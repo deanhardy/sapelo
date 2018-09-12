@@ -42,7 +42,8 @@ sumplot <- ggplot(sum, aes(own3cat, acres)) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
         axis.line.y = element_line(color = 'black'),
-        axis.text = element_text(color = 'black'))
+        axis.text = element_text(color = 'black'),
+        axis.ticks.x = element_line(colour = 'white'))
 sumplot
 
 tiff(file.path(datadir, "figures/owner_category_sums.tif"), height = 5, width = 5, unit = "in", 
