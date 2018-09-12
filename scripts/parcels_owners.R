@@ -1,41 +1,51 @@
-# set working directory on Windows
-setwd("C:/Users/dhardy/Dropbox/sesync/data/R")
-
 rm(list=ls())
 
 library(tidyverse)
 library(lubridate)
 library(readxl)
+library(sf)
+library(tmap)
 
-## import property transactions & owner data
-sales <- read.csv("data/sales/sales_sapelo_master.csv") %>%
-  mutate(parcel_id = as.character(parcel.id), date = as.Date(date, "%m/%d/%Y")) %>%
-  mutate(year = year(date), group = ifelse(price >0, "Money", "No Money")) %>%
-  mutate(group = factor(group, levels = (c("Money", "No Money"))))
+utm <- 2150 ## NAD83 17N
 
-owner <- read_excel("data/owners/owner_info_master.xlsx", 1) %>%
-  mutate(own_cat = as.character(own_cat), parcel_id = as.character(parcel_id))
+## define data directory
+datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 
-## select most recent sales for each property
-latest_sales <- sales %>%
-  group_by(parcel_id) %>%
-  slice(which.max(date))
+## import property owner data
+o <- read.csv(file.path(datadir, 'property/owners_sapelo_master.csv'), stringsAsFactors = F) %>%
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Outsider'), 'Outsider',
+                          ifelse(own_cat == 'NA', 'Descendant', own_cat)))
 
+p <- st_read(file.path(datadir, 'property/parcels.shp'), stringsAsFactors = F) %>%
+  st_transform(utm) %>%
+  rename(parcel_id = PARCEL_ID)
 
+p <- full_join(p, o, by = 'parcel_id')
 
-## summarize by owners
-sum <- owner %>%
-  group_by(own_cat) %>%
-  summarise(count = n(), acres = sum())
+new_o <- o %>%
+  filter(!(parcel_id %in% p$parcel_id))
+  
+## summarize by owner categories
+sum <- p %>%
+  group_by(own3cat) %>%
+  summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
+  filter(!(own3cat %in% c(NA, 'County')))
 
 ## plot freq of land holdings by owner category
-sumplot <- ggplot(owner, aes(own_cat)) +
-  geom_bar() +
-  geom_text(stat='count',aes(label=..count..),vjust=-0.5) + 
-  ggtitle("Sapelo Ownership") + 
-  labs(x = "Owner Category", y = "Frequency")
+
+sumplot <- ggplot(sum, aes(own3cat, acres)) +
+  geom_col(aes(fill = own3cat), show.legend = F, width = 0.5) + 
+  # geom_text(aes(own3cat, acres+5), label = sum$num) + 
+  labs(x = '', y = "Acres") + 
+  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
+  scale_fill_manual(values = c('grey10', 'grey30', 'grey70')) +
+  theme(panel.background = element_rect(fill = 'white'),
+        panel.grid = element_blank(),
+        axis.line.y = element_line(color = 'black'),
+        axis.text = element_text(color = 'black'))
 sumplot
 
-tiff("figures/owner_category_sums.tif", height = 5, width = 5, unit = "in", compression = "lzw", res = 300)
+tiff(file.path(datadir, "figures/owner_category_sums.tif"), height = 5, width = 5, unit = "in", 
+     compression = "lzw", res = 300)
 sumplot
 dev.off()

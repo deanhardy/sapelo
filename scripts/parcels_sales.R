@@ -8,12 +8,19 @@ library(lubridate)
 library(gridExtra)
 library(tidyquant)
 
+## define data directory
+datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
+
 ## import data
-sales <- read.csv("data/sales/sales_sapelo_master.csv") %>%
-  mutate(parcel_id = as.character(parcel.id), date = as.Date(date, "%m/%d/%Y")) %>%
+sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"), stringsAsFactors = F) %>%
+  mutate(date = as.Date(date, "%m/%d/%Y")) %>%
   mutate(year = year(date), group = ifelse(price >0, "Money", "No Money")) %>%
-  mutate(group = factor(group, levels = (c("Money", "No Money")))) %>%
-  group_by(year)
+  mutate(group = factor(group, levels = (c("Money", "No Money"))))
+
+## select most recent sales for each property
+latest_sales <- sales %>%
+  group_by(parcel_id) %>%
+  slice(which.max(date))
 
 ## export sales data as table in PDF
 # pdf("sales_table.pdf", height=11, width=8.5)
