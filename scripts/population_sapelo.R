@@ -1,0 +1,51 @@
+setwd("C:/Users/dhardy/Dropbox/sesync/data/R")
+
+rm(list=ls())
+
+library(tidyverse)
+library(lubridate)
+
+## import data
+pop <- read.csv("data/population/population_sapelo.csv", stringsAsFactors = F) %>%
+  mutate(date = as.Date(date, "%m/%d/%Y"), unknown = as.numeric(total), black = as.numeric(black), 
+         white = as.numeric(white)) %>%
+  select(date, unknown, white, black) %>%
+  gather(key = 'race', value = 'population', 2:4)
+  # mutate(type = factor(race, levels = c('white', 'black', 'unknown')))
+
+evt <- read.csv('data/population/events.csv', stringsAsFactors = F) %>%
+  mutate(date = as.Date(date, '%m/%d/%Y'))
+
+fig <- ggplot() +
+  geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 500) + 
+  geom_col(aes(y = population, x = date, fill = factor(race, levels = c('white', 'black'))), 
+           filter(pop, race != 'unknown'), width = 500) + 
+  geom_segment(data = evt, aes(y = 0, yend = seq(950, 150, -50), x = date, xend = date), 
+               linetype = 'dashed', size = 0.3) +
+  geom_text(data = evt, aes(x = date, y = seq(950, 150, -50), label = event), 
+             hjust = -0.01, size = 2.5) + 
+  scale_x_date(name = "Year", date_breaks = "20 year", 
+               limits = as.Date(c('1860-01-01', '2020-01-01')),
+               date_labels = "%Y",
+               expand = c(0,0)) + 
+  scale_y_continuous(name = "Population",
+                     breaks = seq(0,1000, 100),
+                     limits = c(0,1000), expand = c(0,0)) +
+  scale_fill_manual(name = 'Race', 
+                    labels = c('Black', 'Unknown', 'White'),
+                    values = c(black = 'black', unknown = 'grey50', white = 'grey')) +
+  theme(axis.line = element_line(color = 'black'),
+        panel.background = element_rect(fill = FALSE),
+        panel.grid = element_blank(),
+        #panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(1,1,0.5,0.5, 'cm'),
+        legend.position = c(0.9,0.9),
+        legend.text = element_text(size = 8))
+# expand_limits(x = as.Date('1850-01-01'))
+fig 
+
+tiff('figures/population_sapelo.tif', compression = 'lzw', unit = 'in', height = 5,
+     width = 5, res = 300)
+fig
+dev.off()
+
