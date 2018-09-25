@@ -1,5 +1,3 @@
-# set working directory on Windows
-setwd("C:/Users/Juncus/Dropbox/sesync/data/R")
 
 rm(list=ls())
 
@@ -19,7 +17,7 @@ sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"),
 
 ## select most recent sales for each property
 latest_sales <- sales %>%
-  group_by(parcel_id) %>%
+  group_by(parcel.id) %>%
   slice(which.max(date))
 
 ## export sales data as table in PDF
@@ -67,28 +65,29 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         legend.text = element_text(size = 10))
 saleplot
 
-tiff("figures/sales_plot_no_pts.tif", units = "in", height = 5, width = 5, res = 300, compression = "lzw")
+tiff(file.path(dataidir, "figures/sales_plot_no_pts.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
 saleplot
 dev.off()
 
 
 saleplot_pts <- ggplot(filter(sales, reason != "MT", price != 0),  
-                   aes(date, price.acre/1000, color = sale.type)) + 
-  geom_smooth(aes(date, price.acre/1000, color = sale.type, fill = sale.type),
+                   aes(date, price.acre/100000, color = sale.type)) + 
+  geom_smooth(aes(date, price.acre/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
               linetype = 'dashed', lwd = 0.5, show.legend = TRUE) +
-  geom_point(aes(date, price.acre/1000, size = acres)) +
+  geom_point(aes(date, price.acre/100000, size = acres)) +
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
-  scale_y_continuous(name = "Sale price per acre (x $1,000)",
-                     breaks = seq(0,1600, 200),
-                     limits = c(-300,1600), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,1600,200), labels = NULL)) +
-  coord_x_date(ylim = c(0,1600), xlim = c('1990-01-01', '2018-08-22')) +
+  scale_y_continuous(name = "Sale price per acre (x $100,000)",
+                     breaks = seq(0,16, 2),
+                     limits = c(-3,16), expand = c(0.05,0),
+                     sec.axis = sec_axis(~., breaks = seq(0,16,2), labels = NULL)) +
+  coord_x_date(ylim = c(0,16), xlim = c('1990-01-01', '2018-08-22')) +
   scale_color_manual(name = "Sale Type", values = c('black', 'grey55'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'),
                     labels = c('Land Only', 'Land with Building')) +
+  scale_size_continuous(name = 'Acres') +
   theme(axis.title = element_text(size = 10),
         axis.text = element_text(color = "black", size = 10),
         axis.ticks.length = unit(-0.2, 'cm'),
@@ -101,10 +100,11 @@ saleplot_pts <- ggplot(filter(sales, reason != "MT", price != 0),
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
         legend.position = c(0.25,0.65),
-        legend.text = element_text(size = 10))
+        legend.text = element_text(size = 10),
+        legend.box.background = element_rect(color = 'black'))
 saleplot_pts
 
-tiff("figures/sales_plot_pts.tif", units = "in", height = 5, width = 5, res = 300, compression = "lzw")
+tiff(file.path(datadir, "figures/sales_plot_pts.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
 saleplot_pts
 dev.off()
 
