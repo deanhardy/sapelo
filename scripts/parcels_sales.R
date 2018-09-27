@@ -1,4 +1,3 @@
-
 rm(list=ls())
 
 library(tidyverse)
@@ -25,52 +24,9 @@ latest_sales <- sales %>%
 # grid.table(sales)
 # dev.off()
 
-## plot sales price per acre
+size_legend <- guides(color = 'black', fill = 'none')
+## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  
-                   aes(date, price.acre/1000, color = sale.type)) + 
-  # geom_point(shape = 19) +
-  # geom_smooth(aes(date, price.acre/1000),
-  #             filter(sales, date < '2009-01-01' & date > '1990-01-01' & 
-  #                      reason != "MT", price != 0 & sale.type == "Land Only"),
-  #             method = "lm", se = TRUE, linetype = "dashed", lwd = 0.5, show.legend = FALSE) + 
-  # geom_smooth(aes(date, price.acre/1000),
-  #             filter(sales, date > '2009-01-01' & 
-  #                      reason != "MT", price != 0 & sale.type == "Land Only"),
-  #             method = "loess", se = TRUE, linetype = "dashed", lwd = 0.5, show.legend = FALSE) + 
-  geom_smooth(aes(date, price.acre/1000, color = sale.type, fill = sale.type), 
-              method = "loess", se = TRUE, 
-              linetype = 'dashed', lwd = 0.5, show.legend = TRUE) + 
-  scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y", 
-                date_minor_breaks = "1 year", expand = c(0.0,0.0)) +
-  scale_y_continuous(name = "Sale price per acre (x $1,000)", 
-                     breaks = seq(0,700, 100),
-                     limits = c(-300,1600), expand = c(0,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,700,100), labels = NULL)) + 
-  coord_x_date(ylim = c(0,700), xlim = c('1990-01-01', '2018-08-22')) +
-  scale_color_manual(name = "Sale Type", values = c('black', 'grey55'), 
-                     labels = c('Land Only', 'Land with Building')) +
-  scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'), 
-                     labels = c('Land Only', 'Land with Building')) +
-  theme(axis.title = element_text(size = 10),
-        axis.text = element_text(color = "black", size = 10),
-        axis.ticks.length = unit(-0.2, 'cm'),
-        axis.ticks = element_line(color = 'black'),
-        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-        axis.line = element_line(color = 'black'),
-        panel.background = element_rect(fill = FALSE, color = 'black'),
-        panel.grid = element_blank(),
-        plot.margin = margin(1,1,0.5,0.5, 'cm'),
-        legend.position = c(0.25,0.88),
-        legend.text = element_text(size = 10))
-saleplot
-
-tiff(file.path(dataidir, "figures/sales_plot_no_pts.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
-saleplot
-dev.off()
-
-
-saleplot_pts <- ggplot(filter(sales, reason != "MT", price != 0),  
                    aes(date, price.acre/100000, color = sale.type)) + 
   geom_smooth(aes(date, price.acre/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
@@ -82,12 +38,12 @@ saleplot_pts <- ggplot(filter(sales, reason != "MT", price != 0),
                      breaks = seq(0,16, 2),
                      limits = c(-3,16), expand = c(0.05,0),
                      sec.axis = sec_axis(~., breaks = seq(0,16,2), labels = NULL)) +
-  coord_x_date(ylim = c(0,16), xlim = c('1990-01-01', '2018-08-22')) +
+  coord_x_date(ylim = c(0,16), xlim = c('1990-01-01', '2020-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('black', 'grey55'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'),
                     labels = c('Land Only', 'Land with Building')) +
-  scale_size_continuous(name = 'Acres') +
+  scale_size_continuous(name = 'Parcel Size (Acres)') +
   theme(axis.title = element_text(size = 10),
         axis.text = element_text(color = "black", size = 10),
         axis.ticks.length = unit(-0.2, 'cm'),
@@ -101,11 +57,12 @@ saleplot_pts <- ggplot(filter(sales, reason != "MT", price != 0),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
         legend.position = c(0.25,0.65),
         legend.text = element_text(size = 10),
+        legend.key = element_blank(),
         legend.box.background = element_rect(color = 'black'))
-saleplot_pts
+saleplot
 
-tiff(file.path(datadir, "figures/sales_plot_pts.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
-saleplot_pts
+tiff(file.path(datadir, "figures/sales_priceperacre.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
+saleplot
 dev.off()
 
 ## prep data for plotting total count of sales by year
@@ -115,23 +72,22 @@ sales2 <- sales %>%
 
 ## plot sales frequency totals and fit curve 
 sale_rate <- ggplot(filter(sales2, year > 1990)) +
-  # geom_smooth(aes(year, freq, color = group), level = 0.9,
-  #             method = "lm", se = TRUE, linetype = "dotted", lwd = 0, show.legend = FALSE) +  
-  # geom_col(aes(year, freq, fill = group), position = 'dodge', width = 0.5) +
-  geom_smooth(aes(year, freq, fill = group, color = group), level = 0.9, fullrange = FALSE, 
-              method = "lm", se = TRUE, linetype = "dashed", lwd =0.5, show.legend = FALSE) +
+  geom_smooth(aes(year, freq, fill = group, color = group), level = 0.95, fullrange = FALSE, 
+              method = "lm", se = TRUE, linetype = "dashed", lwd =0.5) +
   geom_point(aes(year, freq, color = group)) +
-  scale_x_continuous(name = "Year", limits = c(1990,2018), 
-                     breaks = seq(1990,2015,5), expand = c(0,0),
+  scale_x_continuous(name = "Year", limits = c(1990,2020), 
+                     breaks = seq(1990,2020,5), expand = c(0,0),
                      sec.axis = sec_axis(~., labels = NULL, 
-                                         breaks = seq(1990,2015,5))) +
+                                         breaks = seq(1990,2020,5))) +
   scale_y_continuous(name = "Number of Transactions", breaks = seq(0,45, 5), 
-                     limits = c(0,45), expand = c(0,0),
+                     limits = c(-10,45), expand = c(0,0),
                      sec.axis = sec_axis(~., labels = NULL, 
                                          breaks = seq(0,45, 5))) + 
+  coord_cartesian(ylim = c(0,45)) + 
   scale_color_manual(name = "Type", values = c("chartreuse4", "grey20"), 
                     labels = c("Money", "No Money")) +
-  scale_fill_manual(values = c("chartreuse4", "grey20")) +
+  scale_fill_manual(name = "Type", values = c("chartreuse4", "grey20"), 
+                     labels = c("Money", "No Money")) +
   theme(axis.title = element_text(size = 10),
         axis.text = element_text(color = "black",
                                    size = 10),
@@ -140,7 +96,7 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
         axis.line = element_line(color = 'black'),
-        legend.position = c(0.15,0.88),
+        legend.position = c(0.18,0.85),
         legend.text = element_text(size = 10),
         # legend.title = element_text(size = 10),
         # legend.background = element_rect(color = 'grey70'),
@@ -148,11 +104,11 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         #                                 color = 'grey80'),
         panel.grid = element_blank(), 
         panel.background = element_blank(),
-        plot.margin = margin(1,1,0.5,0.5, 'cm'))
-
+        plot.margin = margin(1,1,0.5,0.5, 'cm'),
+        legend.box.background = element_rect(color = 'black'))
 sale_rate
 
-tiff("figures/sale_rate_points.tiff", units = "in", height = 5, width = 5, res = 300,
+tiff(file.path(datadir, 'figures/sales_rate.tiff'), units = "in", height = 5, width = 5, res = 300,
      compression = "lzw")
 sale_rate
 dev.off()
