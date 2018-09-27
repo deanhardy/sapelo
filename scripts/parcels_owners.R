@@ -84,3 +84,22 @@ png(file.path(datadir, 'figures/map_owner3category.png'), res = 150, units = 'in
     width = 5, height = 5)
 map
 dev.off()
+
+ownsum <- po %>%
+  group_by(own3cat) %>%
+  summarise(n())
+
+llcsum <- po %>%
+  filter(own_cat %in% c('LLC', 'INC', 'LLP')) %>%
+  group_by(owner) %>%
+  summarise(n(), acres = sum(gis_acres, na.rm = T))
+
+outsidersum <- po %>%
+  filter(own3cat == 'Outsider') %>%
+  group_by(owner) %>%
+  summarise(n(), acres = sum(gis_acres, na.rm = T))
+
+descendantsum <- po %>%
+  filter(own3cat == 'Descendant') %>%
+  group_by(owner) %>%
+  summarise(n())
