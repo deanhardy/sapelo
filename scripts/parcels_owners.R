@@ -47,11 +47,11 @@ sum <- po %>%
 
 ## plot freq of land holdings by owner category
 
-sumplot <- ggplot(sum, aes(own3cat, acres)) +
+sumplot <- ggplot(sum, aes(own3cat, acres * 0.404686)) +
   geom_col(aes(fill = own3cat), show.legend = F, width = 0.5) + 
   # geom_text(aes(own3cat, acres+5), label = sum$num) + 
-  labs(x = '', y = "Acres") + 
-  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
+  labs(x = '', y = "Hectares") + 
+  scale_y_continuous(limits = c(0,80), expand = c(0,0)) +
   scale_fill_manual(values = clr3) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
@@ -78,13 +78,13 @@ po2 <- po %>%
   mutate(own3cat = as_factor(own3cat))
 
 ## map owners by category
-map <- tm_shape(po2, unit = 'miles') + 
-  tm_fill('own3cat', palette = clr5, title = 'Owner Category') + 
+map <- tm_shape(po2) + 
+  tm_fill('own3cat', palette = clr4, title = 'Owner Category') + 
   tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0, 0.2), size = 0.8, position = c(0.71, 0)) + 
-  tm_compass(type = 'arrow', size = 3, position = c(0.75, 0.09)) + 
+  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.71, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.77, 0.09)) + 
   tm_layout(frame = FALSE)
-# map 
+map 
 
 tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
     width = 5, height = 5)
@@ -98,12 +98,12 @@ ownsum <- po %>%
 llcsum <- po %>%
   filter(own_cat %in% c('LLC', 'INC', 'LLP')) %>%
   group_by(owner) %>%
-  summarise(n(), acres = sum(gis_acres, na.rm = T))
+  summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
 
 outsidersum <- po %>%
   filter(own3cat == 'Outsider') %>%
   group_by(owner) %>%
-  summarise(n(), acres = sum(gis_acres, na.rm = T))
+  summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 
 descendantsum <- po %>%
   filter(own3cat == 'Descendant') %>%

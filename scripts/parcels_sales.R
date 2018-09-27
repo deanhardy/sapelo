@@ -12,7 +12,8 @@ datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"), stringsAsFactors = F) %>%
   mutate(date = as.Date(date, "%m/%d/%Y")) %>%
   mutate(year = year(date), group = ifelse(price >0, "Money", "No Money")) %>%
-  mutate(group = factor(group, levels = (c("Money", "No Money"))))
+  mutate(group = factor(group, levels = (c("Money", "No Money")))) %>%
+  mutate(price.ha = price/(acres * 0.404686))
 
 ## select most recent sales for each property
 latest_sales <- sales %>%
@@ -24,26 +25,26 @@ latest_sales <- sales %>%
 # grid.table(sales)
 # dev.off()
 
-size_legend <- guides(color = 'black', fill = 'none')
+# size_legend <- guides(color = 'black', fill = 'none')
 ## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  
-                   aes(date, price.acre/100000, color = sale.type)) + 
-  geom_smooth(aes(date, price.acre/100000, color = sale.type, fill = sale.type),
+                   aes(date, price.ha/100000, color = sale.type)) + 
+  geom_smooth(aes(date, price.ha/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
               linetype = 'dashed', lwd = 0.5, show.legend = TRUE) +
-  geom_point(aes(date, price.acre/100000, size = acres)) +
+  geom_point(aes(date, price.ha/100000, size = acres * 0.404686)) +
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
-  scale_y_continuous(name = "Sale price per acre (x $100,000)",
-                     breaks = seq(0,16, 2),
-                     limits = c(-3,16), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,16,2), labels = NULL)) +
-  coord_x_date(ylim = c(0,16), xlim = c('1990-01-01', '2020-01-01')) +
+  scale_y_continuous(name = "Sale price per hectare (x $100,000)",
+                     breaks = seq(0,40, 5),
+                     limits = c(-20,40), expand = c(0.05,0),
+                     sec.axis = sec_axis(~., breaks = seq(0,40,5), labels = NULL)) +
+  coord_x_date(ylim = c(0,40), xlim = c('1990-01-01', '2020-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('black', 'grey55'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'),
                     labels = c('Land Only', 'Land with Building')) +
-  scale_size_continuous(name = 'Parcel Size (Acres)') +
+  scale_size_continuous(name = 'Parcel Size (HA)') +
   theme(axis.title = element_text(size = 10),
         axis.text = element_text(color = "black", size = 10),
         axis.ticks.length = unit(-0.2, 'cm'),
@@ -61,7 +62,7 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         legend.box.background = element_rect(color = 'black'))
 saleplot
 
-tiff(file.path(datadir, "figures/sales_priceperacre.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
+tiff(file.path(datadir, "figures/sales_priceperha.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
 saleplot
 dev.off()
 
