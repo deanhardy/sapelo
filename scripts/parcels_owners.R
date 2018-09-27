@@ -8,7 +8,8 @@ library(tmap)
 
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
-  
+clr4 <- c('grey30', 'grey60', 'grey90', 'black')
+
 ## define data directory
 datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 
@@ -72,15 +73,20 @@ dev.off()
 #   filter(notes == 'guessed own category based on sales') %>%
 #   st_centroid('geometry')
 
-po2 <- po %>% filter(!(own3cat %in% c('Unknown', 'County')))
+po2 <- po %>% 
+  mutate(own3cat = ifelse(own3cat %in% c('Unknown', 'County'), 'Other', own3cat)) %>%
+  mutate(own3cat = as_factor(own3cat))
 
 ## map owners by category
-map <- tm_shape(po2) + 
-  tm_fill('own3cat', palette = clr3, title = 'Owner Category') + 
-  tm_borders(col = 'black')
-map 
+map <- tm_shape(po2, unit = 'miles') + 
+  tm_fill('own3cat', palette = clr5, title = 'Owner Category') + 
+  tm_borders(col = 'black') +
+  tm_scale_bar(breaks = c(0, 0.2), size = 0.8, position = c(0.71, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.75, 0.09)) + 
+  tm_layout(frame = FALSE)
+# map 
 
-png(file.path(datadir, 'figures/map_owner3category.png'), res = 150, units = 'in',
+tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
     width = 5, height = 5)
 map
 dev.off()
