@@ -7,7 +7,8 @@ library(sf)
 library(tmap)
 
 utm <- 2150 ## NAD83 17N
-
+clr3 <- c('grey30', 'grey60', 'grey90')
+  
 ## define data directory
 datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 
@@ -24,8 +25,15 @@ p <- st_read(file.path(datadir, 'property/parcels.shp'), stringsAsFactors = F) %
 po <- full_join(p, o, by = 'parcel_id') %>%
   mutate(gis_acres = 
            ifelse(parcel_id == '0102A  0134002', 1.21, 
-                  ifelse(parcel_id == '0102A  0134', gis_acres - 1.21, 
-                         ifelse(parcel_id %in% c('0101A  0071', '0101A  0071001', '0101A  0071002', '0101A  0071003', '0101A  0071004'), 0.4, gis_acres))))
+                  ifelse(parcel_id == '0102A  0134', gis_acres - 1.21,
+                         ifelse(parcel_id == '0102A  0090', 1.15, 
+                                ifelse(parcel_id == '0101A  0068001', 1, 
+                                       ifelse(parcel_id == '0101A  0106001', 0.25,
+                                              ifelse(parcel_id == '0102A 0025', 1,
+                                                     ifelse(parcel_id == '0102A  0045001', 2,
+                                ifelse(parcel_id %in% c('0101A  0071', '0101A  0071001', '0101A  0071002', '0101A  0071003', '0101A  0071004'), 0.4, gis_acres))))))))) %>%
+  mutate(own_cat = ifelse(is.na(own_cat), 'Unknown', own_cat)) %>%
+  mutate(own3cat = ifelse(is.na(own3cat), 'Unknown', own3cat))
 
 # new_o <- o %>%
 #   filter(!(parcel_id %in% p$parcel_id))
@@ -34,7 +42,7 @@ po <- full_join(p, o, by = 'parcel_id') %>%
 sum <- po %>%
   group_by(own3cat) %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
-  filter(!(own3cat %in% c(NA, 'County')))
+  filter(!(own3cat %in% c('County', 'Unknown')))
 
 ## plot freq of land holdings by owner category
 
@@ -43,7 +51,7 @@ sumplot <- ggplot(sum, aes(own3cat, acres)) +
   # geom_text(aes(own3cat, acres+5), label = sum$num) + 
   labs(x = '', y = "Acres") + 
   scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
-  scale_fill_manual(values = c('grey10', 'grey30', 'grey70')) +
+  scale_fill_manual(values = clr3) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
         axis.line.y = element_line(color = 'black'),
@@ -51,27 +59,28 @@ sumplot <- ggplot(sum, aes(own3cat, acres)) +
         axis.ticks.x = element_line(colour = 'white'))
 sumplot
 
-tiff(file.path(datadir, "figures/owner_category_sums.tif"), height = 5, width = 5, unit = "in", 
+tiff(file.path(datadir, "figures/owner3category_sums.tif"), height = 5, width = 5, unit = "in", 
      compression = "lzw", res = 300)
 sumplot
 dev.off()
 
-new_o <- o %>% group_by(owner) %>%
-  summarise(table(owner), own_cat = first(own_cat)) %>%
-  mutate(own_cat_freq)
+# new_o <- o %>% group_by(owner) %>%
+#   summarise(table(owner), own_cat = first(own_cat)) %>%
+#   mutate(own_cat_freq)
 
-who <- po %>%
-  filter(notes == 'guessed own category based on sales') %>%
-  st_centroid('geometry')
+# who <- po %>%
+#   filter(notes == 'guessed own category based on sales') %>%
+#   st_centroid('geometry')
 
-po2 <- po %>% filter(is.na(own3cat))  
+po2 <- po %>% filter(!(own3cat %in% c('Unknown', 'County')))
 
 ## map owners by category
-map <- tm_shape(po) + 
-  tm_polygons('own_cat', title = 'Owner Category')
+map <- tm_shape(po2) + 
+  tm_fill('own3cat', palette = clr3, title = 'Owner Category') + 
+  tm_borders(col = 'black')
 map 
 
-png(file.path(datadir, 'figures/map_owner_category.png'), res = 150, units = 'in',
+png(file.path(datadir, 'figures/map_owner3category.png'), res = 150, units = 'in',
     width = 5, height = 5)
 map
 dev.off()
