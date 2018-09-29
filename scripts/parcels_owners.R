@@ -8,14 +8,15 @@ library(tmap)
 
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
-clr4 <- c('grey30', 'grey60', 'grey90', 'black')
+clr4 <- c('grey90', 'grey30', 'grey60', 'grey85')
 
 ## define data directory
-datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
+datadir <- 'C:/Users/Juncus/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_master.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Outsider'), 'Outsider', own_cat))
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Outsider'), 'Outsider', own_cat)) %>%
+  mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
 
 p <- st_read(file.path(datadir, 'property/parcels.shp'), stringsAsFactors = F) %>%
   st_transform(utm) %>%
@@ -34,25 +35,25 @@ po <- full_join(p, o, by = 'parcel_id') %>%
                                                      ifelse(parcel_id == '0102A  0045001', 2,
                                 ifelse(parcel_id %in% c('0101A  0071', '0101A  0071001', '0101A  0071002', '0101A  0071003', '0101A  0071004'), 0.4, gis_acres))))))))) %>%
   mutate(own_cat = ifelse(is.na(own_cat), 'Unknown', own_cat)) %>%
-  mutate(own3cat = ifelse(is.na(own3cat), 'Unknown', own3cat))
+  mutate(own3cat = ifelse(is.na(own3cat), 'Unknown', own3cat)) %>%
+  mutate(own4cat = ifelse(is.na(own4cat), 'Unknown', own4cat))
 
 # new_o <- o %>%
 #   filter(!(parcel_id %in% p$parcel_id))
   
-## summarize by owner categories
+## summarize by owner 3 class categories
 sum <- po %>%
   group_by(own3cat) %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
   filter(!(own3cat %in% c('County', 'Unknown')))
 
-## plot freq of land holdings by owner category
-
+## plot freq of land holdings by owner 3 class category
 sumplot <- ggplot(sum, aes(own3cat, acres * 0.404686)) +
-  geom_col(aes(fill = own3cat), show.legend = F, width = 0.5) + 
+  geom_col(fill = 'black', show.legend = F, width = 0.2) + 
   # geom_text(aes(own3cat, acres+5), label = sum$num) + 
   labs(x = '', y = "Hectares") + 
   scale_y_continuous(limits = c(0,80), expand = c(0,0)) +
-  scale_fill_manual(values = clr3) +
+  # scale_fill_manual(values = 'black') +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
         axis.line.y = element_line(color = 'black'),
@@ -65,6 +66,30 @@ tiff(file.path(datadir, "figures/owner3category_sums.tif"), height = 5, width = 
 sumplot
 dev.off()
 
+
+## summarize by owner 4 class categories
+sum2 <- po %>%
+  group_by(own4cat) %>%
+  summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
+  filter(!(own4cat %in% c('County', 'Unknown')))
+
+## plot freq of land holdings by owner 4 class category
+sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres * 0.404686)) +
+  geom_col(fill = 'black', show.legend = F, width = 0.3) +
+  labs(x = '', y = "Hectares") + 
+  scale_y_continuous(limits = c(0,80), expand = c(0,0)) +
+  scale_fill_manual(values = clr4) +
+  theme(panel.background = element_rect(fill = 'white'),
+        panel.grid = element_blank(),
+        axis.line.y = element_line(color = 'black'),
+        axis.text = element_text(color = 'black'),
+        axis.ticks.x = element_line(colour = 'white'))
+sumplot2
+
+tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 5, width = 5, unit = "in", 
+     compression = "lzw", res = 300)
+sumplot2
+dev.off()
 # new_o <- o %>% group_by(owner) %>%
 #   summarise(table(owner), own_cat = first(own_cat)) %>%
 #   mutate(own_cat_freq)
@@ -107,8 +132,10 @@ dev.off()
 
 ownsum <- po %>%
   group_by(own3cat) %>%
-  summarise(n())
+  summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
 
+ownsum[[2,3]]/sum(ownsum$ha)
+  
 llcsum <- po %>%
   filter(own_cat %in% c('LLC', 'INC', 'LLP')) %>%
   group_by(owner) %>%
@@ -123,3 +150,4 @@ descendantsum <- po %>%
   filter(own3cat == 'Descendant') %>%
   group_by(owner) %>%
   summarise(n())
+
