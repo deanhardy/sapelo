@@ -1,7 +1,8 @@
-setwd("C:/Users/dhardy/Dropbox/sesync/data/R")
-
 # load emf maker
 library(devEMF)
+
+## define data directory
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 # set colors
 rgb(0, 169, 230, names = "mooreablue", maxColorValue = 255)
@@ -16,7 +17,7 @@ lbls.prcl <- c("36", "132", "205", "283")
 x <- c(1, 2, 3, 4)
 
 # prints tif
-tiff('figures/hh.prop.tif', width=3, height=3, units="in", res=300)
+tiff(file.path(datadir, 'figures/hh.prop.tif'), width=3, height=3, units="in", res=300)
 par(cex=0.7)
 
 # plots data in bar chart
@@ -69,14 +70,14 @@ dev.off()
 ################################################
 
 # create data and label vectors for property number affected by SLR
-stat <- c(182, 42, 72)
+stat <- c(170, 47, 86)
 acre <- c(219, 144, 57)
-ha <- c(89, 59, 23)
-lbls.stat <- c("182", "42", "72")
+ha <- c(78, 64, 24)
+lbls.stat <- c("186", "47", "86")
 lgnd.1 <- c("Geechee Descendant", "Heritage Authority", "Non-traditional")
 
 # prints transparent png for slide
-png('figures/hh.stat.png', width=5, height=5, units="in", res=300, bg="transparent")
+png(file.path(datadir, 'figures/hh.stat.png'), width=5, height=5, units="in", res=300, bg="transparent")
 par(cex=1.3)
 
 # plots data in bar chart
@@ -87,7 +88,7 @@ dev.off()
 
 
 # prints transparent png for slide
-png('figures/hh.hectare.png', width=5, height=5, units="in", res=300, bg="transparent")
+png(file.path(datadir, 'figures/hh.hectare.png'), width=5, height=5, units="in", res=300, bg="transparent")
 par(cex=1.3)
 
 # plots data in bar chart

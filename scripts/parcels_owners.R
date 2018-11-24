@@ -11,7 +11,7 @@ clr3 <- c('grey30', 'grey60', 'grey90')
 clr4 <- c('grey90', 'grey30', 'grey60', 'grey85')
 
 ## define data directory
-datadir <- 'C:/Users/Juncus/Dropbox/r_data/sapelo'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_master.csv'), stringsAsFactors = F) %>%
