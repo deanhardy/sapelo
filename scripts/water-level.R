@@ -18,7 +18,7 @@ df <- read.delim(file.path(datadir, 'water-level/site02-181012-181109.csv'), hea
 
 fig <- ggplot(df) + 
   geom_line(aes(date_time_gmt, water_height_m * 3.28084 + 5.456203)) + ## convert to feet then add MLLW base elevation
-  geom_line(aes(date_time_gmt, water_temp_f/10), lty = "dotted", color = 'black') + 
+  geom_line(aes(date_time_gmt, water_temp_f/10), lty = 'dotted', color = 'black') + 
   scale_x_datetime(name = 'Date (Year 2018)', date_breaks = '4 day', date_labels = '%m/%d') + 
   scale_y_continuous(name = 'Height in feet (MLLW)',
                      sec.axis = sec_axis(~. * 10, 
