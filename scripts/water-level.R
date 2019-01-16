@@ -7,7 +7,8 @@ library(lubridate)
 datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data--- site 02 (aka "snagtree") MLLW elevation in meters is 1.9678506744 & in feet is 5.456203
-df <- read.delim(file.path(datadir, 'water-level/site02-181012-181109.csv'), header = TRUE, skip = 1,
+df <- read.delim(file.path(datadir, 'water-level/hobo-data/site02-181012-181109.csv'), 
+                 header = TRUE, skip = 1,
                  stringsAsFactors = FALSE)[-1] %>%
   rename(water_height_m = Water.Level..meters..LGR.S.N..20441313.,
          water_temp_f = Temp...F..LGR.S.N..20441313..SEN.S.N..20441313.,
@@ -16,10 +17,18 @@ df <- read.delim(file.path(datadir, 'water-level/site02-181012-181109.csv'), hea
   mutate(date_time_gmt = mdy_hm(date_time_gmt, tz='UTC')) %>%
   slice(., 1:(n()-1)) ## removes last row because erroneous reading 
 
+nerr <- read.csv(file.path(datadir, 'water-level/nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
+                 header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
+  slice(., 3:n()) %>%
+  mutate(date_time_gmt = ymd_hms(Date, tz='UTC'),
+         Depth = as.numeric(Depth)) %>%
+  filter(date_time_gmt >= first(df$date_time_gmt) & date_time_gmt <= last(df$date_time_gmt))
+
 fig <- ggplot(df) + 
   geom_line(aes(date_time_gmt, water_height_m * 3.28084 + 5.456203)) + ## convert to feet then add MLLW base elevation
   geom_line(aes(date_time_gmt, water_temp_f/10), lty = 'dotted', color = 'black') + 
-  scale_x_datetime(name = 'Date (Year 2018)', date_breaks = '4 day', date_labels = '%m/%d') + 
+  # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
+  scale_x_datetime(name = 'Date (Year 2018)', date_breaks = '4 day', date_labels = '%d') + 
   scale_y_continuous(name = 'Height in feet (MLLW)',
                      sec.axis = sec_axis(~. * 10, 
                                          name = expression(paste('Water Temperature (',degree,'F)')))) +
