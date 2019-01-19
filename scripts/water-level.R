@@ -8,20 +8,20 @@ Sys.setenv(TZ='GMT')
 datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data--- site 02 (aka "snagtree") MLLW elevation in meters is 1.9678506744 & in feet is 5.456203
-df <- read.delim(file.path(datadir, 'water-level/hobo-data/site02-181012-181109.csv'), 
+df <- read.csv(file.path(datadir, 'water-level/hobo-data/site02-181013-181109.csv'), 
                  header = TRUE, skip = 1,
                  stringsAsFactors = FALSE)[-1] %>%
   rename(water_height_m = Water.Level..meters..LGR.S.N..20441313.,
-         water_temp_f = Temp...F..LGR.S.N..20441313..SEN.S.N..20441313.,
+         water_temp_f = Temp..Â.F..LGR.S.N..20441313..SEN.S.N..20441313.,
          abs_pres_psi = Abs.Pres..psi..LGR.S.N..20441313..SEN.S.N..20441313.,
          date_time_gmt = Date.Time..GMT.00.00) %>%
-  mutate(date_time_gmt = mdy_hm(date_time_gmt, tz='UTC')) %>%
+  mutate(date_time_gmt = mdy_hms(date_time_gmt)) %>%
   slice(., 1:(n()-1)) ## removes last row because erroneous reading 
 
 nerr <- read.csv(file.path(datadir, 'water-level/nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
                  header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
   slice(., 3:n()) %>%
-  mutate(date_time_gmt = ymd_hms(Date, tz='UTC'),
+  mutate(date_time_gmt = ymd_hms(Date),
          Depth = as.numeric(Depth)) %>%
   filter(date_time_gmt >= first(df$date_time_gmt) & date_time_gmt <= last(df$date_time_gmt))
 
