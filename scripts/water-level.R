@@ -2,6 +2,7 @@ rm(list=ls())
 
 library(tidyverse)
 library(lubridate)
+Sys.setenv(TZ='GMT')
 
 ## define data directory
 datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
