@@ -35,14 +35,22 @@ nerr <- read.csv(file.path(datadir, 'water-level/nerr-data/lowerduplin-realtime-
          Depth = as.numeric(Depth)) %>%
   filter(date_time_gmt >= first(df$date_time_gmt) & date_time_gmt <= last(df$date_time_gmt))
 
-ot <- read.delim(file.path(datadir, 'water-level/nerr-date/OldTower-tide-predictions.txt'),
+ot <- read.delim(file.path(datadir, 'water-level/nerr-data/OldTower-tide-predictions.txt'),
                  sep = '\t', header = TRUE, skip = 19,
                  stringsAsFactors = FALSE)
+colnames(ot) <- c('Date', 'Day', 'Time', 'Pred', 'High.Low', 'SKIP1', 'SKIP2')  
 
-fig <- ggplot(df3) + 
+ot2 <- ot %>% 
+  mutate(date_time_gmt = with(., as.POSIXct(paste(Date, Time), 
+                              format = '%Y/%m/%d %I:%M %p'))) %>%
+  select(date_time_gmt, Pred, High.Low) %>%
+  filter(High.Low == 'H')
+
+fig <- ggplot(filter(df3, date_time_gmt >= first(ot2$date_time_gmt) & date_time_gmt <= last(ot2$date_time_gmt))) + 
   geom_line(aes(date_time_gmt, water_height_m * 3.28084 + 5.456203)) + ## convert to feet then add MLLW base elevation
   geom_line(aes(date_time_gmt, water_temp_f/10), lty = 'dotted', color = 'black') + 
   # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
+  geom_point(aes(date_time_gmt, Pred), data = ot2) +
   scale_x_datetime(name = 'Date (Year 2018)', date_breaks = '4 day', date_labels = '%m/%d') + 
   scale_y_continuous(name = 'Height in feet (MLLW)',
                      sec.axis = sec_axis(~. * 10, 
