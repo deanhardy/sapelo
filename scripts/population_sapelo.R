@@ -7,26 +7,28 @@ library(lubridate)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data
-pop <- read.csv(file.path(datadir, "population/population_sapelo.csv"), stringsAsFactors = F) %>%
+pop <- read.csv(file.path(datadir, "population/population_sapelo.csv"), stringsAsFactors = F, skip = 2) %>%
   mutate(date = as.Date(date, "%m/%d/%Y"), unknown = as.numeric(total), black = as.numeric(black), 
          white = as.numeric(white)) %>%
   select(date, unknown, white, black) %>%
   gather(key = 'race', value = 'population', 2:4)
   # mutate(type = factor(race, levels = c('white', 'black', 'unknown')))
 
-evt <- read.csv(file.path(datadir, 'population/events.csv'), stringsAsFactors = F) %>%
+evt <- read.csv(file.path(datadir, 'population/events.csv'), stringsAsFactors = F, skip = 2) %>%
   mutate(date = as.Date(date, '%m/%d/%Y'))
 
 fig <- ggplot() +
   geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 500) + 
   geom_col(aes(y = population, x = date, fill = factor(race, levels = c('white', 'black'))), 
            filter(pop, race != 'unknown'), width = 500) + 
-  geom_segment(data = evt, aes(y = 0, yend = seq(950, 150, -40), x = date, xend = date), 
+  geom_segment(aes(y = 0, yend = seq(950, 150, -32), x = date, xend = date),
+               filter(evt, date >= '1800-01-01'), 
                linetype = 'dashed', size = 0.3) +
-  geom_text(data = evt, aes(x = date, y = seq(950, 150, -40), label = event), 
-             hjust = -0.01, size = 2.5) + 
+  geom_text(aes(x = date, y = seq(950, 150, -32), label = paste(event, ' ', '(', source, ')', sep = '')),
+            filter(evt, date >= '1800-01-01'), 
+            hjust = -0.01, size = 2.5) +
   scale_x_date(name = "Year", date_breaks = "20 year", 
-               limits = as.Date(c('1860-01-01', '2020-01-01')),
+               limits = as.Date(c('1800-01-01', '2020-01-01')),
                date_labels = "%Y",
                expand = c(0,0)) + 
   scale_y_continuous(name = "Population",
@@ -45,8 +47,8 @@ fig <- ggplot() +
 # expand_limits(x = as.Date('1850-01-01'))
 fig 
 
-tiff(file.path(datadir, 'figures/population_sapelo.tif'), compression = 'lzw', unit = 'in', height = 5,
-     width = 5, res = 300)
+tiff(file.path(datadir, 'figures/population_sapelo_revised.tif'), compression = 'lzw', unit = 'in', height = 5,
+     width = 8.8, res = 300)
 fig
 dev.off()
 
