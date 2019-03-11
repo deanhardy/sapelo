@@ -5,7 +5,7 @@ library(lubridate)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data--- site 02 (aka "snagtree") MLLW elevation in meters is 1.9678506744 & in feet is 5.456203
 df <- read.csv(file.path(datadir, 'water-level/hobo-data/site02-181013-181109.csv'), 
@@ -55,8 +55,8 @@ fig <- ggplot(filter(df3, date_time_gmt >= first(ot2$date_time_gmt) & date_time_
   scale_y_continuous(name = 'Height in feet (MLLW)',
                      sec.axis = sec_axis(~. * 10, 
                                          name = expression(paste('Water Temperature (',degree,'F)')))) +
-  theme(axis.title = element_text(size = 8),
-        axis.text = element_text(color = "black", size = 8),
+  theme(axis.title = element_text(size = 18),
+        axis.text = element_text(color = "black", size = 18),
         axis.ticks.length = unit(-0.2, 'cm'),
         axis.ticks = element_line(color = 'black'),
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
@@ -68,8 +68,8 @@ fig <- ggplot(filter(df3, date_time_gmt >= first(ot2$date_time_gmt) & date_time_
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         legend.position = c(10/15,3),
-        legend.text = element_text(size = 8),
-        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 18),
         legend.key = element_blank(),
         legend.box.background = element_rect(color = 'black'))  
 #  labs(caption = "Temperature is dotted line.")
