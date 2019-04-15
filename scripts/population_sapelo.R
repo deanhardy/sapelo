@@ -2,28 +2,6 @@ rm(list=ls())
 
 library(tidyverse)
 library(lubridate)
-library(tidycensus)
-library(sf)
-
-## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
-
-## import recent (>=year 2000) pop data
-vvv <- load_variables(2000, 'sf1', cache = TRUE)
-vars = c('P012001', 'P012A001', 'P012B001', 'P012C001', 'P012D001', 'P012E001', 'P012F001',
-         'P012G001', 'P012H001', 'P012I001')
-pop10 <- get_decennial(
-  geography = 'block',
-  variables = vars, 
-  year = 2010, 
-  state = 'GA',
-  county = 'McIntosh',
-  geometry = TRUE,
-  output = 'wide')
-
-# pop10 %>% ggplot(aes(fill = value)) + geom_sf()
-
-pop10 %>% st_write(file.path(datadir,'pop10-blocks.shp'), driver = 'ESRI Shapefile')
 
 ## import data
 pop <- read.csv(file.path(datadir, "population/population_sapelo.csv"), stringsAsFactors = F, skip = 2) %>%
