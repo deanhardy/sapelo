@@ -3,6 +3,9 @@ rm(list=ls())
 library(tidyverse)
 library(lubridate)
 
+## define data directory
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
+
 ## import data
 pop <- read.csv(file.path(datadir, "population/population_sapelo.csv"), stringsAsFactors = F, skip = 2) %>%
   mutate(date = as.Date(date, "%m/%d/%Y"), unknown = as.numeric(total), black = as.numeric(black), 
