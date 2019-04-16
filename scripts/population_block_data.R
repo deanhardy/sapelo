@@ -11,12 +11,23 @@ library(ipumsr)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import nhgis data
-nhgis <- read_nhgis_sf(
-  data_file = file.path(datadir, "population/nhgis/nhgis0017_csv.zip"),
-  shape_file = file.path(datadir, "population/nhgis/nhgis0017_shape.zip")
-)
+# nhgis <- read_nhgis_sf(
+#   data_file = file.path(datadir, 'population/nhgis/nhgis0017_csv', 
+#                         data_layer = 'nhgis0017_ds120_1990_block.csv'),
+#   shape_file = file.path(datadir, 'population/nhgis/nhgis0017_shape',
+#                          data_layer = 'GA_block_1990.shp'),
+#   var_attrs = 'val_label'
+# )
 
-nhgis_ddi <- read_ipums_codebook(file.path(datadir, "population/nhgis/nhgis0017_csv.zip"))
+nhgis_data <- read.csv(file.path(datadir, 'population/nhgis/nhgis0017_csv/nhgis0017_ds120_1990_block.csv'))
+nhgis <- read_sf(file.path(datadir, 'population/nhgis/nhgis0017_shape/GA_block_1990.shp')) %>%
+  st_as_sf()
+
+mc <- filter(test, FIPSSTCO == '13001')
+  
+nhgis_ddi <- read_ipums_codebook(file.path(datadir, 'population/nhgis/nhgis0017_csv'))
+
+ipums_val_labels(nhgis_data$COUNTY)
 
 ## import 2010 pop data
 vvv <- load_variables(2000, 'sf1', cache = TRUE)
