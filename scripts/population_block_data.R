@@ -3,31 +3,60 @@
 ################################################################
 rm(list=ls())
 
+library(tidyverse)
 library(tidycensus)
 library(sf)
 library(ipumsr)
+library(data.table)
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import nhgis data
-# nhgis <- read_nhgis_sf(
-#   data_file = file.path(datadir, 'population/nhgis/nhgis0017_csv', 
-#                         data_layer = 'nhgis0017_ds120_1990_block.csv'),
-#   shape_file = file.path(datadir, 'population/nhgis/nhgis0017_shape',
-#                          data_layer = 'GA_block_1990.shp'),
-#   var_attrs = 'val_label'
-# )
+# nhgis_ddi <- read_ipums_codebook(file.path(datadir, 'population/nhgis/nhgis0017_csv'))
+#
+nhgis <- read_nhgis_sf(
+  data_file = file.path(datadir, 'population/nhgis/ga_block_data90_00',
+                        data_layer = 'nhgis0017_ds120_1990_block.csv'),
+  shape_file = file.path(datadir, 'population/nhgis/ga_block_1990',
+                         data_layer = 'GA_block_1990.shp'),
+  var_attrs = 'val_label'
+)
 
-nhgis_data <- read.csv(file.path(datadir, 'population/nhgis/nhgis0017_csv/nhgis0017_ds120_1990_block.csv'))
-nhgis <- read_sf(file.path(datadir, 'population/nhgis/nhgis0017_shape/GA_block_1990.shp')) %>%
-  st_as_sf()
+nhgis_90data <- read.csv(file.path(datadir, 'population/nhgis/ga_block_data90_00/nhgis0017_ds120_1990_block.csv'),
+                       stringsAsFactors = FALSE) %>%
+  mutate(COUNTY = as.character(COUNTY))
+nhgis_00data <- read.csv(file.path(datadir, 'population/nhgis/ga_block_data90_00/nhgis0017_ds147_2000_block.csv'),
+                         stringsAsFactors = FALSE) %>%
+  mutate(COUNTY = as.character(COUNTY))
 
-mc <- filter(test, FIPSSTCO == '13001')
-  
-nhgis_ddi <- read_ipums_codebook(file.path(datadir, 'population/nhgis/nhgis0017_csv'))
+## import 1990 NHGIS block data
+mc_90data <- filter(nhgis_90data, COUNTY == 'McIntosh') %>%
+  mutate_at(vars(starts_with('ET')), funs(as.numeric)) %>%
+  mutate(white = rowSums(.[27:88]), black = rowSums(.[89:150]), other = rowSums(.[151:336]),
+         total = rowSums(.[27:336]))
+mc_90shp <- read_sf(file.path(datadir, 'population/nhgis/ga_block_1990/')) %>%
+  st_as_sf() %>%
+  filter(FIPSSTCO == '13191')
+mc90 <- left_join(mc_90shp, mc_90data)
 
-ipums_val_labels(nhgis_data$COUNTY)
+qtm(mc90, fill = 'black')
+
+mc90 %>% st_write(file.path(datadir, 'population/nhgis/mc_block_1990.shp'), driver = 'ESRI Shapefile')
+
+## import 2000 NHGIS block data
+mc_00data <- filter(nhgis_00data, COUNTY == 'McIntosh') %>%
+  mutate_at(vars(starts_with('FY')), funs(as.numeric)) %>%
+  mutate(white = rowSums(.[14:59]), black = rowSums(.[60:105]), other = rowSums(.[106:335]),
+         total = rowSums(.[14:335]))
+mc_00shp <- read_sf(file.path(datadir, 'population/nhgis/ga_block_2000/')) %>%
+  st_as_sf() %>%
+  filter(FIPSSTCO == '13191')
+mc00 <- left_join(mc_00shp, mc_00data)
+
+qtm(mc00, fill = 'black')
+
+mc00 %>% st_write(file.path(datadir, 'population/nhgis/mc_block_2000.shp'), driver = 'ESRI Shapefile')
 
 ## import 2010 pop data
 vvv <- load_variables(2000, 'sf1', cache = TRUE)
