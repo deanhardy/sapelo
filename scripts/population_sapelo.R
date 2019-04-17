@@ -21,21 +21,23 @@ fig <- ggplot() +
   geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 500) + 
   geom_col(aes(y = population, x = date, fill = factor(race, levels = c('white', 'black'))), 
            filter(pop, race != 'unknown'), width = 500) + 
-  geom_segment(aes(y = 0, yend = seq(950, 182, -32), x = date, xend = date),
-               filter(evt, date >= '1800-01-01'), 
+  geom_segment(aes(y = 0, yend = seq(990, 150, -(990-150)/(nrow(filter(evt, date >= '1860-01-01'))-1)), 
+                   x = date, xend = date),
+               filter(evt, date >= '1860-01-01'), 
                linetype = 'dashed', size = 0.3) +
-  geom_text(aes(x = date, y = seq(950, 182, -32), label = paste(event, ' ', '(', source, ')', sep = '')),
-            filter(evt, date >= '1800-01-01'), 
+  geom_text(aes(x = date, y = seq(990, 150, -(990-150)/(nrow(filter(evt, date >= '1860-01-01'))-1)), 
+                label = paste(event, ' ', '(', source, ')', sep = '')),
+            filter(evt, date >= '1860-01-01'), 
             hjust = -0.01, size = 2.5) +
   scale_x_date(name = "Year", date_breaks = "20 year", 
-               limits = as.Date(c('1800-01-01', '2020-01-01')),
+               limits = as.Date(c('1860-01-01', '2020-01-01')),
                date_labels = "%Y",
                expand = c(0,0)) + 
   scale_y_continuous(name = "Population",
                      breaks = seq(0,1000, 100),
                      limits = c(0,1000), expand = c(0,0)) +
   scale_fill_manual(name = 'Race', 
-                    labels = c('Black', 'Unknown', 'White'),
+                    labels = c('Black', 'Other', 'White'),
                     values = c(black = 'black', unknown = 'grey50', white = 'grey')) +
   theme(axis.line = element_line(color = 'black'),
         panel.background = element_rect(fill = FALSE),
