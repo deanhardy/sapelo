@@ -18,9 +18,9 @@ evt <- read.csv(file.path(datadir, 'population/events.csv'), stringsAsFactors = 
   mutate(date = as.Date(date, '%m/%d/%Y'))
 
 fig <- ggplot() +
-  geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 500) + 
+  geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 300) + 
   geom_col(aes(y = population, x = date, fill = factor(race, levels = c('white', 'black'))), 
-           filter(pop, race != 'unknown'), width = 500) + 
+           filter(pop, race != 'unknown'), width = 300) + 
   geom_segment(aes(y = 0, yend = seq(990, 150, -(990-150)/(nrow(filter(evt, date >= '1860-01-01'))-1)), 
                    x = date, xend = date),
                filter(evt, date >= '1860-01-01'), 
@@ -29,7 +29,7 @@ fig <- ggplot() +
                 label = paste(event, ' ', '(', source, ')', sep = '')),
             filter(evt, date >= '1860-01-01'), 
             hjust = -0.01, size = 2.5) +
-  scale_x_date(name = "Year", date_breaks = "20 year", 
+  scale_x_date(name = "Year", date_breaks = "10 years", date_minor_breaks = '10 years',
                limits = as.Date(c('1860-01-01', '2020-01-01')),
                date_labels = "%Y",
                expand = c(0,0)) + 
