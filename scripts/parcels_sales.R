@@ -25,6 +25,7 @@ latest_sales <- sales %>%
 # grid.table(sales)
 # dev.off()
 
+fnt = 9
 # size_legend <- guides(color = 'black', fill = 'none')
 ## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  
@@ -36,17 +37,17 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
   scale_y_continuous(name = "Sale price per hectare (x $100,000)",
-                     breaks = seq(0,40, 5),
-                     limits = c(-20,40), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,40,5), labels = NULL)) +
-  coord_x_date(ylim = c(0,40), xlim = c('1990-01-01', '2020-01-01')) +
+                     breaks = seq(0,50, 5),
+                     limits = c(-20,50), expand = c(0.05,0),
+                     sec.axis = sec_axis(~., breaks = seq(0,50,5), labels = NULL)) +
+  coord_x_date(ylim = c(0,50), xlim = c('1990-01-01', '2020-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('black', 'grey55'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'),
                     labels = c('Land Only', 'Land with Building')) +
   scale_size_continuous(name = 'Parcel Size (HA)') +
-  theme(axis.title = element_text(size = 16),
-        axis.text = element_text(color = "black", size = 16),
+  theme(axis.title = element_text(size = fnt),
+        axis.text = element_text(color = "black", size = fnt),
         axis.ticks.length = unit(-0.2, 'cm'),
         axis.ticks = element_line(color = 'black'),
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
@@ -56,14 +57,14 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         panel.grid = element_blank(),
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
-        legend.position = c(0.25,0.75),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 16),
+        legend.position = c(0.25,0.68),
+        legend.text = element_text(size = fnt),
+        legend.title = element_text(size = fnt),
         legend.key = element_blank(),
         legend.box.background = element_rect(color = 'black'))
 saleplot
 
-tiff(file.path(datadir, "figures/sales_priceperha.tif"), units = "in", height = 7, width = 6.5, res = 300, compression = "lzw")
+tiff(file.path(datadir, "figures/sales_priceperha.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
 saleplot
 dev.off()
 
@@ -90,17 +91,17 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
                     labels = c("Money", "No Money")) +
   scale_fill_manual(name = "Type", values = c("chartreuse4", "grey20"), 
                      labels = c("Money", "No Money")) +
-  theme(axis.title = element_text(size = 16),
+  theme(axis.title = element_text(size = fnt),
         axis.text = element_text(color = "black",
-                                   size = 16),
+                                   size = fnt),
         axis.ticks.length = unit(-0.2, 'cm'),
         axis.ticks = element_line(color = 'black'),
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
         axis.line = element_line(color = 'black'),
         legend.position = c(0.18,0.85),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 16),
+        legend.text = element_text(size = fnt),
+        legend.title = element_text(size = fnt),
         # legend.background = element_rect(color = 'grey70'),
         # panel.grid.major.y = element_line(linetype = 'solid',
         #                                 color = 'grey80'),
@@ -110,7 +111,7 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         legend.box.background = element_rect(color = 'black'))
 sale_rate
 
-tiff(file.path(datadir, 'figures/sales_rate.tiff'), units = "in", height = 7, width = 6.5, res = 300,
+tiff(file.path(datadir, 'figures/sales_rate.tiff'), units = "in", height = 5, width = 5, res = 300,
      compression = "lzw")
 sale_rate
 dev.off()
