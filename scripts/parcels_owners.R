@@ -1,6 +1,7 @@
 rm(list=ls())
 
 library(tidyverse)
+library(stringr)
 library(lubridate)
 library(readxl)
 library(sf)
@@ -8,7 +9,7 @@ library(tmap)
 
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
-clr4 <- c('grey90', 'grey30', 'grey60', 'grey85')
+clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
@@ -21,6 +22,7 @@ o <- read.csv(file.path(datadir, 'property/owners_sapelo_master.csv'), stringsAs
 p <- st_read(file.path(datadir, 'property/parcels.shp'), stringsAsFactors = F) %>%
   st_transform(utm) %>%
   rename(parcel_id = PARCEL_ID)
+p$parcel_id <- str_squish(p$parcel_id)
 
 # as.data.frame(table(unique(p$parcel_id)))
 
