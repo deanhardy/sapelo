@@ -1,4 +1,4 @@
-rm(list=ls())
+#rm(list=ls())
 
 library(tidyverse)
 library(stringr)
@@ -120,16 +120,24 @@ dev.off()
 
 ## map owners by 3 class category
 map2 <- tm_shape(po2) + 
-  tm_fill('own3cat', palette = clr4, title = 'Owner Category') + 
+  tm_fill('own3cat', palette = clr4, title = 'B)\nOwner Category') + 
   tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.71, 0)) + 
-  tm_compass(type = 'arrow', size = 3, position = c(0.77, 0.09)) + 
-  tm_layout(frame = FALSE)
+  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.65, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.71, 0.09)) +
+  tm_layout(frame = FALSE,
+            legend.text.size = 0.8,
+            legend.title.size = 1)
 map2
 
 tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
     width = 5, height = 5)
 map2
+dev.off()
+
+## owner plus tax map combo, but must run "tax_map" script first
+tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
+     width = 8, height = 5)
+tmap_arrange(taxmap, map2, ncol = 2)
 dev.off()
 
 ownsum <- po %>%

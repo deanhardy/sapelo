@@ -32,7 +32,7 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
                    aes(date, price.ha/100000, color = sale.type)) + 
   geom_smooth(aes(date, price.ha/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
-              linetype = 'dashed', lwd = 0.5, show.legend = TRUE) +
+              linetype = 'dashed', lwd = 0.5, show.legend = F) +
   geom_point(aes(date, price.ha/100000, size = acres * 0.404686)) +
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
@@ -41,9 +41,9 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
                      limits = c(-20,50), expand = c(0.05,0),
                      sec.axis = sec_axis(~., breaks = seq(0,50,5), labels = NULL)) +
   coord_x_date(ylim = c(0,50), xlim = c('1990-01-01', '2020-01-01')) +
-  scale_color_manual(name = "Sale Type", values = c('black', 'grey55'),
+  scale_color_manual(name = "Sale Type", values = c('black', 'grey75'),
                      labels = c('Land Only', 'Land with Building')) +
-  scale_fill_manual(name = "Sale Type", values = c('black', 'grey55'),
+  scale_fill_manual(name = "Sale Type", values = c('black', 'grey75'),
                     labels = c('Land Only', 'Land with Building')) +
   scale_size_continuous(name = 'Parcel Size (HA)') +
   theme(axis.title = element_text(size = fnt),
@@ -61,6 +61,8 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
         legend.key = element_blank(),
+        legend.spacing.y = unit(0.01, 'cm'),
+        legend.box.margin = margin(0.1,0.1,0.1,0.1, 'cm'),
         legend.box.background = element_rect(color = 'black'))
 saleplot
 
@@ -87,9 +89,9 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
                      sec.axis = sec_axis(~., labels = NULL, 
                                          breaks = seq(0,45, 5))) + 
   coord_cartesian(ylim = c(0,45)) + 
-  scale_color_manual(name = "Type", values = c("chartreuse4", "grey20"), 
+  scale_color_manual(name = "Type", values = c("black", "grey75"), 
                     labels = c("Money", "No Money")) +
-  scale_fill_manual(name = "Type", values = c("chartreuse4", "grey20"), 
+  scale_fill_manual(name = "Type", values = c("black", "grey75"), 
                      labels = c("Money", "No Money")) +
   theme(axis.title = element_text(size = fnt),
         axis.text = element_text(color = "black",
@@ -108,6 +110,7 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         panel.grid = element_blank(), 
         panel.background = element_blank(),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
+        legend.box.margin = margin(0.1,0.1,0.1,0.1, 'cm'),
         legend.box.background = element_rect(color = 'black'))
 sale_rate
 
