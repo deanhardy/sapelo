@@ -12,8 +12,9 @@ datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"), stringsAsFactors = F) %>%
   mutate(date = as.Date(date, "%m/%d/%Y")) %>%
   mutate(year = year(date), group = ifelse(price >0, "Money", "No Money")) %>%
-  mutate(group = factor(group, levels = (c("Money", "No Money")))) %>%
-  mutate(price.ha = price/(acres * 0.404686))
+  mutate(group = factor(group, levels = (c("No Money", "Money")))) %>%
+  mutate(price.ha = price/(acres * 0.404686)) %>%
+  filter(acres != 'na')
 
 ## select most recent sales for each property
 latest_sales <- sales %>%
@@ -25,7 +26,7 @@ latest_sales <- sales %>%
 # grid.table(sales)
 # dev.off()
 
-fnt = 9
+fnt = 8
 # size_legend <- guides(color = 'black', fill = 'none')
 ## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  
@@ -33,20 +34,23 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
   geom_smooth(aes(date, price.ha/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
               linetype = 'dashed', lwd = 0.5, show.legend = F) +
-  geom_point(aes(date, price.ha/100000, size = acres * 0.404686)) +
+  geom_point(aes(date, price.ha/100000, size = acres * 0.404686), alpha = 0.5) +
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
   scale_y_continuous(name = "Sale price per hectare (x $100,000)",
-                     breaks = seq(0,50, 5),
+                     breaks = seq(0,45, 5),
                      limits = c(-20,50), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,50,5), labels = NULL)) +
-  coord_x_date(ylim = c(0,50), xlim = c('1990-01-01', '2020-01-01')) +
-  scale_color_manual(name = "Sale Type", values = c('black', 'grey75'),
+                     sec.axis = sec_axis(~., breaks = seq(0,45,5), labels = NULL)) +
+  coord_x_date(ylim = c(0,45), xlim = c('1990-01-01', '2020-01-01')) +
+  scale_color_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                      labels = c('Land Only', 'Land with Building')) +
-  scale_fill_manual(name = "Sale Type", values = c('black', 'grey75'),
+  scale_fill_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                     labels = c('Land Only', 'Land with Building')) +
-  scale_size_continuous(name = 'Parcel Size (HA)') +
+  scale_size_continuous(name = 'Parcel Size (HA)', range = c(1, 4)) +
+  ggtitle('B)') + 
   theme(axis.title = element_text(size = fnt),
+        axis.title.x = element_text(margin = margin(t=-10,r=0,b=0,l=0)),
+        axis.title.y = element_text(margin = margin(t=0,r=-10,b=0,l=0)),
         axis.text = element_text(color = "black", size = fnt),
         axis.ticks.length = unit(-0.2, 'cm'),
         axis.ticks = element_line(color = 'black'),
@@ -57,12 +61,12 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         panel.grid = element_blank(),
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
-        legend.position = c(0.25,0.68),
+        legend.position = c(0.28,0.7),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
         legend.key = element_blank(),
         legend.spacing.y = unit(0.01, 'cm'),
-        legend.box.margin = margin(0.1,0.1,0.1,0.1, 'cm'),
+        legend.box.margin = margin(0.05,0.05,0.05,0.05, 'cm'),
         legend.box.background = element_rect(color = 'black'))
 saleplot
 
@@ -77,23 +81,27 @@ sales2 <- sales %>%
 
 ## plot sales frequency totals and fit curve 
 sale_rate <- ggplot(filter(sales2, year > 1990)) +
-  geom_smooth(aes(year, freq, fill = group, color = group), level = 0.95, fullrange = FALSE, 
-              method = "lm", se = TRUE, linetype = "dashed", lwd =0.5) +
-  geom_point(aes(year, freq, color = group)) +
+  # geom_smooth(aes(year, freq, fill = group, color = group), level = 0.95, fullrange = FALSE, 
+  #             method = "lm", se = TRUE, linetype = "dashed", lwd =0.5, show.legend = F) +
+  geom_col(aes(year, freq, fill = group), width = 0.5) + 
+#           position = position_dodge2(width = 0.3, padding = 0)) +
   scale_x_continuous(name = "Year", limits = c(1990,2020), 
-                     breaks = seq(1990,2020,5), expand = c(0,0),
-                     sec.axis = sec_axis(~., labels = NULL, 
-                                         breaks = seq(1990,2020,5))) +
+                     breaks = seq(1990,2020,5), expand = c(0,0)) +
+                     # sec.axis = sec_axis(~., labels = NULL, 
+                     #                     breaks = seq(1990,2020,5))) +
   scale_y_continuous(name = "Number of Transactions", breaks = seq(0,45, 5), 
                      limits = c(-10,45), expand = c(0,0),
                      sec.axis = sec_axis(~., labels = NULL, 
                                          breaks = seq(0,45, 5))) + 
   coord_cartesian(ylim = c(0,45)) + 
-  scale_color_manual(name = "Type", values = c("black", "grey75"), 
-                    labels = c("Money", "No Money")) +
-  scale_fill_manual(name = "Type", values = c("black", "grey75"), 
-                     labels = c("Money", "No Money")) +
+  scale_color_manual(name = "Type", values = c("grey65", "black"), 
+                    labels = c("No Money", "Money")) +
+  scale_fill_manual(name = "Type", values = c("grey65", "black"), 
+                     labels = c("No Money", "Money")) +
+  ggtitle('A)') +
   theme(axis.title = element_text(size = fnt),
+        axis.title.x = element_text(margin = margin(t=-10,r=0,b=0,l=0)),
+        axis.title.y = element_text(margin = margin(t=0,r=-10,b=0,l=0)),
         axis.text = element_text(color = "black",
                                    size = fnt),
         axis.ticks.length = unit(-0.2, 'cm'),
@@ -101,22 +109,29 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
         axis.line = element_line(color = 'black'),
-        legend.position = c(0.18,0.85),
+        legend.position = c(0.21,0.85),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
+        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         # legend.background = element_rect(color = 'grey70'),
         # panel.grid.major.y = element_line(linetype = 'solid',
         #                                 color = 'grey80'),
         panel.grid = element_blank(), 
-        panel.background = element_blank(),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
-        legend.box.margin = margin(0.1,0.1,0.1,0.1, 'cm'),
+        legend.box.margin = margin(0.05,0.05,0.05,0.05, 'cm'),
         legend.box.background = element_rect(color = 'black'))
 sale_rate
 
 tiff(file.path(datadir, 'figures/sales_rate.tiff'), units = "in", height = 5, width = 5, res = 300,
      compression = "lzw")
 sale_rate
+dev.off()
+
+## combine sales rate and sales amounts into one graphic
+tiff(file.path(datadir, 'figures/sales_rate_amounts.tiff'), units = "in", height = 5, width = 8, res = 300,
+     compression = "lzw")
+grid.arrange(sale_rate, saleplot, ncol = 2)
 dev.off()
 
 
