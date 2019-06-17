@@ -122,8 +122,8 @@ dev.off()
 map2 <- tm_shape(po2) + 
   tm_fill('own3cat', palette = clr4, title = 'B)\nOwner Category') + 
   tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.65, 0)) + 
-  tm_compass(type = 'arrow', size = 3, position = c(0.71, 0.09)) +
+  tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
   tm_layout(frame = FALSE,
             legend.text.size = 0.8,
             legend.title.size = 1)

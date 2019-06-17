@@ -6,7 +6,7 @@ library(gridExtra)
 library(tidyquant)
 
 ## define data directory
-datadir <- 'C:/Users/dhardy/Dropbox/r_data/sapelo'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"), stringsAsFactors = F) %>%
@@ -65,7 +65,7 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
         legend.key = element_blank(),
-        legend.spacing.y = unit(0.01, 'cm'),
+        legend.spacing.y = unit(0.005, 'cm'),
         legend.box.margin = margin(0.05,0.05,0.05,0.05, 'cm'),
         legend.box.background = element_rect(color = 'black'))
 saleplot
