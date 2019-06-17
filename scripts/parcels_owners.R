@@ -135,8 +135,8 @@ map2
 dev.off()
 
 ## owner plus tax map combo, but must run "tax_map" script first
-tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
-     width = 8, height = 5)
+tiff(file.path(datadir, 'figures/owner_tax_combo.tif'), res = 300, units = 'in',
+     width = 8, height = 5, compression = "lzw")
 tmap_arrange(taxmap, map2, ncol = 2)
 dev.off()
 

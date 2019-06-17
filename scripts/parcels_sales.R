@@ -129,7 +129,7 @@ sale_rate
 dev.off()
 
 ## combine sales rate and sales amounts into one graphic
-tiff(file.path(datadir, 'figures/sales_rate_amounts.tiff'), units = "in", height = 5, width = 8, res = 300,
+tiff(file.path(datadir, 'figures/sales_rate_amounts.tif'), units = "in", height = 5, width = 8, res = 300,
      compression = "lzw")
 grid.arrange(sale_rate, saleplot, ncol = 2)
 dev.off()
