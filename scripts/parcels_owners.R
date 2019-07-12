@@ -134,11 +134,43 @@ tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = '
 map2
 dev.off()
 
+## make interactive map of parcel owner data
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+
+df <- st_transform(po2, 4326) %>%
+  mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
+  filter(gis_acres != 'NA')
+pal <- colorFactor(rainbow(3), df$own3cat)
+
+m <- leaflet() %>%
+  addTiles(group = 'Open Street Map') %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+  setView(lng = -81.26, lat = 31.43, zoom = 14) %>%
+  addPolygons(data = df,
+              popup = paste("Parcel ID:", df$parcel_id, "<br>",
+                            "Owner:", df$owner, "<br>",
+                            "GIS Acres:", round(df$gis_acres, 1)),
+              group = 'Parcels',
+              fillColor = ~pal(df$own3cat),
+              fillOpacity = 0.5,
+              weight = 1) %>%
+  addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
+                   overlayGroups = c("Parcels"),
+                   options = layersControlOptions(collapsed = TRUE)) %>%
+  addLegend("bottomright",
+            pal = pal,
+            values = df$own3cat,
+            title = "Owner Category") %>%
+  addScaleBar("bottomright")
+m
+
 ## owner plus tax map combo, but must run "tax_map" script first
-tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
-     width = 8, height = 5)
-tmap_arrange(taxmap, map2, ncol = 2)
-dev.off()
+# tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
+#      width = 8, height = 5)
+# tmap_arrange(taxmap, map2, ncol = 2)
+# dev.off()
 
 ownsum <- po %>%
   group_by(own3cat) %>%
