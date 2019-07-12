@@ -122,8 +122,8 @@ dev.off()
 map2 <- tm_shape(po2) + 
   tm_fill('own3cat', palette = clr4, title = 'B)\nOwner Category') + 
   tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.65, 0)) + 
-  tm_compass(type = 'arrow', size = 3, position = c(0.71, 0.09)) +
+  tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
   tm_layout(frame = FALSE,
             legend.text.size = 0.8,
             legend.title.size = 1)
@@ -166,11 +166,24 @@ m <- leaflet() %>%
   addScaleBar("bottomright")
 m
 
+## exporting as html file for exploration
+library(htmlwidgets)
+saveWidget(m, 
+           file="/Users/dhardy/Dropbox/r_data/sapelo/hh_parcels.html",
+           title = "Hog Hammock Parcel Data")
+
 ## owner plus tax map combo, but must run "tax_map" script first
+<<<<<<< HEAD
 # tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
 #      width = 8, height = 5)
 # tmap_arrange(taxmap, map2, ncol = 2)
 # dev.off()
+=======
+tiff(file.path(datadir, 'figures/owner_tax_combo.tif'), res = 300, units = 'in',
+     width = 8, height = 5, compression = "lzw")
+tmap_arrange(taxmap, map2, ncol = 2)
+dev.off()
+>>>>>>> 47c05dd62499bdc8c2a0264813f1b3bf7aef38ee
 
 ownsum <- po %>%
   group_by(own3cat) %>%
