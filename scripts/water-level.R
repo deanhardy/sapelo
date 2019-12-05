@@ -2,50 +2,32 @@ rm(list=ls())
 
 library(tidyverse)
 library(lubridate)
+library(data.table)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/hobo-data'
 
-## import data--- site 02 (aka "snagtree") MLLW elevation in meters is 1.9678506744 & in feet is 5.456203
-s2 <- read.csv(file.path(datadir, 'water-level/hobo-data/site02-181013-181109.csv'), 
-               header = TRUE, skip = 1,
-               stringsAsFactors = FALSE,
-               check.names = FALSE)[-1]
-colnames(s2) <- c('date_time_gmt', 'abs_pres_psi', 'water_temp_f', 'water_height_m')
-
-sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
+## define variables
+# sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
+filz <- list.files(path = datadir,
+                   pattern= '*.csv',
+                   full.names = TRUE,
+                   recursive = TRUE) 
 df <- NULL
 
-for(i in sites) {
-  OUT <- list.files(path = file.path(datadir, i), 
-             pattern= '*.csv',
-             full.names = TRUE) %>%
-    map_df(~fread(., skip = 3, 
-                select = c(2:5), 
-                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_f', 'water_height_m'),
-                stringsAsFactors = FALSE)) %>%
-    mutate(site = i)
+## import & tidy hobo water level data
+for(i in 1:length(filz)) {
+  OUT <- fread(filz[i],
+               select = c(2:5),
+               col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_f', 'water_depth_m'),
+               stringsAsFactors = FALSE) %>%
+    slice(., 2:(n()-1)) %>% ## removes first and last readings
+    mutate(date_time_gmt = mdy_hms(date_time_gmt),
+           site = str_sub(filz[i], 63,-19))
   df <- rbind(OUT, df)
 }
 
-# myfiles = lapply(temp, read.delim)
-
-s2 <- s2[,1:4] %>%
-  mutate(date_time_gmt = mdy_hms(date_time_gmt)) %>%
-  slice(., 2:(n()-1)) ## removes first and last readings
-s2
-
-df2 <- read.csv(file.path(datadir, 'water-level/hobo-data/site02-181109-190118.csv'), 
-                header = TRUE, skip = 1,
-                stringsAsFactors = FALSE)[-1]
-colnames(df2) <- c('date_time_gmt', 'abs_pres_psi', 'water_temp_f', 'water_height_m')
-
-df2 <- df2 %>%
-  mutate(date_time_gmt = mdy_hms(date_time_gmt)) %>%
-  slice(., 2:(n()-1)) ## removes first and last readings
-
-df3 <- rbind(df, df2)
 
 nerr <- read.csv(file.path(datadir, 'water-level/nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
                  header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
