@@ -8,6 +8,10 @@ Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
+# set dates for graphs
+date1 <- as.Date('2019-07-01')
+date2 <- as.Date('2019-09-30')
+
 ## define variables
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
 filz <- list.files(path = file.path(datadir, 'hobo-data'),
@@ -26,7 +30,18 @@ for(i in 1:length(filz)) {
     slice(., 2:(n()-1)) %>% ## removes first and last readings
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
            site = str_sub(filz[i], 68,-19)) %>%
-    mutate(site = paste('Site', site, sep = '-'))
+    mutate(site = paste('Site', site, sep = '-')) %>%
+    mutate(name = if_else(site == 'Site-02', 'Snagtree',
+                          if_else(site == 'Site-03', 'St. Lukes',
+                                  if_else(site == 'Site-05', 'Graball',
+                                          if_else(site == 'Site-06', 'Dani Trap',
+                                                  if_else(site == 'Site-07', 'Cope Spot',
+                                                          if_else(site == 'Site-09', 'Mr. Tracys',
+                                                                  if_else(site == 'Site-11', 'Library',
+                                                                          if_else(site == 'Site-12', 'Mr. Smith',
+                                                                                  if_else(site == 'Site-13', 'Purple Ribbon',
+                                                                                          if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
+    mutate(sitename = paste(site, name))
   tidal <- rbind(OUT, tidal)
 }
 
@@ -86,14 +101,14 @@ ot2 <- ot %>%
 sites.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df$site)
+  sites_list <- unique(df$sitename)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
   
     # create plot for each county in df 
     plot <- 
-      ggplot(filter(df, site == sites_list[i] & date_time_gmt >= as.Date('2019-04-01') & date_time_gmt <= as.Date('2019-05-31')))  + 
+      ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
         geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
@@ -120,6 +135,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
             legend.title = element_text(size = 18),
             legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black')) + 
+  #    annotate(name) + 
       ggtitle(sites_list[i])
     
     # save plots as .png
