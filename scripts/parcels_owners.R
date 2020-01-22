@@ -15,7 +15,7 @@ clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
-o <- read.csv(file.path(datadir, 'property/owners_sapelo_master.csv'), stringsAsFactors = F) %>%
+o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Outsider'), 'Outsider', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
 
@@ -172,18 +172,18 @@ saveWidget(m,
            file="/Users/dhardy/Dropbox/r_data/sapelo/hh_parcels.html",
            title = "Hog Hammock Parcel Data")
 
-## owner plus tax map combo, but must run "tax_map" script first
-<<<<<<< HEAD
-# tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
-#      width = 8, height = 5)
+# ## owner plus tax map combo, but must run "tax_map" script first
+# <<<<<<< HEAD
+# # tiff(file.path(datadir, 'figures/owner_tax_combo.tiff'), res = 300, units = 'in',
+# #      width = 8, height = 5)
+# # tmap_arrange(taxmap, map2, ncol = 2)
+# # dev.off()
+# =======
+# tiff(file.path(datadir, 'figures/owner_tax_combo.tif'), res = 300, units = 'in',
+#      width = 8, height = 5, compression = "lzw")
 # tmap_arrange(taxmap, map2, ncol = 2)
 # dev.off()
-=======
-tiff(file.path(datadir, 'figures/owner_tax_combo.tif'), res = 300, units = 'in',
-     width = 8, height = 5, compression = "lzw")
-tmap_arrange(taxmap, map2, ncol = 2)
-dev.off()
->>>>>>> 47c05dd62499bdc8c2a0264813f1b3bf7aef38ee
+# >>>>>>> 47c05dd62499bdc8c2a0264813f1b3bf7aef38ee
 
 ownsum <- po %>%
   group_by(own3cat) %>%
