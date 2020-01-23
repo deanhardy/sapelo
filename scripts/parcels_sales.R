@@ -9,8 +9,8 @@ library(tidyquant)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import data
-sales <- read.csv(file.path(datadir, "property/transactions_sapelo_master.csv"), stringsAsFactors = F) %>%
-  mutate(date = as.Date(date, "%m/%d/%Y")) %>%
+sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
+  mutate(date = as.Date(date, "%m/%d/%y")) %>%
   mutate(year = year(date), group = ifelse(price >0, "Money", "No Money")) %>%
   mutate(group = factor(group, levels = (c("No Money", "Money")))) %>%
   mutate(price.ha = price/(acres * 0.404686)) %>%
