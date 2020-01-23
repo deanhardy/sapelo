@@ -16,7 +16,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Outsider'), 'Outsider', own_cat)) %>%
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-traditional'), 'Non-traditional', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
 
 p <- st_read(file.path(datadir, 'property/parcels.shp'), stringsAsFactors = F) %>%
@@ -26,16 +26,17 @@ p$parcel_id <- str_squish(p$parcel_id)
 
 # as.data.frame(table(unique(p$parcel_id)))
 
+## manual entry of acreage for those without shapefile boundary
 po <- full_join(p, o, by = 'parcel_id') %>%
   mutate(gis_acres = 
-           ifelse(parcel_id == '0102A  0134002', 1.21, 
-                  ifelse(parcel_id == '0102A  0134', gis_acres - 1.21,
-                         ifelse(parcel_id == '0102A  0090', 1.15, 
-                                ifelse(parcel_id == '0101A  0068001', 1, 
-                                       ifelse(parcel_id == '0101A  0106001', 0.25,
+           ifelse(parcel_id == '0102A 0134002', 1.21, 
+                  ifelse(parcel_id == '0102A 0134', gis_acres - 1.21,
+                         ifelse(parcel_id == '0102A 0090', 1.15, 
+                                ifelse(parcel_id == '0101A 0068001', 1, 
+                                       ifelse(parcel_id == '0101A 0106001', 0.25,
                                               ifelse(parcel_id == '0102A 0025', 1,
-                                                     ifelse(parcel_id == '0102A  0045001', 2,
-                                ifelse(parcel_id %in% c('0101A  0071', '0101A  0071001', '0101A  0071002', '0101A  0071003', '0101A  0071004'), 0.4, gis_acres))))))))) %>%
+                                                     ifelse(parcel_id == '0102A 0045001', 2,
+                                ifelse(parcel_id %in% c('0101A 0071', '0101A 0071001', '0101A 0071002', '0101A 0071003', '0101A 0071004'), 0.4, gis_acres))))))))) %>%
   mutate(own_cat = ifelse(is.na(own_cat), 'Unknown', own_cat)) %>%
   mutate(own3cat = ifelse(is.na(own3cat), 'Unknown', own3cat)) %>%
   mutate(own4cat = ifelse(is.na(own4cat), 'Unknown', own4cat))
@@ -142,7 +143,7 @@ library(sf)
 df <- st_transform(po2, 4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
   filter(gis_acres != 'NA')
-pal <- colorFactor(rainbow(3), df$own3cat)
+pal <- colorFactor(rainbow(4), df$own4cat)
 
 m <- leaflet() %>%
   addTiles(group = 'Open Street Map') %>%
@@ -153,7 +154,7 @@ m <- leaflet() %>%
                             "Owner:", df$owner, "<br>",
                             "GIS Acres:", round(df$gis_acres, 1)),
               group = 'Parcels',
-              fillColor = ~pal(df$own3cat),
+              fillColor = ~pal(df$own4cat),
               fillOpacity = 0.5,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
@@ -161,7 +162,7 @@ m <- leaflet() %>%
                    options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
             pal = pal,
-            values = df$own3cat,
+            values = df$own4cat,
             title = "Owner Category") %>%
   addScaleBar("bottomright")
 m
@@ -197,7 +198,7 @@ llcsum <- po %>%
   summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
 
 outsidersum <- po %>%
-  filter(own3cat == 'Outsider') %>%
+  filter(own3cat == 'Non-traditional') %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 
