@@ -84,6 +84,10 @@ df3 <- rbind(T3_1, T3_2)
 df4 <- rbind(df1, df2)
 df <- rbind(df4, df3)
 
+dat <- df %>%
+  mutate(yrmo = paste(year, month, sep = '-')) %>%
+  mutate(date = as.Date(paste(yrmo, '-01', sep = '')))
+
 ## combines above 10 year periods for all stations into single tidy df
 # NO_ST <- seq(1,3)
 # TIME <- c(T1, T2, T3)
@@ -113,7 +117,7 @@ df <- rbind(df4, df3)
 
 # for (i in STATIONS) {
 
-fig <- ggplot(data = df, aes(x = date, y = MSL, color = station)) +
+fig <- ggplot(dat, aes(x = date, y = MSL, color = station)) +
   geom_smooth(method = 'loess') + 
   geom_point(size = 1) + 
 #  geom_text(x = Sys.Date()-3563*2, y = 0.3, label = lm_eqn(dat), parse = TRUE) + 
