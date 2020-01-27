@@ -118,7 +118,7 @@ dat <- df %>%
 # for (i in STATIONS) {
 
 fig <- ggplot(dat, aes(x = date, y = MSL, color = station)) +
-  geom_smooth(method = 'loess') + 
+  geom_smooth(method = 'lm') + 
   geom_point(size = 1) + 
 #  geom_text(x = Sys.Date()-3563*2, y = 0.3, label = lm_eqn(dat), parse = TRUE) + 
   scale_y_continuous(name = paste('Datum', DATUM, '(m)'),
