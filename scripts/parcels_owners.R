@@ -143,8 +143,11 @@ library(sf)
 df <- st_transform(po2, 4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
   filter(gis_acres != 'NA')
-pal <- colorFactor(rainbow(4), df$own4cat)
+pal4 <- colorFactor(rainbow(4), df$own4cat)
 
+comp <- df %>%
+  filter(own4cat == 'Company')
+  
 m <- leaflet() %>%
   addTiles(group = 'Open Street Map') %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
@@ -154,14 +157,14 @@ m <- leaflet() %>%
                             "Owner:", df$owner, "<br>",
                             "GIS Acres:", round(df$gis_acres, 1)),
               group = 'Parcels',
-              fillColor = ~pal(df$own4cat),
+              fillColor = ~pal4(df$own4cat),
               fillOpacity = 0.5,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    overlayGroups = c("Parcels"),
                    options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
-            pal = pal,
+            pal = pal4,
             values = df$own4cat,
             title = "Owner Category") %>%
   addScaleBar("bottomright")
@@ -226,6 +229,10 @@ oldest_sales <- sales %>%
 
 df2 <- left_join(df, latest_sales, by = 'parcel_id')
 
+clr4 <- c('black', 'grey60', 'red', 'white')
+
+pal3 <- colorFactor(clr4, df$own3cat)
+
 parcel_popup <- paste0(
   "<strong>PARCEL INFO</strong>", "<br>",
   "Parcel ID:", df$parcel_id, "<br>",
@@ -246,15 +253,19 @@ m <- leaflet() %>%
   addPolygons(data = df,
               popup = parcel_popup,
               group = 'Parcels',
-              fillColor = ~pal(df$own4cat),
-              fillOpacity = 0.5,
+              fillColor = ~pal3(df$own3cat),
+              fillOpacity = 0.8,
               weight = 1) %>%
+  addPolylines(data = comp,
+               color = "yellow",
+               opacity = 1,
+               weight = 3) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    overlayGroups = c("Parcels"),
                    options = layersControlOptions(collapsed = TRUE)) %>%
   addLegend("bottomright",
-            pal = pal,
-            values = df$own4cat,
+            pal = pal3,
+            values = df$own3cat,
             title = "Owner Category") %>%
   addScaleBar("bottomright")
 m
