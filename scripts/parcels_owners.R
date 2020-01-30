@@ -207,3 +207,68 @@ descendantsum <- po %>%
   group_by(owner) %>%
   summarise(n())
 
+
+###########################
+## working on adding transaction to owners leaflet map
+sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
+  mutate(date = as.Date(date, "%m/%d/%y")) %>%
+  rename(parcel_id = parcel.id)
+
+## select most recent sales for each property
+latest_sales <- sales %>%
+  group_by(parcel_id) %>%
+  slice(which.max(date))
+
+## select oldest sales for each property
+oldest_sales <- sales %>%
+  group_by(parcel_id) %>%
+  slice(which.min(date))
+
+df2 <- left_join(df, latest_sales, by = 'parcel_id')
+
+parcel_popup <- paste0(
+  "<strong>PARCEL INFO</strong>", "<br>",
+  "Parcel ID:", df$parcel_id, "<br>",
+  "Owner: ", df$owner, "<br>",
+  "GIS Acres: ", round(df$gis_acres, 1),"<br>", "<br>",
+  "<strong>MOST RECENT TRANSACTION</strong>", "<br>",
+  "Date: ", df2$date, "<br>",
+  "Grantor: ", df2$grantor, "<br>",
+  "Grantee: ", df2$grantee, "<br>",
+  "Price: $", df2$price, "<br>",
+  "Price per Acre: $", df2$price.acre, "<br>",
+  "Sale Type: ", df2$sale.type)
+
+m <- leaflet() %>%
+  addTiles(group = 'Open Street Map') %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+  setView(lng = -81.26, lat = 31.43, zoom = 14) %>%
+  addPolygons(data = df,
+              popup = parcel_popup,
+              group = 'Parcels',
+              fillColor = ~pal(df$own4cat),
+              fillOpacity = 0.5,
+              weight = 1) %>%
+  addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
+                   overlayGroups = c("Parcels"),
+                   options = layersControlOptions(collapsed = TRUE)) %>%
+  addLegend("bottomright",
+            pal = pal,
+            values = df$own4cat,
+            title = "Owner Category") %>%
+  addScaleBar("bottomright")
+m
+
+## exporting as html file for exploration
+saveWidget(m, 
+           file="/Users/dhardy/Dropbox/r_data/sapelo/hh_parcels_transactions.html",
+           title = "Hog Hammock Transactionns")
+
+# foreach (sales$parcel_id in df$parcel_id) {
+#   list(sales$date)
+# }
+# 
+# if(df$parcel_id == sales$parcel_id){
+#   list(sales$date)
+#   
+  
