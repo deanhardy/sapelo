@@ -164,3 +164,10 @@ decadal.uniqpar <- sales %>%
   summarise(decadal_uniqpar = n())
 ## combine
 decadal.freq <- merge(decadal.uniqpar, decadal.trans)
+
+
+## filter transactions by specific group
+who <- 'PFS GROUP LLC'
+
+test <- sales %>%
+  filter(grantor %in% who | grantee %in% who)
