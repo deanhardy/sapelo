@@ -106,21 +106,9 @@ dat <- df %>%
 # GET EQUATION AND R-SQUARED AS STRING
 # SOURCE: https://groups.google.com/forum/#!topic/ggplot2/1TgH-kG5XMA
 
-# lm_eqn <- function(dat){
-#   m <- lm(MSL ~ date, dat);
-#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
-#                    list(a = format(unname(coef(m)[1]), digits = 2),
-#                         b = format(unname(coef(m)[2]), digits = 2),
-#                         r2 = format(summary(m)$r.squared, digits = 3)))
-#   as.character(as.expression(eq));
-# }
-
-# for (i in STATIONS) {
-
 fig <- ggplot(dat, aes(x = date, y = MSL, color = station)) +
   geom_smooth(method = 'lm') + 
   geom_point(size = 1) + 
-#  geom_text(x = Sys.Date()-3563*2, y = 0.3, label = lm_eqn(dat), parse = TRUE) + 
   scale_y_continuous(name = paste('Datum', DATUM, '(m)'),
                      breaks = round(seq(-0.2, 0.4, by = 0.1), 2),
                      minor_breaks = seq(-0.2, 0.4, by = 0.05)) + 
@@ -138,6 +126,56 @@ fig
 ggsave(fig, file=paste(datadir,
                         '/figures/sea-level', ".png", sep=''), width = 6, height = 4, units = 'in', scale=2)
 # }
+
+## working on adding equation with slope
+
+dat2 <- filter(dat, station == '8670870') %>%
+  mutate(MSL = MSL*100)
+
+library(ggpmisc)
+
+## from https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph
+lm_eqn <- function(dat2){
+  m <- lm(MSL ~ date, dat2);
+  eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2,
+                   list(a = format(unname(coef(m)[1]), digits = 3),
+                        b = format(unname(coef(m)[2]), digits = 2),
+                        r2 = format(summary(m)$r.squared, digits = 3)))
+  as.character(as.expression(eq));
+}
+
+my.formula <- y ~ x
+m <- lm(MSL ~ date, dat2)
+T <- 3653*3
+
+# for (i in STATIONS) {
+
+## still need to correct geom_text formala to draw on correct coef for time window used
+fig2 <- ggplot(filter(dat2, date > Sys.Date()-T), aes(x = date, y = MSL)) +
+  geom_line(color = 'blue', lwd = 0.5) + 
+  geom_smooth(method = 'lm', color = 'red', formula = my.formula) +
+  stat_poly_eq(formula = my.formula, 
+               aes(label = paste(..eq.label.., sep = "~~~")), 
+               parse = TRUE) +
+  geom_text(x = Sys.Date()-(T/1.1), y = 35, label = paste("Total SLR = ", round(coef(m)[2]*T, 2), 'cm')) + 
+  scale_y_continuous(name = paste('Datum', DATUM, '(cm)'),
+                     breaks = seq(-20, 40, by = 10),
+                     minor_breaks = seq(-20, 40, by = 5)) + 
+  scale_x_date(name = 'Date', 
+               date_breaks = '12 months', 
+               date_minor_breaks = '6 month',
+               date_labels = '%b-%y') + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+        legend.position = 'right') + 
+  ggtitle(paste("Monthly Mean Sea Level")) 
+#   facet_wrap(~station)
+fig2
+
+# save plots as .png
+ggsave(fig2, file=paste(datadir,
+                       '/figures/sea-level-cm', ".png", sep=''), width = 6, height = 4, units = 'in', scale=2)
+# }
+
 
 # tiff(file.path(datadir, '/figures/sea-level.tif'), units = 'in', 
 #      height = 4, width = 6, compression = 'lzw',
