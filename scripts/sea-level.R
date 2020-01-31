@@ -129,8 +129,7 @@ ggsave(fig, file=paste(datadir,
 
 ## working on adding equation with slope
 
-dat2 <- filter(dat, station == '8670870') %>%
-  mutate(MSL = MSL*100)
+
 
 library(ggpmisc)
 
@@ -144,20 +143,28 @@ lm_eqn <- function(dat2){
   as.character(as.expression(eq));
 }
 
-my.formula <- y ~ x
-m <- lm(MSL ~ date, dat2)
-T <- 3653*3
+## set parameters
+my.formula <- y ~ x # generic formula for use in equation
+D <- c(1,2,3)
 
-# for (i in STATIONS) {
+for (i in D) {
+
+T <- 3653*i ## set time period
+T_name <- ifelse(T == 3653, "Decade", 
+                 ifelse(T == 3653*2, 'Two Decades', 'Three Decades'))
+## filter all data to one station and selected time period
+dat2 <- filter(dat, station == '8670870' & date >= Sys.Date()-T) %>%
+  mutate(MSL = MSL*100)
+m <- lm(MSL ~ date, dat2) ## create regression line
 
 ## still need to correct geom_text formala to draw on correct coef for time window used
-fig2 <- ggplot(filter(dat2, date > Sys.Date()-T), aes(x = date, y = MSL)) +
+fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
   geom_line(color = 'blue', lwd = 0.5) + 
   geom_smooth(method = 'lm', color = 'red', formula = my.formula) +
-  stat_poly_eq(formula = my.formula, 
-               aes(label = paste(..eq.label.., sep = "~~~")), 
-               parse = TRUE) +
-  geom_text(x = Sys.Date()-(T/1.1), y = 35, label = paste("Total SLR = ", round(coef(m)[2]*T, 2), 'cm')) + 
+  # stat_poly_eq(formula = my.formula, 
+  #              aes(label = paste(..eq.label.., sep = "~~~")), 
+  #              parse = TRUE) +
+  # geom_text(x = Sys.Date()-(T/1.1), y = 35, label = paste("Total SLR = ", round(coef(m)[2]*T, 2), 'cm')) + 
   scale_y_continuous(name = paste('Datum', DATUM, '(cm)'),
                      breaks = seq(-20, 40, by = 10),
                      minor_breaks = seq(-20, 40, by = 5)) + 
@@ -167,18 +174,16 @@ fig2 <- ggplot(filter(dat2, date > Sys.Date()-T), aes(x = date, y = MSL)) +
                date_labels = '%b-%y') + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
         legend.position = 'right') + 
-  ggtitle(paste("Monthly Mean Sea Level")) 
+  ggtitle(paste("Sea Level Trend Over Past ", T_name, "; NOAA Station ID: ", dat2$station, sep = ''))  +
+  annotate(geom = 'text', label = paste("Total Observed SLR =", round(coef(m)[2]*T, 2), 'cm'), 
+           x = Sys.Date()-(T), y = Inf, hjust = 0.1, vjust = 3) + 
+  annotate(geom = 'text', label = paste("Averaged Annual Trend =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
+           x = Sys.Date()-(T), y = Inf, hjust = 0.09, vjust = 5)
 #   facet_wrap(~station)
 fig2
 
 # save plots as .png
 ggsave(fig2, file=paste(datadir,
-                       '/figures/sea-level-cm', ".png", sep=''), width = 6, height = 4, units = 'in', scale=2)
-# }
+                       '/figures/sea-level-trend-cm-', i, "-decade.png", sep=''), width = 6, height = 4, units = 'in', scale=2)
+}
 
-
-# tiff(file.path(datadir, '/figures/sea-level.tif'), units = 'in', 
-#      height = 4, width = 6, compression = 'lzw',
-#      res = 300)
-# fig
-# dev.off()
