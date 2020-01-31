@@ -161,6 +161,7 @@ m <- lm(MSL ~ date, dat2) ## create regression line
 fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
   geom_line(color = 'blue', lwd = 0.5) + 
   geom_smooth(method = 'lm', color = 'red', formula = my.formula) +
+  geom_smooth(method = 'loess', color = 'grey30', linetype = 2, se = FALSE) +
   # stat_poly_eq(formula = my.formula, 
   #              aes(label = paste(..eq.label.., sep = "~~~")), 
   #              parse = TRUE) +
@@ -178,7 +179,8 @@ fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
   annotate(geom = 'text', label = paste("Total Observed SLR =", round(coef(m)[2]*T, 2), 'cm'), 
            x = Sys.Date()-(T), y = Inf, hjust = 0.1, vjust = 3) + 
   annotate(geom = 'text', label = paste("Averaged Annual Trend =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
-           x = Sys.Date()-(T), y = Inf, hjust = 0.09, vjust = 5)
+           x = Sys.Date()-(T), y = Inf, hjust = 0.09, vjust = 5) + 
+  labs(caption = "Data Source: NOAA")
 #   facet_wrap(~station)
 fig2
 
