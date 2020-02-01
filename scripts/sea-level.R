@@ -169,7 +169,8 @@ fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
   scale_y_continuous(name = paste(DATUM, '(cm)'),
                      breaks = seq(-40, 40, by = 10),
                      minor_breaks = seq(-40, 40, by = 5),
-                     limits = c(-40, 40)) + 
+                     limits = c(-40, 40),
+                     expand = c(0,0)) + 
   scale_x_date(name = 'Year', 
                date_breaks = '12 months', 
                date_minor_breaks = '6 month',
@@ -177,6 +178,7 @@ fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
                expand = c(0,0)) + 
               # limits = c(first(date), last(date))) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 12),
         legend.position = 'bottom',
         panel.background = element_rect(fill = "white", color = 'black', linetype = 1),
         #panel.border = element_rect(fill = 'white', color = 'black'),
