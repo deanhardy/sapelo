@@ -125,23 +125,20 @@ fig
 # save plots as .png
 ggsave(fig, file=paste(datadir,
                         '/figures/sea-level', ".png", sep=''), width = 6, height = 4, units = 'in', scale=2)
-# }
+
 
 ## working on adding equation with slope
-
-
-
 library(ggpmisc)
 
 ## from https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph
-lm_eqn <- function(dat2){
-  m <- lm(MSL ~ date, dat2);
-  eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2,
-                   list(a = format(unname(coef(m)[1]), digits = 3),
-                        b = format(unname(coef(m)[2]), digits = 2),
-                        r2 = format(summary(m)$r.squared, digits = 3)))
-  as.character(as.expression(eq));
-}
+# lm_eqn <- function(dat2){
+#   m <- lm(MSL ~ date, dat2);
+#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2,
+#                    list(a = format(unname(coef(m)[1]), digits = 3),
+#                         b = format(unname(coef(m)[2]), digits = 2),
+#                         r2 = format(summary(m)$r.squared, digits = 3)))
+#   as.character(as.expression(eq));
+# }
 
 ## set parameters
 my.formula <- y ~ x # generic formula for use in equation
@@ -154,11 +151,14 @@ T_name <- ifelse(T == 3653, "Decade",
                  ifelse(T == 3653*2, 'Two Decades', 'Three Decades'))
 ## filter all data to one station and selected time period
 dat2 <- filter(dat, station == '8670870' & date >= Sys.Date()-T) %>%
-  mutate(MSL = MSL*100)
+  mutate(MSL = MSL*100) %>%
+  arrange(date)
 m <- lm(MSL ~ date, dat2) ## create regression line
 
-## still need to correct geom_text formala to draw on correct coef for time window used
+## 
+## mimic style in NOAA graph here: https://tidesandcurrents.noaa.gov/sltrends/sltrends_station.shtml?id=8670870
 fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
+  geom_hline(yintercept = 0, linetype = 1.5, lwd = 1) +
   geom_line(color = 'blue', lwd = 0.5) + 
   geom_smooth(method = 'lm', color = 'red', formula = my.formula) +
   geom_smooth(method = 'loess', color = 'grey30', linetype = 2, se = FALSE) +
@@ -166,23 +166,35 @@ fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
   #              aes(label = paste(..eq.label.., sep = "~~~")), 
   #              parse = TRUE) +
   # geom_text(x = Sys.Date()-(T/1.1), y = 35, label = paste("Total SLR = ", round(coef(m)[2]*T, 2), 'cm')) + 
-  scale_y_continuous(name = paste('Datum', DATUM, '(cm)'),
-                     breaks = seq(-20, 40, by = 10),
-                     minor_breaks = seq(-20, 40, by = 5)) + 
-  scale_x_date(name = 'Date', 
+  scale_y_continuous(name = paste(DATUM, '(cm)'),
+                     breaks = seq(-40, 40, by = 10),
+                     minor_breaks = seq(-40, 40, by = 5),
+                     limits = c(-40, 40)) + 
+  scale_x_date(name = 'Year', 
                date_breaks = '12 months', 
                date_minor_breaks = '6 month',
-               date_labels = '%b-%y') + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
-        legend.position = 'right') + 
-  ggtitle(paste("Sea Level Trend Over Past ", T_name, "; NOAA Station ID: ", dat2$station, sep = ''))  +
+               date_labels = '%Y',
+               expand = c(0,0)) + 
+              # limits = c(first(date), last(date))) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        legend.position = 'bottom',
+        panel.background = element_rect(fill = "white", color = 'black', linetype = 1),
+        #panel.border = element_rect(fill = 'white', color = 'black'),
+        panel.grid.major.y = element_line(colour = 'black', linetype = 2),
+        axis.ticks.x = element_line(color = 'black')) + 
+  ggtitle(paste("Sea Level Trend Over Past ", T_name, sep = ''))  +
   annotate(geom = 'text', label = paste("Total Observed SLR =", round(coef(m)[2]*T, 2), 'cm'), 
-           x = Sys.Date()-(T), y = Inf, hjust = 0.1, vjust = 3) + 
-  annotate(geom = 'text', label = paste("Averaged Annual Trend =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
-           x = Sys.Date()-(T), y = Inf, hjust = 0.09, vjust = 5) + 
-  labs(caption = "Data Source: NOAA")
+           x = Sys.Date()-(T), y = Inf, hjust = -0.1, vjust = 5) + 
+  # annotate(geom = 'segment', color = 'red', 
+  #          x = Sys.Date()-(T), y = Inf) + 
+  annotate(geom = 'text', label = paste("Linear Relative Sea Level Trend =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
+           x = Sys.Date()-(T), y = Inf, hjust =-0.08, vjust = 7) + 
+  labs(caption = paste("Data: Monthly ", DATUM, " for NOAA Station ID: ", dat2$station, 
+                       ', ', first(dat2$date), ' to ', last(dat2$date), sep = ''))
 #   facet_wrap(~station)
 fig2
+
+# as.Date(date >= Sys.Date()-T)))
 
 # save plots as .png
 ggsave(fig2, file=paste(datadir,
