@@ -158,9 +158,13 @@ m <- lm(MSL ~ date, dat2) ## create regression line
 ## 
 ## mimic style in NOAA graph here: https://tidesandcurrents.noaa.gov/sltrends/sltrends_station.shtml?id=8670870
 fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
-  geom_hline(yintercept = 0, linetype = 1.5, lwd = 1) +
-  geom_line(color = 'blue', lwd = 0.5) + 
-  geom_smooth(method = 'lm', color = 'red', formula = my.formula) +
+  geom_hline(yintercept = 0, linetype = 1.5, lwd = 0.5) +
+  geom_line(color = 'blue', lwd = 0.2) + 
+  geom_smooth(method = 'lm', color = 'black', formula = my.formula) +
+  ## next three lines add linear trend lines for each decade
+  geom_smooth(data = filter(dat2, date >= last(date)-3653), method = 'lm', color = 'purple', formula = my.formula, se = FALSE) +
+  geom_smooth(data = filter(dat2, date >= last(date)-3653*2 & date <= last(date)-3653), method = 'lm', color = 'coral', formula = my.formula, se = FALSE) +
+  geom_smooth(data = filter(dat2, date <= first(date)+3653), method = 'lm', color = 'red', formula = my.formula, se = FALSE) +
   geom_smooth(method = 'loess', color = 'grey30', linetype = 2, se = FALSE) +
   # stat_poly_eq(formula = my.formula, 
   #              aes(label = paste(..eq.label.., sep = "~~~")), 
@@ -185,11 +189,11 @@ fig2 <- ggplot(dat2, aes(x = date, y = MSL)) +
         panel.grid.major.y = element_line(colour = 'black', linetype = 2),
         axis.ticks.x = element_line(color = 'black')) + 
   ggtitle(paste("Sea Level Trend Over Past ", T_name, sep = ''))  +
-  annotate(geom = 'text', label = paste("Total Observed SLR =", round(coef(m)[2]*T, 2), 'cm'), 
+  annotate(geom = 'text', label = paste("Total Observed SLR for Period =", round(coef(m)[2]*T, 2), 'cm'), 
            x = Sys.Date()-(T), y = Inf, hjust = -0.1, vjust = 5) + 
   # annotate(geom = 'segment', color = 'red', 
   #          x = Sys.Date()-(T), y = Inf) + 
-  annotate(geom = 'text', label = paste("Linear Relative Sea Level Trend =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
+  annotate(geom = 'text', label = paste("Linear Relative Sea Level Trend (black line) =", round((coef(m)[2]*T)/(T/100), 2)*10, 'mm/yr'), 
            x = Sys.Date()-(T), y = Inf, hjust =-0.08, vjust = 7) + 
   labs(caption = paste("Data: Monthly ", DATUM, " for NOAA Station ID: ", dat2$station, 
                        ', ', first(dat2$date), ' to ', last(dat2$date), sep = ''))
@@ -200,6 +204,6 @@ fig2
 
 # save plots as .png
 ggsave(fig2, file=paste(datadir,
-                       '/figures/sea-level-trend-cm-', i, "-decade.png", sep=''), width = 6, height = 4, units = 'in', scale=2)
+                       '/figures/sea-level-trends_', i, "-decade_station-", dat2$station[1], ".png", sep=''), width = 6, height = 4, units = 'in', scale=2)
 }
 
