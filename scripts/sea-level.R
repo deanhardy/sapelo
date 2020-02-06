@@ -14,7 +14,26 @@ test <- read.csv("https://tidesandcurrents.noaa.gov/sltrends/data/USAverageSeaso
 STATIONS <- c(8670870, 8720030)
 # 8662245
 DATUM <- 'MSL'
-# TIME <- c(3653, 3653*2)
+DATE <- c(Sys.Date(), Sys.Date()-3653, Sys.Date()-(3653*2))
+df <- NULL
+
+## for loop to grab data in decadal increments
+for (i in DATE) {
+  OUT <- coops_search(
+    begin_date = DATE[1] %>% 
+      gsub('-', '', .) %>%
+      as.numeric(),
+    end_date = DATE[1]-3653 %>%
+      gsub('-', '', .) %>%
+      as.numeric(),
+    station_name = STATIONS[1],
+    product = 'monthly_mean', 
+    datum = DATUM, 
+    units = 'metric', 
+    time_zone = 'GMT')
+  
+  df <- rbind(df,OUT)
+}
 
 ## grab most recent decade of data
 T1 <- 
