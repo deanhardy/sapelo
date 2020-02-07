@@ -88,7 +88,7 @@ library(ggpmisc)
 
 ## set parameters
 my.formula <- y ~ x # generic formula for use in equation
-D <- c(1,2,3)
+D <- c(1,2,3,4)
 
 for (i in D) {
 
