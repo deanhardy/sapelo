@@ -1,3 +1,8 @@
+################################################################################
+## By: Dean Hardy
+## script to download and graph mean monthly sea level from NOAA tide gage stations
+## depends on rnoaa & tidyverse packages
+################################################################################
 rm(list=ls())
 
 library(rnoaa) ## package info https://cran.r-project.org/web/packages/rnoaa/rnoaa.pdf
@@ -7,125 +12,46 @@ library(tidyverse)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import average seasonal cycle data
-test <- read.csv("https://tidesandcurrents.noaa.gov/sltrends/data/USAverageSeasonalCycleData.csv",
-                 stringsAsFactors = FALSE)
+# test <- read.csv("https://tidesandcurrents.noaa.gov/sltrends/data/USAverageSeasonalCycleData.csv",
+#                  stringsAsFactors = FALSE)
 
-## define stations of interest
-STATIONS <- c(8670870, 8720030)
-# 8662245
-DATUM <- 'MSL'
-DATE <- c(Sys.Date(), Sys.Date()-3653, Sys.Date()-(3653*2))
-df <- NULL
+## define variables
+STATION <- c(8670870, 8720030) ## define stations
+DATUM <- 'MSL' ## define datum
+T <- c(0,1,2,3) ## define number of decades of data to grab where 0 = 1 decade, 1 = 2 decades, etc
+df <- NULL ## empty dataframe
 
-## for loop to grab data in decadal increments
-for (i in DATE) {
-  OUT <- coops_search(
-    begin_date = DATE[1] %>% 
+## for loop to grab data in decadal increments for multiple stations
+for (z in 1:length(STATION)) {
+  
+for (i in 1:length(T)) {
+DATE <- Sys.Date()-(3653*T)
+
+OUT <-
+  coops_search(
+    begin_date = as.character(as.Date(DATE[[i]]-3653), format = '%Y%m%d') %>% 
       gsub('-', '', .) %>%
       as.numeric(),
-    end_date = DATE[1]-3653 %>%
+    end_date = as.character(as.Date(DATE[[i]]), format = '%Y%m%d') %>%
       gsub('-', '', .) %>%
       as.numeric(),
-    station_name = STATIONS[1],
+    station_name = STATION[[z]],
     product = 'monthly_mean', 
     datum = DATUM, 
     units = 'metric', 
-    time_zone = 'GMT')
+    time_zone = 'GMT')$data 
   
-  df <- rbind(df,OUT)
+  OUT2 <- OUT %>%
+    mutate(station = as.character(STATION[[z]])) %>%
+    mutate(yrmo = paste(year, month, sep = '-')) %>%
+    mutate(date = as.Date(paste(yrmo, '-01', sep = '')))
+
+  df <- rbind(df, OUT2)
+}
 }
 
-## grab most recent decade of data
-T1 <- 
-  lapply(STATIONS, function(z) {
-    coops_search(begin_date = as.character(as.Date(Sys.Date()-3653, format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 end_date = as.character(as.Date(Sys.Date(), format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 station_name = z,
-                 product = 'monthly_mean', 
-                 datum = DATUM, 
-                 units = 'metric', 
-                 time_zone = 'GMT')
-}$data)
-
-## grab second most recent decade of data
-T2 <- 
-  lapply(STATIONS, function(z) {
-    coops_search(begin_date = as.character(as.Date(Sys.Date()-3653*2, format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 end_date = as.character(as.Date(Sys.Date()-3653, format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 station_name = z,
-                 product = 'monthly_mean', 
-                 datum = DATUM, 
-                 units = 'metric', 
-                 time_zone = 'GMT')
-  }$data)
-
-## grab third most recent decade of data
-T3 <- 
-  lapply(STATIONS, function(z) {
-    coops_search(begin_date = as.character(as.Date(Sys.Date()-3653*3, format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 end_date = as.character(as.Date(Sys.Date()-3653*2, format = '%Y%m%d')) %>% 
-                   gsub('-', '', .) %>%
-                   as.numeric(),
-                 station_name = z,
-                 product = 'monthly_mean', 
-                 datum = DATUM, 
-                 units = 'metric', 
-                 time_zone = 'GMT')
-  }$data)
-
-## need to write into for loop
-T1_1 <- T1[[1]] %>%
-  mutate(station = as.character(STATIONS[1]))
-T1_2 <- T1[[2]] %>%
-  mutate(station = as.character(STATIONS[2]))
-T2_1 <- T2[[1]] %>%
-  mutate(station = as.character(STATIONS[1]))
-T2_2 <- T2[[2]] %>%
-  mutate(station = as.character(STATIONS[2]))
-T3_1 <- T3[[1]] %>%
-  mutate(station = as.character(STATIONS[1]))
-T3_2 <- T3[[2]] %>%
-  mutate(station = as.character(STATIONS[2]))
-
-df1 <- rbind(T1_1, T1_2)
-df2 <- rbind(T2_1, T2_2)
-df3 <- rbind(T3_1, T3_2)
-df4 <- rbind(df1, df2)
-df <- rbind(df4, df3)
-
-dat <- df %>%
-  mutate(yrmo = paste(year, month, sep = '-')) %>%
-  mutate(date = as.Date(paste(yrmo, '-01', sep = '')))
-
-## combines above 10 year periods for all stations into single tidy df
-# NO_ST <- seq(1,3)
-# TIME <- c(T1, T2, T3)
-# df <- NULL
-# 
-# for (y in TIME) {
-#   for (i in NO_ST) {
-#     OUT <- TIME[y][[i]] %>%
-#       mutate(station = as.character(STATIONS[i])) %>%
-#       mutate(yrmo = paste(year, month, sep = '-')) %>%
-#       mutate(date = as.Date(paste(yrmo, '-01', sep = '')))
-#    df <- rbind(df, OUT)
-#  }
-# }
-
-# GET EQUATION AND R-SQUARED AS STRING
-# SOURCE: https://groups.google.com/forum/#!topic/ggplot2/1TgH-kG5XMA
-
-fig <- ggplot(dat, aes(x = date, y = MSL, color = station)) +
+## plot mean monthly sea levels for all stations and draw regression line for each station
+fig <- ggplot(df, aes(x = date, y = MSL, color = station)) +
   geom_smooth(method = 'lm') + 
   geom_point(size = 1) + 
   scale_y_continuous(name = paste('Datum', DATUM, '(m)'),
@@ -148,7 +74,8 @@ ggsave(fig, file=paste(datadir,
 
 ## working on adding equation with slope
 library(ggpmisc)
-
+# GET EQUATION AND R-SQUARED AS STRING
+# SOURCE: https://groups.google.com/forum/#!topic/ggplot2/1TgH-kG5XMA
 ## from https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph
 # lm_eqn <- function(dat2){
 #   m <- lm(MSL ~ date, dat2);
@@ -169,7 +96,7 @@ T <- 3653*i ## set time period
 T_name <- ifelse(T == 3653, "Decade", 
                  ifelse(T == 3653*2, 'Two Decades', 'Three Decades'))
 ## filter all data to one station and selected time period
-dat2 <- filter(dat, station == '8670870' & date >= Sys.Date()-T) %>%
+dat2 <- filter(df, station == '8670870' & date >= Sys.Date()-T) %>%
   mutate(MSL = MSL*100) %>%
   arrange(date)
 m <- lm(MSL ~ date, dat2) ## create regression line
