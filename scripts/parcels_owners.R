@@ -10,6 +10,8 @@ library(tmap)
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
 clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
+clr5 <- c('black', 'grey60', 'red', 'grey10')
+
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
@@ -133,6 +135,23 @@ map2
 tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
     width = 5, height = 5)
 map2
+dev.off()
+
+
+## map owners by 3 class category with companies highlighted
+map3 <- tm_shape(po2) + 
+  tm_fill('own3cat', palette = clr5, title = 'Owner Category') + 
+  tm_borders(col = 'black') +
+  tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
+  tm_layout(frame = FALSE,
+            legend.text.size = 0.8,
+            legend.title.size = 1)
+map3
+
+tiff(file.path(datadir, 'figures/map_owner4category_llc-highlighted.tiff'), res = 300, units = 'in',
+     width = 5, height = 5)
+map3
 dev.off()
 
 ## make interactive map of parcel owner data
