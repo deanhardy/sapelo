@@ -231,7 +231,10 @@ descendantsum <- po %>%
 
 
 ###########################
+## want to add search function, see here: https://stackoverflow.com/questions/37798690/search-button-for-leaflet-r-map
 ## working on adding transaction to owners leaflet map
+###########################
+
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
   mutate(date = as.Date(date, "%m/%d/%y")) %>%
   rename(parcel_id = parcel.id)
