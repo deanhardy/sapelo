@@ -3,31 +3,44 @@ rm(list=ls())
 library(sf)
 library(tidyverse)
 library(nhdplusTools) # https://cran.r-project.org/web/packages/nhdplusTools/nhdplusTools.pdf
+library(tmap)
 
-datadir <- '/Users/dhardy/Dropbox/r_projects/sapelo/nhd'
-huc4 <- c('0306', '0307') ## watersheds to download
+nhddir <- '/Users/dhardy/r_projects/sapelo/nhd'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
+
+huc4 <- c('0304', '0305', '0306', '0307') ## watersheds to download
 fcodes <- c('33600', '33601', '33603') ## https://nhd.usgs.gov/userGuide/Robohelpfiles/NHD_User_Guide/Feature_Catalog/Hydrography_Dataset/Complete_FCode_List.htm
 
-df <- download_nhdplushr(datadir, huc4, download_files = TRUE)
+df <- download_nhdplushr(nhddir, huc4, download_files = TRUE)
 
 require(rgdal)
 
-fgdb <- file.path(df, 'NHDPLUS_H_0307_HU4_GDB.gdb')
+## List all feature classes in a file geodatabase
+# subset(ogrDrivers(), grepl("GDB", name))
+# fc_list <- ogrListLayers(fgdb)
+# print(fc_list)
 
-# List all feature classes in a file geodatabase
-subset(ogrDrivers(), grepl("GDB", name))
-fc_list <- ogrListLayers(fgdb)
-print(fc_list)
+nhd <- NULL ## for use in for loop
 
-# Read the feature class
-fc <- readOGR(dsn=fgdb,layer="NHDFlowline")
+# Read the feature class and convert to sf object
+for (i in 1:length(huc4)) {
+fgdb <- file.path(df, paste('NHDPLUS_H_', huc4[[i]], '_HU4_GDB.gdb', sep = ''))
 
-# convert to sf object
-fc2 <- st_as_sf(fc) %>%
+OUT <- readOGR(dsn=fgdb,layer="NHDFlowline") %>%
+  st_as_sf() %>%
   filter(FCode %in% fcodes)
 
-# Determine the FC extent, projection, and attribute information
-summary(fc2)
+nhd <- rbind(nhd, OUT)
+}
 
-# View the feature class
-qtm(fc2)
+# import coastal counties
+cnty <- st_read(file.path(datadir, 'coastal_county/USsouth_CoastalCounty_2010Census_DP1.shp'), stringsAsFactors = FALSE) %>%
+  filter(str_detect(GEOID10, '^45|^13')) ## filter to GA and SC
+
+## map canals ditches for AOI
+tm_shape(cnty) + 
+  tm_polygons() + 
+tm_shape(nhd) + 
+  tm_lines(col = 'blue')
+
+
