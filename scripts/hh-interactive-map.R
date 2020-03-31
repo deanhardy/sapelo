@@ -6,6 +6,7 @@ library(tidyverse)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
+# devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
@@ -38,6 +39,51 @@ oldest_sales <- sales %>%
 ## attach parcel owner data to transactions data
 df2 <- left_join(df, latest_sales, by = 'parcel_id')
 
+## import title search data and adjoin to spatial data and hatch
+title <- read.csv(file.path(datadir, 'property/title_search_outsiders.csv'), stringsAsFactors = F) %>%
+  rename(parcel_id = parcel.id) %>%
+  mutate(date = as.Date(date, format = '%m/%d/%y'),
+         parcel_id = str_replace(parcel_id, '  ', ' ')) %>%
+  group_by(parcel_id) %>%
+  slice(which.max(date)) %>%
+  dplyr::select(status) 
+
+df3 <- left_join(df2, title, by = 'parcel_id') %>%
+  filter(status != 'NA') 
+
+## https://gist.github.com/johnbaums/c6a1cb61b8b6616143538950e6ec34aa
+hatch <- function(x, density) {
+  # x: polygon object (SpatialPolgyons* or sf)
+  # density: approx number of lines to plot
+  require(sp)
+  require(raster)
+  e <- extent(x)
+  w <- diff(e[1:2])
+  x1 <- seq(xmin(e), xmax(e)+w, length.out=floor(density*2))
+  x0 <- seq(xmin(e)-w, xmax(e), length.out=floor(density*2))
+  y0 <- rep(ymin(e), floor(density*2))
+  y1 <- rep(ymax(e), floor(density*2))
+  ll <- spLines(mapply(function(x0, y0, x1, y1) {
+    rbind(c(x0, y0), c(x1, y1))
+  }, x0, y0, x1, y1, 
+  SIMPLIFY=FALSE))  
+  if(is(x, 'sf')) {
+    require(sf)
+    ll <- st_as_sf(ll)
+    st_crs(ll) <- st_crs(x)
+    st_intersection(ll, x)
+  } else {
+    proj4string(ll) <- proj4string(x)
+    raster::intersect(ll, x)
+  }
+}
+
+df3.hatch <- hatch(df3, 60)
+
+# den <- rep(5, length(df3))
+# ang <- rep(45, length(df3))
+# df3.hatch <- HatchedPolygons::hatched.SpatialPolygons(df3, density = den, angle = ang)
+
 ## import ag data
 ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F) %>%
   st_transform(4326)
@@ -48,8 +94,11 @@ ag_cntr <- st_centroid(ag)
 hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   rename(site = Id)
-info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors = F)
-hobo2 <- left_join(hobo, info)
+info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors = F) %>%
+  mutate(install_date = as.Date(install.date, '%m/%d/%y'),
+         site = as.numeric(site)) %>%
+  dplyr::select(site, install_date)
+hobo <- left_join(hobo, info)
 
 ## last updated 3/31/2020 from Zillow 
 ## want to use API to pull info realtime with price etc.
@@ -61,6 +110,9 @@ weblink <- '<a href=https://www.zillow.com/sapelo-island-ga/?searchQueryState={%
 ## define map variables
 clr4 <- c('black', 'grey60', 'orange', 'white')
 pal3 <- colorFactor(clr4, df$own3cat)
+clr3 <- c('green', 'yellow', 'red')
+tit3 <- colorFactor(clr3, df3$status)
+tit3.h <- colorFactor(clr3, df3.hatch$status)
 forsale_group <- paste('For Sale (updated ', format(Sys.Date(), format="%m/%d/%y"), ')', sep = '')
 iconred <- awesomeIcons(
   icon = 'ios-close',
@@ -105,6 +157,7 @@ hobo_popup <- paste0(
   "<strong>LOGGER INFO</strong>", "<br>",
   "Site #", hobo$site, "<br>",
   "Site Name: ", hobo$name, "<br>",
+  "Install Date: ", hobo$install_date, "<br>",
   "MLLW Elevation (ft): ", round(hobo$mllw_elvft, 2))
 
 ## generate interactive leaflet map
@@ -116,8 +169,6 @@ m <- leaflet() %>%
              group = forsale_group,
              icon = iconred,
              popup = weblink) %>%
-  # addMarkers(data = hobo, 
-  #            group = 'Water Loggers') %>%
   addAwesomeMarkers(data = hobo,
                     group = 'Water Loggers',
                     popup = hobo_popup,
@@ -130,6 +181,7 @@ m <- leaflet() %>%
               popup = ag_popup,
               group = 'Agriculture',
               fillColor = '#66ff00',
+              color = 'black', 
               fillOpacity = 0.8,
               weight = 1) %>%
   addPolylines(data = comp,
@@ -137,26 +189,43 @@ m <- leaflet() %>%
                group = 'Companies',
                opacity = 1,
                weight = 3) %>%
+  addPolylines(data = df3,
+               color = ~tit3(df3$status),
+               group = 'Title Search Status',
+               opacity = 1,
+               weight = 3) %>%
+  addPolylines(data = df3.hatch,
+               color = ~tit3(df3.hatch$status),
+               group = 'Title Search Status',
+               opacity = 1,
+               weight = 3) %>%
   addPolygons(data = df,
               popup = parcel_popup,
+              # stroke = F,
+              color = 'black',
               group = 'Parcels',
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-                   overlayGroups = c("Parcels", "Companies", forsale_group, 'Agriculture', 'Water Loggers'),
+                   overlayGroups = c("Parcels", "Title Search Status", "Companies", forsale_group, 'Agriculture', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = pal3,
             group = 'Parcels',
             values = df$own3cat,
             title = "Owner Category") %>%
+  addLegend("bottomleft",
+            pal = tit3,
+            group = 'Title Search Status',
+            values = df3$status,
+            title = "Title Search Status") %>%
   # addLegend("bottomleft",
   #           color = blue,
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c(forsale_group, 'Companies', 'Agriculture', 'Water Loggers'))
+  hideGroup(c(forsale_group, "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
 m
 
 library(htmlwidgets)
