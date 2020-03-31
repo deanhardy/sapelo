@@ -5,15 +5,11 @@ library(tidyverse)
 library(nhdplusTools) # https://cran.r-project.org/web/packages/nhdplusTools/nhdplusTools.pdf
 library(tmap)
 
-<<<<<<< HEAD
-datadir <- '/Users/dhardy/r_projects/sapelo/nhd'
 huc4 <- c('0306', '0307') ## watersheds to download
-=======
 nhddir <- '/Users/dhardy/r_projects/sapelo/nhd'
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 huc4 <- c('0304', '0305', '0306', '0307') ## watersheds to download
->>>>>>> 0f72faa40880ce2b1a1d5196a8377324425018a2
 fcodes <- c('33600', '33601', '33603') ## https://nhd.usgs.gov/userGuide/Robohelpfiles/NHD_User_Guide/Feature_Catalog/Hydrography_Dataset/Complete_FCode_List.htm
 
 df <- download_nhdplushr(nhddir, huc4, download_files = TRUE)
