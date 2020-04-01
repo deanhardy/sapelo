@@ -6,6 +6,7 @@ library(tidyverse)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
+library(leafletplugins)
 # devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
@@ -160,6 +161,9 @@ hobo_popup <- paste0(
   "Install Date: ", hobo$install_date, "<br>",
   "MLLW Elevation (ft): ", round(hobo$mllw_elvft, 2))
 
+targetGroups <- c('Parcels')
+
+
 ## generate interactive leaflet map
 m <- leaflet() %>%
   addTiles(group = 'Open Street Map') %>%
@@ -220,6 +224,7 @@ m <- leaflet() %>%
             group = 'Title Search Status',
             values = df3$status,
             title = "Title Search Status") %>%
+  addSearchFeatures(targetGroups = 'Parcels_Cntrd', options = searchFeaturesOptions(zoom = 10)) %>%
   # addLegend("bottomleft",
   #           color = blue,
   #           group = 'For Sale (updated 3/25/20)',
