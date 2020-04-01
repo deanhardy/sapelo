@@ -6,7 +6,6 @@ library(tidyverse)
 library(sf)
 library(leaflet)
 library(leaflet.extras)
-library(leafletplugins)
 # devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
@@ -40,6 +39,9 @@ oldest_sales <- sales %>%
 ## attach parcel owner data to transactions data
 df2 <- left_join(df, latest_sales, by = 'parcel_id')
 
+## create centroids for search feature
+df2_cntrd <- st_centroid(df2)
+  
 ## import title search data and adjoin to spatial data and hatch
 title <- read.csv(file.path(datadir, 'property/title_search_outsiders.csv'), stringsAsFactors = F) %>%
   rename(parcel_id = parcel.id) %>%
@@ -138,7 +140,8 @@ leafIcons <- icons(
 
 parcel_popup <- paste0(
   "<strong>PARCEL INFO</strong>", "<br>",
-  "Parcel ID:", df$parcel_id, "<br>",
+  "<i>Search Parcel ID in Search Bar</i>", "<br>",
+  "Parcel ID: ", df$parcel_id, "<br>",
   "Owner: ", df$owner, "<br>",
   "GIS Acres: ", round(df$gis_acres, 1),"<br>", "<br>",
   "<strong>MOST RECENT TRANSACTION</strong>", "<br>",
@@ -181,6 +184,9 @@ m <- leaflet() %>%
              popup = ag_popup,
              group = 'Agriculture',
              icon = leafIcons) %>%
+  addMarkers(data = df2_cntrd,
+             group = 'Parcels_Cntrd',
+             label = df2_cntrd$parcel_id) %>%
   addPolygons(data = ag,
               popup = ag_popup,
               group = 'Agriculture',
@@ -224,13 +230,15 @@ m <- leaflet() %>%
             group = 'Title Search Status',
             values = df3$status,
             title = "Title Search Status") %>%
-  addSearchFeatures(targetGroups = 'Parcels_Cntrd', options = searchFeaturesOptions(zoom = 10)) %>%
+  addSearchFeatures(targetGroups = 'Parcels_Cntrd', 
+                    options = searchFeaturesOptions(propertyName = "label",
+                                                    zoom = 18)) %>%
   # addLegend("bottomleft",
   #           color = blue,
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c(forsale_group, "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
+  hideGroup(c(forsale_group, 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
 m
 
 library(htmlwidgets)
