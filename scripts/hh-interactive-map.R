@@ -13,7 +13,12 @@ library(raster)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## udpated 4/20/20
-zillow_listings <- c('0101A 0004003', '0101A 0019003', '0102A 0051', '0102A 0026', '0102A 0029', '0102A 0095001')
+zillow_listings <- c('0102A 0095001',
+                     '0101A 0019003', 
+                     '0102A 0051',
+                     '0102A 0029',
+                     '0101A 0004003',
+                     '0102A 0095')
 ## for implementing zillow scraping later
 ## https://github.com/notesofdabbler/blog_notesofdabbler/blob/master/learn_rvest/exploreZillow_w_rvest.R
 
