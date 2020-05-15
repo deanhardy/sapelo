@@ -22,6 +22,7 @@ zillow_listings <- c('0102A 0095001',
                      '0102A 0134001')
 ## for implementing zillow scraping later
 ## https://github.com/notesofdabbler/blog_notesofdabbler/blob/master/learn_rvest/exploreZillow_w_rvest.R
+## http://thatdatatho.com/2018/12/14/an-introduction-to-scraping-real-estate-data-with-rvest-and-rselenium/
 
 
 ## import parcel owner data and trans
