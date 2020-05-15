@@ -117,12 +117,16 @@ info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors 
   dplyr::select(site, install_date)
 hobo <- left_join(hobo, info)
 
-## last updated 4/20/2020 from Zillow 
-## want to use API to pull info realtime with price etc.
-forsale <- df2 %>% filter(parcel_id %in% zillow_listings) %>%
-  st_centroid() ## last one deduced from legal desc online, parcel id wrong
+## read in zillow data
+zdata <- read.csv(file.path(datadir, 'zdata.csv'))[-1]
 
-weblink <- '<a href=https://www.zillow.com/sapelo-island-ga/?searchQueryState={%22pagination%22:{},%22usersSearchTerm%22:%22Sapelo%20Island,%20GA%22,%22mapBounds%22:{%22west%22:-81.44322331103515,%22east%22:-81.04153568896484,%22south%22:31.34861701591248,%22north%22:31.562411869538245},%22mapZoom%22:12,%22savedSearchEnrollmentId%22:%22X1-SS0h1ut76czy191000000000_4hjdl%22,%22regionSelection%22:[{%22regionId%22:54314,%22regionType%22:6}],%22isMapVisible%22:true,%22filterState%22:{},%22isListVisible%22:true}>Zillow Sales Data</a>'
+forsale <- merge(df2, zdata, by = "parcel_id") %>%
+  rename(saledate = date.y, saleprice = price.y) %>%
+  mutate(link = paste0('<a href=', link, ' target=_blank>Link to Zillow</a>')) %>%
+  st_centroid() %>%
+  dplyr::select(parcel_id, addr, saledate, saleprice, link, geometry)
+
+# weblink <- '<a href=https://www.zillow.com/sapelo-island-ga/?searchQueryState={%22pagination%22:{},%22usersSearchTerm%22:%22Sapelo%20Island,%20GA%22,%22mapBounds%22:{%22west%22:-81.44322331103515,%22east%22:-81.04153568896484,%22south%22:31.34861701591248,%22north%22:31.562411869538245},%22mapZoom%22:12,%22savedSearchEnrollmentId%22:%22X1-SS0h1ut76czy191000000000_4hjdl%22,%22regionSelection%22:[{%22regionId%22:54314,%22regionType%22:6}],%22isMapVisible%22:true,%22filterState%22:{},%22isListVisible%22:true}>Zillow Sales Data</a>'
 
 ## import 1938 map
 dem <- raster(x = file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
@@ -170,6 +174,12 @@ parcel_popup <- paste0(
   "Price per Acre: $", df2$price.acre, "<br>",
   "Sale Type: ", df2$sale.type)
 
+z_popup <- paste0(
+  "<strong>LISTING INFO</strong>", "<br>",
+  "Listing Date: ", forsale$saledate, "<br>",
+  "Sale Price: ", forsale$saleprice, "<br>",
+  "Zillow Link: ", forsale$link)
+
 ag_popup <- paste0(
   "<strong>PLOT INFO</strong>", "<br>",
   "Acres: ", round(ag$acres, 2), "<br>",
@@ -193,7 +203,7 @@ m <- leaflet() %>%
   addAwesomeMarkers(data = forsale, 
              group = forsale_group,
              icon = iconred,
-             popup = weblink) %>%
+             popup = z_popup) %>%
   addAwesomeMarkers(data = hobo,
                     group = 'Water Loggers',
                     popup = hobo_popup,
