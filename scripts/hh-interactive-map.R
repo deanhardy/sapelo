@@ -18,7 +18,8 @@ zillow_listings <- c('0102A 0095001',
                      '0102A 0051',
                      '0102A 0029',
                      '0101A 0004003',
-                     '0102A 0095')
+                     '0102A 0095',
+                     '0102A 0134001')
 ## for implementing zillow scraping later
 ## https://github.com/notesofdabbler/blog_notesofdabbler/blob/master/learn_rvest/exploreZillow_w_rvest.R
 
