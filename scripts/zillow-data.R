@@ -43,7 +43,7 @@ for(i in zdata$link) {
     html_text() %>%
     str_split(., "Number: ") %>%
     as.data.frame() %>%
-    select(starts_with("c")) %>%
+    dplyr::select(starts_with("c")) %>%
     rename(parcel.id = starts_with("c")) %>%
     top_n(-1)
 parcel_id <- rbind(parcel_id, OUT)

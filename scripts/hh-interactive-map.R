@@ -13,17 +13,17 @@ library(raster)
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
-## udpated 4/20/20
-zillow_listings <- c('0102A 0095001',
-                     '0101A 0019003', 
-                     '0102A 0051',
-                     '0102A 0029',
-                     '0101A 0004003',
-                     '0102A 0095',
-                     '0102A 0134001')
-## for implementing zillow scraping later
-## https://github.com/notesofdabbler/blog_notesofdabbler/blob/master/learn_rvest/exploreZillow_w_rvest.R
-## http://thatdatatho.com/2018/12/14/an-introduction-to-scraping-real-estate-data-with-rvest-and-rselenium/
+# ## udpated 4/20/20
+# zillow_listings <- c('0102A 0095001',
+#                      '0101A 0019003', 
+#                      '0102A 0051',
+#                      '0102A 0029',
+#                      '0101A 0004003',
+#                      '0102A 0095',
+#                      '0102A 0134001')
+# ## for implementing zillow scraping later
+# ## https://github.com/notesofdabbler/blog_notesofdabbler/blob/master/learn_rvest/exploreZillow_w_rvest.R
+# ## http://thatdatatho.com/2018/12/14/an-introduction-to-scraping-real-estate-data-with-rvest-and-rselenium/
 
 
 ## import parcel owner data and trans
@@ -68,6 +68,13 @@ comp <- df %>%
 
 ## attach parcel owner data to transactions data
 df2 <- left_join(df, latest_sales, by = 'parcel_id')
+
+## wanting to add all sales data to map
+## https://stackoverflow.com/questions/49938532/r-possible-to-create-a-leaflet-map-and-a-rendering-table-without-shiny
+sales.spatial <- left_join(df, sales, by = 'parcel_id') %>%
+  group_by(parcel_id) %>%
+  dplyr::select(parcel_id, date:geometry) %>%
+  arrange(date, .by_group = TRUE)
 
 ## create centroids for search feature
 df2_cntrd <- st_centroid(df2)
@@ -134,7 +141,13 @@ info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors 
 hobo <- left_join(hobo, info)
 
 ## read in zillow data
-zdata <- read.csv(file.path(datadir, 'zdata.csv'))[-1]
+zdata <- read.csv(file.path(datadir, 'zdata.csv'), stringsAsFactors = F)[-1]
+
+matches <- regmatches(zdata$date, gregexpr("[[:digit:]]+", zdata$date))
+# unlist(matches)
+
+unlist(map(matches, c(2,1)))
+
 
 forsale <- merge(df2, zdata, by = "parcel_id") %>%
   rename(saledate = date.y, saleprice = price.y) %>%
@@ -210,6 +223,7 @@ hobo_popup <- paste0(
 
 targetGroups <- c('Parcels')
 
+library(htmlTable)
 
 ## generate interactive leaflet map
 m <- leaflet() %>%
@@ -261,6 +275,14 @@ m <- leaflet() %>%
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
+  addPolygons(data = sales.spatial,
+              popup = htmlTable(sales.spatial),
+              # stroke = F,
+              color = 'black',
+              group = 'Sales',
+              # fillColor = ~pal3(df$own3cat),
+              # fillOpacity = 0.8,
+              weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    overlayGroups = c("Parcels", "Title Search Status", "Companies", forsale_group, 'Agriculture', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
@@ -282,7 +304,7 @@ m <- leaflet() %>%
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c(forsale_group, 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
+  hideGroup(c(forsale_group, 'Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
 m
 
 library(htmlwidgets)
