@@ -1,6 +1,7 @@
 rm(list=ls())
 
 ## want to add search function, see here: https://stackoverflow.com/questions/37798690/search-button-for-leaflet-r-map
+## Useful info: https://info.courthousedirect.com/blog/bid/366511/how-to-recognize-a-grantor-grantee-on-a-legal-document
 
 library(tidyverse)
 library(sf)
@@ -31,10 +32,6 @@ df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/'), stringsAsF
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
   filter(gis_acres != 'NA')
 
-## filter out just companies
-comp <- df %>%
-  filter(own4cat == 'Company')
-
 ## import transactions data
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
   mutate(date = as.Date(date, "%m/%d/%y")) %>%
@@ -49,6 +46,25 @@ latest_sales <- sales %>%
 oldest_sales <- sales %>%
   group_by(parcel_id) %>%
   slice(which.min(date))
+
+## select most recent sales for each property
+latest_cashsales <- sales %>%
+  filter(price > 0) %>%
+  group_by(parcel_id) %>%
+  slice(which.max(date)) %>%
+  # arrange(desc(date), .by_group = TRUE) %>%
+  # filter(first(date)) %>%
+  dplyr::select(parcel_id, grantee)
+
+## used to double check current owners are correct, but update needs to be manual bc so many 
+## "differences" are due to capitalization or spelling, not actual diff owner
+owner.diff <- left_join(df, latest_cashsales, by = "parcel_id") %>%
+  mutate(owner2 = if_else(owner == grantee, owner, grantee, missing = owner)) %>%
+  filter(grantee != owner)
+
+## filter out just companies
+comp <- df %>%
+  filter(own4cat == 'Company')
 
 ## attach parcel owner data to transactions data
 df2 <- left_join(df, latest_sales, by = 'parcel_id')
