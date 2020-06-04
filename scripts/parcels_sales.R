@@ -21,6 +21,10 @@ latest_sales <- sales %>%
   group_by(parcel.id) %>%
   slice(which.max(date))
 
+sales2012 <- sales %>%
+  filter(date >= as.Date("2012-01-01") & price > 0)
+  
+  
 ## export sales data as table in PDF
 # pdf("sales_table.pdf", height=11, width=8.5)
 # grid.table(sales)

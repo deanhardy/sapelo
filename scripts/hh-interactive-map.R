@@ -158,8 +158,8 @@ forsale <- merge(df2, zdata, by = "parcel_id") %>%
 # weblink <- '<a href=https://www.zillow.com/sapelo-island-ga/?searchQueryState={%22pagination%22:{},%22usersSearchTerm%22:%22Sapelo%20Island,%20GA%22,%22mapBounds%22:{%22west%22:-81.44322331103515,%22east%22:-81.04153568896484,%22south%22:31.34861701591248,%22north%22:31.562411869538245},%22mapZoom%22:12,%22savedSearchEnrollmentId%22:%22X1-SS0h1ut76czy191000000000_4hjdl%22,%22regionSelection%22:[{%22regionId%22:54314,%22regionType%22:6}],%22isMapVisible%22:true,%22filterState%22:{},%22isListVisible%22:true}>Zillow Sales Data</a>'
 
 ## import 1938 map
-dem <- raster(x = file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
-GDALinfo(file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
+# dem <- raster(x = file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
+# GDALinfo(file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
 
 ## define map variables
 clr4 <- c('black', 'grey60', 'orange', 'white')
