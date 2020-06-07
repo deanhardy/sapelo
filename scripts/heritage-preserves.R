@@ -41,9 +41,18 @@ st <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
   filter(NAME %in% c('Georgia', 'South Carolina', 'North Carolina', 'Alabama', 'Florida', 'Tennessee')) %>%
   st_transform(4326)
 
+ga <- states(cb = FALSE, resolution = '500k', year = NULL) %>%
+  st_as_sf() %>%
+  filter(NAME == 'Georgia') %>%
+  st_transform(4326)
+
+cnty <- counties('GA', resolution = '500k', year = 2018) %>%
+  st_as_sf() %>%
+  st_transform(4326)
+
 urb <- urban_areas(cb = TRUE, year = 2018) %>%
   st_as_sf() %>%
-  filter(NAME10 %in% c('Athens-Clarke County, GA', 'Savannah, GA', 
+  filter(NAME10 %in% c('Athens-Clarke County, GA', 'Savannah, GA', 'Albany, GA', 'Macon, GA',
                        'Atlanta, GA', 'Darien, GA', 'Augusta-Richmond County, GA--SC')) %>%
   st_centroid() %>%
   mutate(name = ifelse(NAME10 == 'Athens-Clarke County, GA', 'Athens',
@@ -51,18 +60,21 @@ urb <- urban_areas(cb = TRUE, year = 2018) %>%
                               ifelse(NAME10 == 'Atlanta, GA', 'Atlanta',
                                      ifelse(NAME10 == 'Macon, GA', 'Macon',
                                             ifelse(NAME10 == 'Darien, GA', 'Darien',
-                                                   ifelse(NAME10 == 'Augusta-Richmond County, GA--SC', 'Augusta', NA))))))) %>%
+                                                   ifelse(NAME10 == 'Augusta-Richmond County, GA--SC', 'Augusta', 
+                                                          ifelse(NAME10 == 'Albany, GA', 'Albany', NA)))))))) %>%
   st_transform(4326)
 
 ## map of GA HPs region
 fig <- 
-  tm_shape(hp2) + tm_fill(col = 'white') +
-  tm_shape(st) + tm_fill(col = 'grey100') +
+  tm_shape(ga) + tm_fill(col = 'white') +
+  tm_shape(st) + tm_fill(col = 'grey90') +
   # tm_shape(t2) + tm_borders(col = 'grey65') +
   # tm_shape(t3) + tm_fill(col = 'grey95') +
-  tm_shape(hp2) + tm_fill(col = 'darkgreen') +
+  tm_shape(ga) + tm_fill(col = 'grey100') +
+  tm_shape(cnty) + tm_borders(col = 'grey50') +
+  tm_shape(hp2) + tm_fill(col = 'green') +
   tm_shape(st) + tm_borders(col = 'black') + 
-  tm_shape(urb) + tm_dots(col = 'black', size = 0.3, shape = 15, legend.show = FALSE) + 
+  tm_shape(urb) + tm_dots(col = 'black', size = 0.2, shape = 15, legend.show = FALSE) + 
   tm_text(text = 'name', just = 'left', xmod = 0.3, ymod = -0.3, shadow = TRUE) + 
   # tm_compass(type = 'arrow', size = 3, position = c(0.83,0.08)) +
   # tm_scale_bar(breaks = c(0,40, 80), size = 1, position= c(0.8, 0.0)) +
