@@ -275,14 +275,14 @@ m <- leaflet() %>%
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
-  addPolygons(data = sales.spatial,
-              popup = htmlTable(sales.spatial),
-              # stroke = F,
-              color = 'black',
-              group = 'Sales',
-              # fillColor = ~pal3(df$own3cat),
-              # fillOpacity = 0.8,
-              weight = 1) %>%
+  # addPolygons(data = sales.spatial,
+  #             popup = htmlTable(sales.spatial),
+  #             # stroke = F,
+  #             color = 'black',
+  #             group = 'Sales',
+  #             # fillColor = ~pal3(df$own3cat),
+  #             # fillOpacity = 0.8,
+  #             weight = 1)#  %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    overlayGroups = c("Parcels", "Title Search Status", "Companies", forsale_group, 'Agriculture', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%

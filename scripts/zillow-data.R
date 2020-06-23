@@ -38,12 +38,12 @@ zdata <- do.call(rbind, Map(data.frame, zID=zID, addr=addr, price=price, date=da
 rownames(zdata) <- c()
 
 parcel_id <- NULL
-i <- "https://www.zillow.com/homedetails/LOT-C-Portion-Of-LOT-C-Sapelo-Island-GA-31327/2079288306_zpid/"
-I <- "https://www.zillow.com/homedetails/1214-Wilson-Rd-Sapelo-Island-GA-31327/2104611996_zpid/"
+# i <- "https://www.zillow.com/homedetails/LOT-C-Portion-Of-LOT-C-Sapelo-Island-GA-31327/2079288306_zpid/"
+# i <- "https://www.zillow.com/homedetails/1214-Wilson-Rd-Sapelo-Island-GA-31327/2104611996_zpid/"
 
 for(i in zdata$link) {
   OUT <- read_html(i) %>%
-    html_nodes("ul .sc-kIPQKe") %>%
+    html_nodes("ul .sc-RefOD") %>%
     html_text() %>%
     str_split(., "Number: ") %>%
     as.data.frame() %>%
@@ -61,7 +61,7 @@ zdata4 <- zdata3 %>% mutate(parcel_id = str_squish(parcel_id))
 
 ## manual repair of pages with info following parcel id
 ## need to fix in for loop above for long-term
-zdata4$parcel_id[1] <- '0101A 0097'
+zdata4$parcel_id[2] <- '0101A 0097'
 
 write.csv(zdata4, file.path(datadir, 'zdata.csv'))
 
