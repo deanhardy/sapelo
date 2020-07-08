@@ -1,3 +1,12 @@
+##############################
+## Author: Dean Hardy
+## Purpose: Configures NERR barometric pressure data available in 15 min intervals from https://cdmo.baruch.sc.edu/ 
+##    to match pressure transducer loggers in field at 12 min intervals via interpolations
+## Requested citation format: NOAA National Estuarine Research Reserve System (NERRS). 
+##    System-wide Monitoring Program. Data accessed from the NOAA NERRS Centralized Data Management Office 
+##    website: http://cdmo.baruch.sc.edu/; accessed 08 July 2020. 
+##############################
+
 rm(list=ls())
 
 library(tidyverse)

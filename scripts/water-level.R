@@ -9,8 +9,8 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-10-15') 
-date2 <- as.Date('2020-01-11')
+date1 <- as.Date('2019-10-22') 
+date2 <- as.Date('2020-01-18')
 
 ## define variables
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
@@ -113,7 +113,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Date (Year 2019)', date_breaks = '7 days', date_labels = '%m/%d') + 
+        scale_x_datetime(name = 'Date (Year 2019)', date_breaks = '1 month', date_labels = '%m') + 
         scale_y_continuous(name = 'Water Depth (m)'
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))
