@@ -17,7 +17,7 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/200120-sapmlmet/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/200708-sapmlmet/SAPMLMET.csv'),
            header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
@@ -49,3 +49,4 @@ colnames(nerr_wx3) <- c('Date', 'Time', 'pres (mbar)')
 write.table(nerr_wx3, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 # write.csv(nerr_wx3, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.csv'), row.names = FALSE)
+

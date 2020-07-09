@@ -9,8 +9,8 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-10-22') 
-date2 <- as.Date('2020-01-18')
+date1 <- as.Date('2020-01-18') 
+date2 <- as.Date('2020-06-13')
 
 ## define variables
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
