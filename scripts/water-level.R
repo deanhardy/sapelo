@@ -113,7 +113,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Date (Year 2019)', date_breaks = '1 month', date_labels = '%m') + 
+        scale_x_datetime(name = 'Date (Year 2020)', date_breaks = '1 month', date_labels = '%m') + 
         scale_y_continuous(name = 'Water Depth (m)'
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))

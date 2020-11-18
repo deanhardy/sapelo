@@ -177,5 +177,8 @@ descendantsum <- po %>%
   group_by(owner) %>%
   summarise(n())
 
+heirs <- po %>%
+  filter(own3cat == 'Descendant') %>%
+  filter(str_detect(owner, c('EST', 'ETAL', 'C/O')))
 
 
