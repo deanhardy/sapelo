@@ -8,6 +8,7 @@ library(sf)
 library(leaflet)
 library(leaflet.extras)
 library(raster)
+library(lubridate)
 # devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
@@ -66,9 +67,9 @@ sp_cashsales <- left_join(sp, latest_cashsales, by = "parcel_id") %>%
 
 ## used to double check current owners are correct, but update needs to be manual bc so many 
 ## "differences" are due to capitalization or spelling, not actual diff owner
-owner.diff <- left_join(df, latest_cashsales, by = "parcel_id") %>%
-  mutate(owner2 = if_else(owner == grantee, owner, grantee, missing = owner)) %>%
-  filter(grantee != owner)
+# owner.diff <- left_join(df, latest_cashsales, by = "parcel_id") %>%
+#   mutate(owner2 = if_else(owner == grantee, owner, grantee, missing = owner)) %>%
+#   filter(grantee != owner)
 
 ## filter out just companies
 comp <- df %>%
@@ -133,7 +134,7 @@ df3.hatch <- hatch(df3, 60)
 # df3.hatch <- HatchedPolygons::hatched.SpatialPolygons(df3, density = den, angle = ang)
 
 ## import ag data
-ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F) %>%
+ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F)[-1,] %>%
   st_transform(4326)
 
 ag_cntr <- st_centroid(ag)
@@ -301,20 +302,11 @@ m <- leaflet() %>%
               weight = 1) %>%
   addPolygons(data = sp_cashsales,
               popup = sales_popup,
-              # stroke = F,
               color = 'black',
               group = 'Latest Sales',
               fillColor = ~pal4(sp_cashsales$year),
-              fillOpacity = 1,
+              fillOpacity = 0.8,
               weight = 1) %>%
-  # addPolygons(data = sales.spatial,
-  #             popup = htmlTable(sales.spatial),
-  #             # stroke = F,
-  #             color = 'black',
-  #             group = 'Sales',
-  #             # fillColor = ~pal3(df$own3cat),
-  #             # fillOpacity = 0.8,
-  #             weight = 1)#  %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
