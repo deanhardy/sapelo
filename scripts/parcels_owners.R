@@ -160,12 +160,15 @@ ownsum <- po %>%
   group_by(own3cat) %>%
   summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
 
+## descendant hectares percentage
 ownsum[[2,3]]/sum(ownsum$ha)
   
 llcsum <- po %>%
   filter(own_cat %in% c('LLC', 'INC', 'LLP')) %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
+sum(llcsum$`n()`)
+sum(llcsum$ha)/sum(ownsum$ha)
 
 outsidersum <- po %>%
   filter(own3cat == 'Non-traditional') %>%

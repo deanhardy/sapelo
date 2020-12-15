@@ -83,6 +83,9 @@ sales2 <- sales %>%
   group_by(group, year) %>%
   summarise(freq = n())
 
+sales3 <- sales2 %>% filter(group == "Money" & year >= 1991)
+sum(sales3$freq)
+
 ## plot sales frequency totals and fit curve 
 sale_rate <- ggplot(filter(sales2, year > 1990)) +
   # geom_smooth(aes(year, freq, fill = group, color = group), level = 0.95, fullrange = FALSE, 
@@ -152,6 +155,8 @@ annual.uniqpar <- sales %>%
   summarise(annual_uniqpar = n())
 ## combine
 annual.freq <- merge(annual.uniqpar, annual.trans)
+
+sum(annual.freq$annual_trans)
 
 ## transaction freq by decade
 decadal.trans <- sales %>%

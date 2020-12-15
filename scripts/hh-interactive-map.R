@@ -28,7 +28,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 
 ## import parcel owner data and trans
-df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/'), stringsAsFactors = F) %>%
+df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
   filter(gis_acres != 'NA')
