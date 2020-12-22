@@ -179,6 +179,7 @@ descendantsum <- po %>%
   filter(own3cat == 'Descendant') %>%
   group_by(owner) %>%
   summarise(n())
+sum(descendantsum$`n()`)
 
 heirs <- po %>%
   filter(own3cat == 'Descendant') %>%
