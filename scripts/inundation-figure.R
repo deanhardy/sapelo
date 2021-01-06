@@ -92,8 +92,8 @@ map.own.ind <-
   #               label = 'Water Level Logger')
 map.own.ind
 
-tiff(file.path(datadir, 'figures/doubleD-fig-option2.tiff'), units = 'in', width = 3.5, height = 3.5, 
-     res = 150, compression = 'lzw')
+tiff(file.path(datadir, 'figures/doubleD-fig.tiff'), units = 'in', width = 3.5, height = 3.5, 
+     res = 300, compression = 'lzw')
 map.own.ind
 dev.off()
 
