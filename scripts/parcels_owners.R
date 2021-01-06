@@ -7,6 +7,8 @@ library(readxl)
 library(sf)
 library(tmap)
 
+## https://stat.ethz.ch/pipermail/r-sig-mac/2020-November/013783.html
+
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
 clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')

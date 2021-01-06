@@ -41,3 +41,19 @@ tiff(file.path(datadir, 'figures/map_assval_chg.tiff'), res = 300, units = 'in',
 taxmap
 dev.off()
 
+## map owners by category
+prcl <- st_read(file.path(datadir, 'spatial-data/parcel-data-export/'))
+
+map <- tm_shape(po2) + 
+  tm_fill('own_cat', title = 'Owner Category') + 
+  tm_borders(col = 'black') +
+  tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.71, 0)) + 
+  tm_compass(type = 'arrow', size = 3, position = c(0.77, 0.09)) + 
+  tm_layout(frame = FALSE)
+map 
+
+tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = 'in',
+     width = 5, height = 5)
+map
+dev.off()
+
