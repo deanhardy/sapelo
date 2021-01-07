@@ -66,7 +66,7 @@ tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = '
 ownmap
 dev.off()
 
-tiff(file.path(datadir, 'figures/epe2020-figure4.tiff'), res = 300, units = 'in',
+tiff(file.path(datadir, 'figures/EPE-987366-RevisedFigure4.tiff'), res = 300, units = 'in',
      width = 5, height = 2.5)
 tmap_arrange(taxmap, ownmap, widths = c(0.5,0.5))
 dev.off()
