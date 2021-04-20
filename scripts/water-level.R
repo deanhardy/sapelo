@@ -22,10 +22,6 @@ filz <- list.files(path = file.path(datadir, 'hobo-data'),
                    recursive = TRUE) 
 tidal <- NULL
 datums <- read.csv(file.path(datadir, 'datums.csv'))
-  
-
-git config --global user.email "deanhardy@gmail.com"
-git config --global user.name "Dean Hardy"
 
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
