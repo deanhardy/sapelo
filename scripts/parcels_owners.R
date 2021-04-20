@@ -7,6 +7,8 @@ library(readxl)
 library(sf)
 library(tmap)
 
+## https://stat.ethz.ch/pipermail/r-sig-mac/2020-November/013783.html
+
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
 clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
@@ -160,12 +162,15 @@ ownsum <- po %>%
   group_by(own3cat) %>%
   summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
 
+## descendant hectares percentage
 ownsum[[2,3]]/sum(ownsum$ha)
   
 llcsum <- po %>%
   filter(own_cat %in% c('LLC', 'INC', 'LLP')) %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
+sum(llcsum$`n()`)
+sum(llcsum$ha)/sum(ownsum$ha)
 
 outsidersum <- po %>%
   filter(own3cat == 'Non-traditional') %>%
@@ -176,6 +181,10 @@ descendantsum <- po %>%
   filter(own3cat == 'Descendant') %>%
   group_by(owner) %>%
   summarise(n())
+sum(descendantsum$`n()`)
 
+heirs <- po %>%
+  filter(own3cat == 'Descendant') %>%
+  filter(str_detect(owner, c('EST', 'ETAL', 'C/O')))
 
 

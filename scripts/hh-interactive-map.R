@@ -8,6 +8,7 @@ library(sf)
 library(leaflet)
 library(leaflet.extras)
 library(raster)
+library(lubridate)
 # devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
@@ -27,7 +28,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 
 ## import parcel owner data and trans
-df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/'), stringsAsFactors = F) %>%
+df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
   filter(gis_acres != 'NA')
@@ -51,16 +52,24 @@ oldest_sales <- sales %>%
 latest_cashsales <- sales %>%
   filter(price > 0) %>%
   group_by(parcel_id) %>%
-  slice(which.max(date)) %>%
+  slice(which.max(date))
   # arrange(desc(date), .by_group = TRUE) %>%
   # filter(first(date)) %>%
-  dplyr::select(parcel_id, grantee)
+  # dplyr::select(parcel_id, grantee)
+
+## strip all but parcel id from owner data (ie df)
+sp <- df %>% dplyr::select(parcel_id)
+
+## join latest_cashsales with spatial data
+sp_cashsales <- left_join(sp, latest_cashsales, by = "parcel_id") %>%
+  # filter(!(is.na(date))) %>%
+  mutate(year = year(date))
 
 ## used to double check current owners are correct, but update needs to be manual bc so many 
 ## "differences" are due to capitalization or spelling, not actual diff owner
-owner.diff <- left_join(df, latest_cashsales, by = "parcel_id") %>%
-  mutate(owner2 = if_else(owner == grantee, owner, grantee, missing = owner)) %>%
-  filter(grantee != owner)
+# owner.diff <- left_join(df, latest_cashsales, by = "parcel_id") %>%
+#   mutate(owner2 = if_else(owner == grantee, owner, grantee, missing = owner)) %>%
+#   filter(grantee != owner)
 
 ## filter out just companies
 comp <- df %>%
@@ -125,7 +134,7 @@ df3.hatch <- hatch(df3, 60)
 # df3.hatch <- HatchedPolygons::hatched.SpatialPolygons(df3, density = den, angle = ang)
 
 ## import ag data
-ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F) %>%
+ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F)[-1,] %>%
   st_transform(4326)
 
 ag_cntr <- st_centroid(ag)
@@ -148,6 +157,11 @@ matches <- regmatches(zdata$date, gregexpr("[[:digit:]]+", zdata$date))
 
 unlist(map(matches, c(2,1)))
 
+##import inundation data
+inund <- st_read(file.path(datadir, 'spatial-data/inundation/inund2100hc_poly.shp'), stringsAsFactors = F) %>%
+  st_transform(4326) %>%
+  filter(prb_smplfy != '1%') %>%
+  mutate(prb_smplfy = ifelse(prblty %in% c('50%', '95%'), '50%', '5%'))
 
 forsale <- merge(df2, zdata, by = "parcel_id") %>%
   rename(saledate = date.y, saleprice = price.y) %>%
@@ -164,7 +178,10 @@ forsale <- merge(df2, zdata, by = "parcel_id") %>%
 ## define map variables
 clr4 <- c('black', 'grey60', 'orange', 'white')
 pal3 <- colorFactor(clr4, df$own3cat)
+pal4 <- colorFactor("RdYlBu", sp_cashsales$year)
 clr3 <- c('green', 'yellow', 'red')
+clr.ind <- c('#00a9e6', '#004c73')
+pal5 <- colorFactor(clr.ind, inund$prb_smplfy)
 tit3 <- colorFactor(clr3, df3$status)
 tit3.h <- colorFactor(clr3, df3.hatch$status)
 forsale_group <- paste('For Sale (updated ', format(Sys.Date(), format="%m/%d/%y"), ')', sep = '')
@@ -203,6 +220,20 @@ parcel_popup <- paste0(
   "Price per Acre: $", df2$price.acre, "<br>",
   "Sale Type: ", df2$sale.type)
 
+sales_popup <- paste0(
+  "<strong>SALE INFO</strong>", "<br>",
+  # "<i>Search Parcel ID in Search Bar</i>", "<br>",
+  "Parcel ID: ", sp_cashsales$parcel_id, "<br>",
+  # "Owner: ", df$owner, "<br>",
+  "GIS Acres: ", round(df$gis_acres, 1),"<br>", "<br>",
+  "Date: ", sp_cashsales$date, "<br>",
+  "Grantor: ", sp_cashsales$grantor, "<br>",
+  "Grantee: ", sp_cashsales$grantee, "<br>",
+  "Price: $",sp_cashsales$price, "<br>",
+  "Price per Acre: $", sp_cashsales$price.acre, "<br>",
+  "Sale Year: ", sp_cashsales$year, "<br>",
+  "Sale Price: $", sp_cashsales$price)
+
 z_popup <- paste0(
   "<strong>LISTING INFO</strong>", "<br>",
   "Listing Date: ", forsale$saledate, "<br>",
@@ -230,10 +261,10 @@ m <- leaflet() %>%
   addTiles(group = 'Open Street Map') %>%
   addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
   setView(lng = -81.26, lat = 31.43, zoom = 15) %>%
-  addAwesomeMarkers(data = forsale, 
-             group = forsale_group,
-             icon = iconred,
-             popup = z_popup) %>%
+  # addAwesomeMarkers(data = forsale, 
+  #            group = forsale_group,
+  #            icon = iconred,
+  #            popup = z_popup) %>%
   addAwesomeMarkers(data = hobo,
                     group = 'Water Loggers',
                     popup = hobo_popup,
@@ -275,16 +306,20 @@ m <- leaflet() %>%
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
-  # addPolygons(data = sales.spatial,
-  #             popup = htmlTable(sales.spatial),
-  #             # stroke = F,
-  #             color = 'black',
-  #             group = 'Sales',
-  #             # fillColor = ~pal3(df$own3cat),
-  #             # fillOpacity = 0.8,
-  #             weight = 1)#  %>%
+  addPolygons(data = inund,
+              group = 'Inundation',
+              fillColor = ~pal5(inund$prb_smplfy),
+              fillOpacity = 0.8,
+              weight = 1) %>%
+  addPolygons(data = sp_cashsales,
+              popup = sales_popup,
+              color = 'black',
+              group = 'Latest Sales',
+              fillColor = ~pal4(sp_cashsales$year),
+              fillOpacity = 0.8,
+              weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-                   overlayGroups = c("Parcels", "Title Search Status", "Companies", forsale_group, 'Agriculture', 'Water Loggers'),
+                   overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers', 'Inundation'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = pal3,
@@ -296,6 +331,16 @@ m <- leaflet() %>%
             group = 'Title Search Status',
             values = df3$status,
             title = "Title Search Status") %>%
+  addLegend("bottomleft",
+            pal = pal4,
+            group = 'Latest Sales',
+            values = sp_cashsales$year,
+            title = "Latest Sale Year") %>%
+  addLegend("bottomleft",
+            pal = pal5,
+            group = 'Inundation',
+            values = inund$prb_smplfy,
+            title = "Inundation") %>%
   addSearchFeatures(targetGroups = 'Parcels_Cntrd', 
                     options = searchFeaturesOptions(propertyName = "label",
                                                     zoom = 18)) %>%
@@ -304,7 +349,7 @@ m <- leaflet() %>%
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c(forsale_group, 'Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
+  hideGroup(c('Sales', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers', 'Inundation'))
 m
 
 library(htmlwidgets)

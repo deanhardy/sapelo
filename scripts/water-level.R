@@ -11,7 +11,7 @@ datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 
 # set dates for graphs
-date1 <- as.Date('2020-01-18') 
+date1 <- as.Date('2020-03-13') 
 date2 <- as.Date('2020-06-13')
 
 ## define variables
@@ -103,7 +103,7 @@ ot2 <- ot %>%
 # create graphing function
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################
-
+TEXT = 24 ## set font size for figures
 sites.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
@@ -112,20 +112,20 @@ sites.graph <- function(df, na.rm = TRUE, ...){
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
   
-    # create plot for each county in df 
+    # create plot for each site in df 
     plot <- 
       ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
         geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Date (Year 2019)', date_breaks = '1 month', date_labels = '%m') + 
+        scale_x_datetime(name = 'Month (Year 2020)', date_breaks = '1 month', date_labels = '%m') + 
         scale_y_continuous(name = 'Water Depth (m)'
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))
                            ) +
-      theme(axis.title = element_text(size = 18),
-            axis.text = element_text(color = "black", size = 18),
+      theme(axis.title = element_text(size = TEXT),
+            axis.text = element_text(color = "black", size = TEXT),
             axis.ticks.length = unit(-0.2, 'cm'),
             axis.ticks = element_line(color = 'black'),
             axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
@@ -136,9 +136,10 @@ sites.graph <- function(df, na.rm = TRUE, ...){
             panel.grid = element_blank(),
             panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
             plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+            plot.title = element_text(size = TEXT, face = "bold"),
             legend.position = c(10/15,3),
-            legend.text = element_text(size = 18),
-            legend.title = element_text(size = 18),
+            legend.text = element_text(size = TEXT),
+            legend.title = element_text(size = TEXT),
             legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black')) + 
   #    annotate(name) + 

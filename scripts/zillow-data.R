@@ -39,11 +39,21 @@ rownames(zdata) <- c()
 
 parcel_id <- NULL
 # i <- "https://www.zillow.com/homedetails/LOT-C-Portion-Of-LOT-C-Sapelo-Island-GA-31327/2079288306_zpid/"
-# i <- "https://www.zillow.com/homedetails/1214-Wilson-Rd-Sapelo-Island-GA-31327/2104611996_zpid/"
+i <- "https://www.zillow.com/homedetails/15XA-TR3-E-Perimeter-Rd-Sapelo-Island-GA-31327/2077662942_zpid/"
+
+## usually every time need to verify html_nodes on Zillow
+## in Firefox, turn on "inspector" and click on "Parcel Number..." on listing page
+
+css.path <- 'html.zsg-theme-modernized.null.fonts-stage-2 body.actionbar-inline.srp-page-container.zsg-layout_full.responsive-search-page.nav-full-width.tengage.wide.znav-search-bar.map-visible.hdp-double-scroll-layout div#wrapper.main-wrapper div#home-detail-lightbox-container div#search-detail-lightbox.home-detail-lightbox div#details-page-container.detail-page.details-page-container.react.active-view div div.ds-wrapper.znav-force-mobile-layout div#ds-container.ds-container.ds-mobile-single-scroll.ds-container-lightboxed.is-data-forward div.ds-data-col.ds-white-bg.ds-data-col-data-forward div#ds-data-view.c5a12t-0.ffdLrh ul.sc-1f5d78c-0.ieUXpt.ds-data-view-list.zsg-tooltip-viewport li.ds-data-view-item div.ds-home-facts-and-features.reso-facts-features.sheety-facts-features div.sc-19crqy3-2.ccXidy div.sc-19crqy3-4.hKgoUm div.sc-1cravqs-0.jHwnPQ div.sc-1cravqs-2.cmGGck div.sc-1cravqs-3.cuQEKD ul.sc-1cravqs-4.elgsYU li span.Text-aiai24-0.cZksOw'
 
 for(i in zdata$link) {
   OUT <- read_html(i) %>%
-    html_nodes("ul .sc-RefOD") %>%
+    # html_node(css.path)
+    # html_nodes('h5 div ul li span')
+    # html_nodes('span .Text-aiai24-0.cZksOw')
+    # html_nodes('/html/body/div[1]/div[6]/div/div[1]/div/div/div[2]/div[4]/div[6]/ul/li[4]/div/div/div[2]/div[2]/div/div[2]/ul/li[5]/span')
+    # html_nodes('h5 div ul li span')
+    # html_nodes("ul .sc-1cravqs-4 .elgsYU")
     html_text() %>%
     str_split(., "Number: ") %>%
     as.data.frame() %>%

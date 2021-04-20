@@ -34,23 +34,23 @@ fnt = 8
 # size_legend <- guides(color = 'black', fill = 'none')
 ## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  
-                   aes(date, price.ha/100000, color = sale.type)) + 
-  geom_smooth(aes(date, price.ha/100000, color = sale.type, fill = sale.type),
+                   aes(date, price.acre/100000, color = sale.type)) + 
+  geom_smooth(aes(date, price.acre/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
               linetype = 'dashed', lwd = 0.5, show.legend = F) +
-  geom_point(aes(date, price.ha/100000, size = acres * 0.404686), alpha = 0.5) +
+  geom_point(aes(date, price.acre/100000, size = acres), alpha = 0.5) +
   scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
-  scale_y_continuous(name = "Sale price per hectare (x $100,000)",
-                     breaks = seq(0,45, 5),
-                     limits = c(-20,50), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,45,5), labels = NULL)) +
-  coord_x_date(ylim = c(0,45), xlim = c('1990-01-01', '2020-01-01')) +
+  scale_y_continuous(name = "Sale price per acre (x $100,000)",
+                     breaks = seq(0,20, 5),
+                     limits = c(-20,20), expand = c(0.05,0),
+                     sec.axis = sec_axis(~., breaks = seq(0,20,5), labels = NULL)) +
+  coord_x_date(ylim = c(0,20), xlim = c('1990-01-01', '2020-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                     labels = c('Land Only', 'Land with Building')) +
-  scale_size_continuous(name = 'Parcel Size (HA)', range = c(1, 4)) +
+  scale_size_continuous(name = 'Parcel Size (Ac)', range = c(1, 4)) +
   ggtitle('B)') + 
   theme(axis.title = element_text(size = fnt),
         axis.title.x = element_text(margin = margin(t=-10,r=0,b=0,l=0)),
@@ -82,6 +82,9 @@ dev.off()
 sales2 <- sales %>%
   group_by(group, year) %>%
   summarise(freq = n())
+
+sales3 <- sales2 %>% filter(group == "Money" & year >= 1991)
+sum(sales3$freq)
 
 ## plot sales frequency totals and fit curve 
 sale_rate <- ggplot(filter(sales2, year > 1990)) +
@@ -152,6 +155,8 @@ annual.uniqpar <- sales %>%
   summarise(annual_uniqpar = n())
 ## combine
 annual.freq <- merge(annual.uniqpar, annual.trans)
+
+sum(annual.freq$annual_trans)
 
 ## transaction freq by decade
 decadal.trans <- sales %>%
