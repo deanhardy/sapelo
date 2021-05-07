@@ -8,14 +8,16 @@ library(tmap)
 library(raster)
 library(fasterize)
 library(tidyverse)
+library(rgdal)
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
+datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo'
 
 ## import parcel owner data and trans
 df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
-  mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
+  mutate(owner = ifelse(is.na(owner), 'unknown', owner),
+         own3cat = ifelse(own3cat == 'Non-traditional', 'Outsider', own3cat)) %>%
   filter(own4cat != 'County' & gis_acres != 'NA')
 
 ## filter out just companies
@@ -43,13 +45,13 @@ tidal <- raster(file.path(datadir, 'spatial-data/inundation/is01.tif'))
 
 ##import inundation data
 inund <- st_read(file.path(datadir, 'spatial-data/inundation/inund2100hc_poly.shp'), stringsAsFactors = F) %>%
-  st_transform(4326) %>%
+  st_transform(4326)
   filter(prb_smplfy != '1%') %>%
   mutate(prb_smplfy = ifelse(prblty %in% c('50%', '95%'), '50%', '5%'))
 
 ## define map variables
 clr.own <- c('black', 'grey60', 'orange')
-clr.ind <- c('#00a9e6', '#004c73')
+clr.ind <- c('#BFE8FF', '#00a9e6','#004c73', '#004c73')
 leafIcon <- tmap_icons("http://leafletjs.com/examples/custom-icons/leaf-green.png")
 
 map.own.ind <- 
@@ -65,7 +67,7 @@ map.own.ind <-
   #             n = 4,
   #             as.count = FALSE) + 
   tm_shape(inund) + 
-    tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
+    tm_fill('prb_smplfy', alpha = 0.3, palette = clr.ind,
             title = 'Inundation Probability') + 
   tm_shape(tidal, raster.downsample = FALSE) + 
     tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
@@ -100,17 +102,18 @@ dev.off()
 
 ## separate inundation map
 map.ind <- 
-  tm_shape(df) + tm_borders(lwd = 0.5) + 
+  tm_shape(df) + tm_borders() + 
   tm_shape(inund) + 
-  tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
+  tm_fill('prb_smplfy', alpha = 1, palette = clr.ind,
           title = 'A)\nInundation Probability') + 
   tm_shape(tidal, raster.downsample = FALSE) + 
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
+  tm_shape(df) + tm_borders(lwd = 1, col = 'black') + 
   tm_layout(frame = FALSE,
-            legend.text.size = 0.6,
-            legend.title.size = 0.7) +
+            legend.text.size = 0.8,
+            legend.title.size = 0.9) +
   tm_add_legend(type = 'fill',
-                labels = 'MHHW Extent',
+                labels = 'Tidal Marsh',
                 col = '#89cd66',
                 border.lwd = 0) 
 # tm_add_legend(type = 'symbol',
@@ -128,7 +131,7 @@ map.own <-
           title = 'B)\nOwner Category') + 
   tm_shape(df) + tm_borders(lwd = 0.5) + 
   tm_shape(comp) + tm_borders('yellow') + 
-  tm_shape(ag) + tm_fill('green') + 
+  # tm_shape(ag) + tm_fill('green') + 
   # tm_shape(inund,
   #          raster.downsample = FALSE) + 
   #   tm_raster(alpha = 0.5,
@@ -139,14 +142,14 @@ map.own <-
   tm_shape(ag_cntr) + 
   tm_symbols(shape = leafIcon, border.lwd = NA,
              just = c(0.4, 2),
-             size = 0.5) + 
+             size = 0.7) + 
   tm_shape(hobo) +
   tm_markers(shape = marker_icon(),
              just = c(0,2),
-             size = 0.1) + 
+             size = 0.3) + 
   tm_layout(frame = FALSE,
-            legend.text.size = 0.6,
-            legend.title.size = 0.7) 
+            legend.text.size = 0.8,
+            legend.title.size = 0.9) 
   # tm_add_legend(type = 'fill',
   #               labels = 'MHHW Extent',
   #               col = '#89cd66',
@@ -163,7 +166,7 @@ map.own
 library(grid)
 library(gridExtra)
 tiff(file.path(datadir, 'figures/doubleD-fig-option1.tiff'), units = 'in', width = 7, height = 3.5, 
-     res = 150, compression = 'lzw')
+     res = 300, compression = 'lzw')
 tmap_arrange(map.ind, map.own, widths = c(0.5, 0.5))
 dev.off()
 
