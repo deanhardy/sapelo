@@ -157,6 +157,11 @@ matches <- regmatches(zdata$date, gregexpr("[[:digit:]]+", zdata$date))
 
 unlist(map(matches, c(2,1)))
 
+##import inundation data
+inund <- st_read(file.path(datadir, 'spatial-data/inundation/inund2100hc_poly.shp'), stringsAsFactors = F) %>%
+  st_transform(4326) %>%
+  filter(prb_smplfy != '1%') %>%
+  mutate(prb_smplfy = ifelse(prblty %in% c('50%', '95%'), '50%', '5%'))
 
 forsale <- merge(df2, zdata, by = "parcel_id") %>%
   rename(saledate = date.y, saleprice = price.y) %>%
@@ -175,6 +180,8 @@ clr4 <- c('black', 'grey60', 'orange', 'white')
 pal3 <- colorFactor(clr4, df$own3cat)
 pal4 <- colorFactor("RdYlBu", sp_cashsales$year)
 clr3 <- c('green', 'yellow', 'red')
+clr.ind <- c('#00a9e6', '#004c73')
+pal5 <- colorFactor(clr.ind, inund$prb_smplfy)
 tit3 <- colorFactor(clr3, df3$status)
 tit3.h <- colorFactor(clr3, df3.hatch$status)
 forsale_group <- paste('For Sale (updated ', format(Sys.Date(), format="%m/%d/%y"), ')', sep = '')
@@ -299,6 +306,11 @@ m <- leaflet() %>%
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
+  addPolygons(data = inund,
+              group = 'Inundation',
+              fillColor = ~pal5(inund$prb_smplfy),
+              fillOpacity = 0.8,
+              weight = 1) %>%
   addPolygons(data = sp_cashsales,
               popup = sales_popup,
               color = 'black',
@@ -307,7 +319,7 @@ m <- leaflet() %>%
               fillOpacity = 0.8,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-                   overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers'),
+                   overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers', 'Inundation'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = pal3,
@@ -324,6 +336,11 @@ m <- leaflet() %>%
             group = 'Latest Sales',
             values = sp_cashsales$year,
             title = "Latest Sale Year") %>%
+  addLegend("bottomleft",
+            pal = pal5,
+            group = 'Inundation',
+            values = inund$prb_smplfy,
+            title = "Inundation") %>%
   addSearchFeatures(targetGroups = 'Parcels_Cntrd', 
                     options = searchFeaturesOptions(propertyName = "label",
                                                     zoom = 18)) %>%
@@ -332,7 +349,7 @@ m <- leaflet() %>%
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c('Sales', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers'))
+  hideGroup(c('Sales', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers', 'Inundation'))
 m
 
 library(htmlwidgets)

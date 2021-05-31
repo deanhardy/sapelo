@@ -6,7 +6,9 @@ library(data.table)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+#datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
+
 
 # set dates for graphs
 date1 <- as.Date('2020-03-13') 
@@ -20,7 +22,7 @@ filz <- list.files(path = file.path(datadir, 'hobo-data'),
                    recursive = TRUE) 
 tidal <- NULL
 datums <- read.csv(file.path(datadir, 'datums.csv'))
-  
+
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],

@@ -55,11 +55,11 @@ sum <- po %>%
   filter(!(own3cat %in% c('County', 'Unknown')))
 
 ## plot freq of land holdings by owner 3 class category
-sumplot <- ggplot(sum, aes(own3cat, acres * 0.404686)) +
+sumplot <- ggplot(sum, aes(own3cat, acres)) +
   geom_col(fill = 'black', show.legend = F, width = 0.2) + 
   # geom_text(aes(own3cat, acres+5), label = sum$num) + 
-  labs(x = '', y = "Hectares") + 
-  scale_y_continuous(limits = c(0,80), expand = c(0,0)) +
+  labs(x = '', y = "Acres") + 
+  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
   # scale_fill_manual(values = 'black') +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
@@ -81,10 +81,10 @@ sum2 <- po %>%
   filter(!(own4cat %in% c('County', 'Unknown')))
 
 ## plot freq of land holdings by owner 4 class category
-sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres * 0.404686)) +
+sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres)) +
   geom_col(fill = 'black', show.legend = F, width = 0.3) +
-  labs(x = '', y = "Hectares") + 
-  scale_y_continuous(limits = c(0,80), expand = c(0,0)) +
+  labs(x = 'Owner Category', y = "Acres") + 
+  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
   scale_fill_manual(values = clr4) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
