@@ -86,51 +86,6 @@ clr.own <- c('black', 'grey60', 'grey95')
 clr.ind <- c('#BFE8FF', '#00a9e6','#004c73', '#004c73')
 leafIcon <- tmap_icons("http://leafletjs.com/examples/custom-icons/leaf-green.png")
 
-# map.own.ind <- 
-#   tm_shape(df) + 
-#     tm_fill('own3cat', palette = clr.own, 
-#             title = 'Owner Category') + 
-#   tm_shape(df) + tm_borders(lwd = 0.5) + 
-#   tm_shape(comp) + tm_borders('yellow') + 
-#   tm_shape(ag) + tm_fill('green') + 
-#   # tm_shape(inund,
-#   #          raster.downsample = FALSE) + 
-#   #   tm_raster(alpha = 0.5,
-#   #             n = 4,
-#   #             as.count = FALSE) + 
-#   tm_shape(inund) + 
-#     tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
-#             title = 'Inundation Probability') + 
-#   tm_shape(tidal, raster.downsample = FALSE) + 
-#     tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
-#   tm_shape(ag_cntr) + 
-#     tm_symbols(shape = leafIcon, border.lwd = NA,
-#              just = c(0.4, 2),
-#              size = 0.5) + 
-#   tm_shape(hobo) +
-#     tm_markers(shape = marker_icon(),
-#                just = c(0,2),
-#              size = 0.1) + 
-#   tm_layout(frame = FALSE,
-#             legend.text.size = 0.6,
-#             legend.title.size = 0.7) +
-#   tm_add_legend(type = 'fill',
-#                 labels = 'MHHW Extent',
-#                 col = '#89cd66',
-#                 border.lwd = 0) 
-#   # tm_add_legend(type = 'symbol',
-#   #               label = 'Agricultural Plot',
-#   #               shape = leafIcon) + 
-#   # tm_add_legend(type = 'symbol',
-#   #               shape = marker_icon(),
-#   #               label = 'Water Level Logger')
-# map.own.ind
-# 
-# tiff(file.path(datadir, 'figures/doubleD-fig.tiff'), units = 'in', width = 3.5, height = 3.5, 
-#      res = 300, compression = 'lzw')
-# map.own.ind
-# dev.off()
-
 ## separate inundation map
 map.ind <- 
   tm_shape(df) + tm_borders() + 
@@ -159,14 +114,15 @@ map.own <-
   tm_shape(df) + 
   tm_fill('own3cat', palette = clr.own, 
           title = 'B)\nOwner Category') + 
-  tm_shape(df) + tm_borders(lwd = 0.5) + 
+  tm_shape(df) + tm_borders(lwd = 1) + 
   # tm_shape(comp) + tm_borders('yellow') + 
   tm_shape(comp.hatch) + tm_lines() + 
   tm_shape(tidal, raster.downsample = FALSE) + 
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(ag_cntr) + 
   tm_squares(col = 'green', 
-             size = 0.5) + 
+             size = 0.4,
+             border.col = 'black') + 
   tm_shape(hobo) +
   tm_symbols(col = 'steelblue3',
              size = 0.5,
@@ -188,7 +144,7 @@ map.own <-
 map.own
 
 tiff(file.path(datadir, 'figures/HardyFigure1.tiff'), units = 'in', width = 7, height = 3.5, 
-     res = 300, compression = 'lzw')
+     res = 600, compression = 'lzw')
 tmap_arrange(map.ind, map.own, widths = c(0.5, 0.5))
 dev.off()
 
