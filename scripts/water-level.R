@@ -6,22 +6,23 @@ library(data.table)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-#datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
-datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
-
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+# datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
 date1 <- as.Date('2020-03-13') 
 date2 <- as.Date('2020-06-13')
 
-## define variables
+## import water level data files
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
 filz <- list.files(path = file.path(datadir, 'hobo-data'),
                    pattern= '*.csv',
                    full.names = TRUE,
                    recursive = TRUE) 
 tidal <- NULL
-datums <- read.csv(file.path(datadir, 'datums.csv'))
+
+## import mllw elevation including lidar and RTK adjusted elevations 
+elev <- read.csv(file.path(datadir, 'site-elevations.csv'))
 
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
@@ -61,6 +62,7 @@ ot <- read.delim(file.path(datadir, 'nerr-data/OldTower-tide-predictions.txt'),
                  stringsAsFactors = FALSE)
 colnames(ot) <- c('Date', 'Day', 'Time', 'Pred', 'High.Low', 'SKIP1', 'SKIP2')  
 
+## further tidy and filter data to just high tide
 ot2 <- ot %>% 
   mutate(date_time_gmt = with(., as.POSIXct(paste(Date, Time), 
                               format = '%Y/%m/%d %I:%M %p'))) %>%
@@ -99,7 +101,7 @@ ot2 <- ot %>%
 # create graphing function
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################
-TEXT = 24 ## set font size for figures
+TEXT = 15 ## set font size for figures
 sites.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
@@ -115,7 +117,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Month (Year 2020)', date_breaks = '1 month', date_labels = '%m') + 
+        scale_x_datetime(name = 'Year 2020', date_breaks = '1 week', date_labels = '%m/%d') + 
         scale_y_continuous(name = 'Water Depth (m)'
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))

@@ -32,6 +32,7 @@ date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(S
 
 lgr_ts <- as.data.frame(date_time_gmt)
 
+## interpolate values
 ip_values <- approx(nerr_wx$date_time_gmt, nerr_wx$BP, xout = lgr_ts$date_time_gmt, 
                     rule = 2, method = "linear", ties = mean)
 
