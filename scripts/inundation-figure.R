@@ -122,9 +122,10 @@ map.own <-
   tm_shape(ag_cntr) + 
   tm_squares(col = 'green', 
              size = 0.4,
-             border.col = 'black') + 
+             border.col = 'black',
+             border.lwd = 1) + 
   tm_shape(hobo) +
-  tm_symbols(col = 'steelblue3',
+  tm_symbols(col = 'steelblue1',
              size = 0.5,
              border.lwd = 1, 
              border.col = 'black') + 
@@ -137,7 +138,7 @@ map.own <-
                 labels = 'Agricultural Plots') + 
   tm_add_legend(type = 'symbol',
                 shape = 21,
-                col = 'steelblue3',
+                col = 'steelblue1',
                 labels = 'Water Loggers') + 
   tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
   tm_compass(position = c(0.74, 0.11), text.size = 0.7)
