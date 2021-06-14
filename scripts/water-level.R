@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2020-03-13') 
-date2 <- as.Date('2020-06-13')
+date1 <- as.Date('2020-05-13') 
+date2 <- as.Date('2020-08-16')
 
 ## import water level data files
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
@@ -30,7 +30,7 @@ for(i in 1:length(filz)) {
                select = c(2:5),
                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_depth_m'),
                stringsAsFactors = FALSE) %>%
-    slice(., 2:(n()-1)) %>% ## removes first and last readings
+    slice(., 2:(n()-3)) %>% ## removes first and last 3 readings (last 2 of which are coupler info)
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
            site = str_sub(filz[i], 68,-19)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
