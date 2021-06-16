@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-01-01') 
-date2 <- as.Date('2019-12-31')
+date1 <- as.Date('2020-01-01') 
+date2 <- as.Date('2020-12-31')
 
 ## import water level data files
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
@@ -154,7 +154,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                           'figures/',
+                           'figures/', "2020-",
                            sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
@@ -171,66 +171,3 @@ sites.graph <- function(df, na.rm = TRUE, ...){
 sites.graph(tidal)
 
 
-########################################################
-# create graphing function for ht
-# https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-########################################################
-TEXT = 15 ## set font size for figures
-sites.graph <- function(df, na.rm = TRUE, ...){
-  
-  # create list of logger sites in data to loop over 
-  sites_list <- unique(df$sitename)
-  
-  # create for loop to produce ggplot2 graphs 
-  for (i in seq_along(sites_list)) {
-    
-    # create plot for each site in df 
-    plot <- 
-      ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
-      geom_line(aes(date, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-      # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
-      # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
-      # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-      scale_x_date(name = 'Year 2020', date_breaks = '1 week', date_labels = '%m/%d') + 
-      scale_y_continuous(name = 'Water Depth (m)'
-                         # sec.axis = sec_axis(~. * 15, 
-                         #                    name = expression(paste('Water Temperature (',degree,'C)')))
-      ) +
-      theme(axis.title = element_text(size = TEXT),
-            axis.text = element_text(color = "black", size = TEXT),
-            axis.ticks.length = unit(-0.2, 'cm'),
-            axis.ticks = element_line(color = 'black'),
-            axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-            axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-            axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-            axis.line = element_line(color = 'black'),
-            panel.background = element_rect(fill = FALSE, color = 'black'),
-            panel.grid = element_blank(),
-            panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
-            plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-            plot.title = element_text(size = TEXT, face = "bold"),
-            legend.position = c(10/15,3),
-            legend.text = element_text(size = TEXT),
-            legend.title = element_text(size = TEXT),
-            legend.key = element_blank(),
-            legend.box.background = element_rect(color = 'black')) + 
-      #    annotate(name) + 
-      ggtitle(sites_list[i])
-    
-    # save plots as .png
-    ggsave(plot, file=paste(datadir,
-                            'figures/',
-                            sites_list[i], "-ht.png", sep=''), width = 6, height = 5, units = 'in', scale=2)
-    
-    # save plots as .pdf
-    # ggsave(plot, file=paste(results, 
-    #                        'projection_graphs/county_graphs/',
-    #                        count_list[i], ".pdf", sep=''), scale=2)
-    
-    # print plots to screen
-    # print(plot)
-  }
-}
-
-# run graphing function on long df
-sites.graph(ht)
