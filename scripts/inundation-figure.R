@@ -5,7 +5,6 @@ library(sf)
 library(raster)
 library(lubridate)
 library(tmap)
-library(raster)
 library(fasterize)
 library(tidyverse)
 library(rgdal)
@@ -37,7 +36,7 @@ ag_cntr <- st_centroid(ag) %>%
 hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   rename(site = Id)
-info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors = F) %>%
+info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
   mutate(install_date = as.Date(install.date, '%m/%d/%y'),
          site = as.numeric(site)) %>%
   dplyr::select(site, install_date)
@@ -48,11 +47,12 @@ tidal <- raster(file.path(datadir, 'spatial-data/inundation/is01.tif'))
 
 ##import inundation data
 inund <- st_read(file.path(datadir, 'spatial-data/inundation/inund2100hc_poly.shp'), stringsAsFactors = F) %>%
-  st_transform(4326)
-  filter(prb_smplfy != '1%') %>%
-  mutate(prb_smplfy = ifelse(prblty %in% c('50%', '95%'), '50%', '5%'))
+  st_transform(4326) %>%
+  # filter(prb_smplfy != '1%') %>%
+  mutate(prb_smplfy = ifelse(prblty %in% c('50%', '95%'), '50%', prblty)) %>%
+  st_make_valid()
 
-  ## https://gist.github.com/johnbaums/c6a1cb61b8b6616143538950e6ec34aa
+## https://gist.github.com/johnbaums/c6a1cb61b8b6616143538950e6ec34aa
 hatch <- function(x, density) {
     # x: polygon object (SpatialPolgyons* or sf)
     # density: approx number of lines to plot
@@ -84,7 +84,13 @@ comp.hatch <- hatch(comp, 60)
 ## define map variables
 clr.own <- c('black', 'grey60', 'grey95')
 clr.ind <- c('#BFE8FF', '#00a9e6','#004c73', '#004c73')
+# clr.ind <- c('#ACD1E6', '#86A2B3','#607480', '#607480') ## meager attempt at 10/30/50 tint shades
 leafIcon <- tmap_icons("http://leafletjs.com/examples/custom-icons/leaf-green.png")
+
+## temporary fix to empty parcels
+df <- df %>% filter(!st_is_empty(.))
+
+tmap_options(check.and.fix = TRUE)
 
 ## separate inundation map
 map.ind <- 
@@ -107,7 +113,7 @@ map.ind <-
                 col = '#89cd66',
                 border.lwd = 0,
                 group = 'funky')
-map.ind
+# map.ind
 
 ## separate owner map with ag and water loggers
 map.own <- 
@@ -142,7 +148,7 @@ map.own <-
                 labels = 'Water Loggers') + 
   tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
   tm_compass(position = c(0.74, 0.11), text.size = 0.7)
-map.own
+# map.own
 
 tiff(file.path(datadir, 'figures/HardyFigure1.tiff'), units = 'in', width = 7, height = 3.5, 
      res = 600, compression = 'lzw')
