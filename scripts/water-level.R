@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2020-01-01') 
-date2 <- as.Date('2020-12-31')
+date1 <- as.Date('2019-10-01') 
+date2 <- as.Date('2019-12-31')
 
 ## import water level data files
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
@@ -126,7 +126,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Year 2020', date_breaks = '1 month', date_labels = '%m') + 
+        scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
         scale_y_continuous(name = 'Water Depth (m)'
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))
@@ -150,12 +150,11 @@ sites.graph <- function(df, na.rm = TRUE, ...){
             legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black')) + 
   #    annotate(name) + 
-      ggtitle(sites_list[i])
+      ggtitle(paste0(sites_list[i], "- Year ", year(date1)))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                           'figures/', "2020-",
-                           sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                           'figures/', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
