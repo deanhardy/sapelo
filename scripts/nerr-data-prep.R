@@ -22,7 +22,6 @@ nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2106
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP)) %>%
-# filter(date_time_gmt >= first('2018-10-13 00:00:00') & date_time_gmt <= Sys.time()) %>%
   select(date_time_gmt, BP)
 
 ## create datetime sequence that matches logger datetime stamps
@@ -45,9 +44,11 @@ nerr_wx3 <- nerr_wx2 %>%
   mutate(Date = noquote(Date)) %>%
   select(Date, Time, pres)
 
-colnames(nerr_wx3) <- c('Date', 'Time', 'pres (mbar)')
+colnames(nerr_wx3) <- c('Date', 'Time (GMT)', 'pres (mbar)')
 
-write.table(nerr_wx3, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+nerr_wx4 <- nerr_wx3 %>%
+  filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
+  
+write.table(nerr_wx4, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
-# write.csv(nerr_wx3, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.csv'), row.names = FALSE)
 
