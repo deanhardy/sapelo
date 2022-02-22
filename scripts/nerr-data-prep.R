@@ -4,7 +4,7 @@
 ##    to match pressure transducer loggers in field at 12 min intervals via interpolations
 ## Requested citation format: NOAA National Estuarine Research Reserve System (NERRS). 
 ##    System-wide Monitoring Program. Data accessed from the NOAA NERRS Centralized Data Management Office 
-##    website: http://cdmo.baruch.sc.edu/; accessed 08 July 2020. 
+##    website: http://cdmo.baruch.sc.edu/. 
 ##############################
 
 rm(list=ls())
@@ -22,12 +22,16 @@ nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2106
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP)) %>%
-  select(date_time_gmt, BP)
+  select(date_time_gmt, BP) %>%
+  drop_na()
 
 ## create datetime sequence that matches logger datetime stamps
 ## then interpolate baro press values and export for use in HOBOware
 date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(Sys.Date()), 
                      by = '12 mins')
+date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(last(nerr_wx$date_time_gmt)), 
+                     by = '12 mins')
+tail(date_time_gmt)
 
 lgr_ts <- as.data.frame(date_time_gmt)
 
