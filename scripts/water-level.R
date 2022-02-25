@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-10-01') 
-date2 <- as.Date('2019-12-31')
+date1 <- as.Date('2020-10-01') 
+date2 <- as.Date('2020-12-31')
 
 ## import water level data files
 # sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
