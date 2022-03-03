@@ -143,7 +143,7 @@ ag_cntr <- st_centroid(ag)
 hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   rename(site = Id)
-info <- read.csv(file.path(datadir, 'water-level/datums.csv'), stringsAsFactors = F) %>%
+info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
   mutate(install_date = as.Date(install.date, '%m/%d/%y'),
          site = as.numeric(site)) %>%
   dplyr::select(site, install_date)

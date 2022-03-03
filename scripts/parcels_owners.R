@@ -109,10 +109,13 @@ po2 <- po %>%
   mutate(own3cat = ifelse(own3cat %in% c('Unknown', 'County'), 'Other', own3cat)) %>%
   mutate(own3cat = as_factor(own3cat))
 
-st_write(po2, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
+## remove empty geometries
+po3 <- po2 %>% filter(!st_is_empty(.))
+
+st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
 
 ## map owners by category
-map <- tm_shape(po2) + 
+map <- tm_shape(po3) + 
   tm_fill('own_cat', title = 'Owner Category') + 
   tm_borders(col = 'black') +
   tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.71, 0)) + 
@@ -126,7 +129,7 @@ map
 dev.off()
 
 ## map owners by 3 class category
-map2 <- tm_shape(po2) + 
+map2 <- tm_shape(po3) + 
   tm_fill('own3cat', palette = clr4, title = 'B)\nOwner Category') + 
   tm_borders(col = 'black') +
   tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
@@ -143,7 +146,7 @@ dev.off()
 
 
 ## map owners by 3 class category with companies highlighted
-map3 <- tm_shape(po2) + 
+map3 <- tm_shape(po3) + 
   tm_fill('own3cat', palette = clr5, title = 'Owner Category') + 
   tm_borders(col = 'black') +
   tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
@@ -160,7 +163,7 @@ dev.off()
 
 ownsum <- po %>%
   group_by(own3cat) %>%
-  summarise(n(), ha = sum(gis_acres * 0.404686, na.rm = T))
+  summarise(n(), ac = sum(gis_acres, na.rm = T), ha = sum(gis_acres * 0.404686, na.rm = T))
 
 ## descendant hectares percentage
 ownsum[[2,3]]/sum(ownsum$ha)
@@ -176,11 +179,12 @@ outsidersum <- po %>%
   filter(own3cat == 'Non-traditional') %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
+sum(outsidersum$`n()`)
 
 descendantsum <- po %>%
   filter(own3cat == 'Descendant') %>%
   group_by(owner) %>%
-  summarise(n())
+  summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 sum(descendantsum$`n()`)
 
 heirs <- po %>%
