@@ -10,12 +10,11 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2020-03-01') 
-date2 <- as.Date('2020-05-31')
+date1 <- as.Date('2018-10-13') 
+date2 <- as.Date('2019-01-18')
 
 ## import water level data files
-# sites <- c('s02', 's03', 's05', 's06', 's07', 's09', 's11', 's12', 's13', 's14')
-filz <- list.files(path = file.path(datadir, 'logger-data'),
+filz <- list.files(path = file.path(datadir, 'new-logger-data'),
                    pattern= '*.csv',
                    full.names = TRUE,
                    recursive = TRUE) 
@@ -33,7 +32,7 @@ for(i in 1:length(filz)) {
     slice(., 5:(n()-7)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
            date = as.Date(date_time_gmt, '%m/%d/%Y'),
-           site = str_sub(filz[i], 70,-19)) %>%
+           site = str_sub(filz[i], -25,-24)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
                           if_else(site == 'Site-03', 'St. Lukes',
@@ -45,8 +44,8 @@ for(i in 1:length(filz)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
-    mutate(sitename = paste(site, name)) %>%
-    filter(water_depth_m >=0 & water_depth_m <2)
+    mutate(sitename = paste(site, name))
+    # filter(water_depth_m >=0 & water_depth_m <2)
   tidal <- rbind(OUT, tidal)
 }
 
@@ -56,10 +55,23 @@ ht <- tidal %>%
   slice(1) %>%
   ungroup()
 
-tidal <- tidal %>%
-  mutate(water_depth_m = ifelse(name == "Purple Ribbon", water_depth_m - 0.3, water_depth_m)) %>%
-  mutate(water_depth_m = ifelse(name == "Mr. Smith", water_depth_m - 0.47, water_depth_m))
+SN <- elev$name
+
+tidal2 <- NULL
+## correcting water levels from well cap to substrate reference elevation
+for (i in 1:length(SN)) {
   
+  el2 <- elev %>%
+  filter(name == SN[[i]]) 
+  
+  OUT2 <- tidal %>%
+    filter(name == SN[[i]]) %>%
+    mutate(water_depth_m = water_depth_m + el2$well_ht_m,
+           well_ht = el2$well_ht)
+  
+  tidal2 <- rbind(OUT2, tidal2)
+}
+
 
 ## import SINERR water level data from Lower Duplin
 # nerr <- read.csv(file.path(datadir, 'nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
@@ -131,7 +143,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
         scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-        scale_y_continuous(name = 'Water Depth (m)'
+        scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0)
                            # sec.axis = sec_axis(~. * 15, 
                            #                    name = expression(paste('Water Temperature (',degree,'C)')))
                            ) +
@@ -171,6 +183,6 @@ sites.graph <- function(df, na.rm = TRUE, ...){
 }
 
 # run graphing function on long df
-sites.graph(tidal)
+sites.graph(tidal2)
 
 
