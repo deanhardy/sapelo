@@ -166,7 +166,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
             legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black')) + 
   #    annotate(name) + 
-      ggtitle(paste0(sites_list[i], "- Year ", year(date1)))
+      ggtitle(paste0(sites_list[i], " - Year ", year(date1)))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
