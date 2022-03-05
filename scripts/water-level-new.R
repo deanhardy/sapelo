@@ -23,6 +23,12 @@ tidal <- NULL
 ## import mllw elevation including lidar and RTK adjusted elevations 
 elev <- read.csv(file.path(datadir, 'site-elevations.csv'))
 
+## import daily precipitation totals
+TP <- read_csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
+  select(date_time_gmt, TP_mm) %>%
+  filter(date_time_gmt >= date1 & date_time_gmt <= date2,
+         TP_mm > 0)
+
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
@@ -139,6 +145,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     plot <- 
       ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
         geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
+        geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) + 
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
