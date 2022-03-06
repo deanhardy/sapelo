@@ -29,6 +29,10 @@ TP <- read_csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2,
          TP_mm > 0)
 
+## add lunar phase
+lnr <- TP %>%
+  mutate(moon = lunar.phase(date_time_gmt, shift = 0, name = F))
+
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
@@ -78,7 +82,10 @@ for (i in 1:length(SN)) {
   tidal2 <- rbind(OUT2, tidal2)
 }
 
+tidal3 <- tidal2 %>%
+  mutate(moon = lunar.phase(date_time_gmt, shift = 0, name = 8))
 
+  
 ## import SINERR water level data from Lower Duplin
 # nerr <- read.csv(file.path(datadir, 'nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
 #                  header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
