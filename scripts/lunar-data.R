@@ -11,6 +11,7 @@ Sys.setenv(TZ='GMT')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+
 lunar <- NULL
 YR <- c("https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2019",
@@ -33,3 +34,4 @@ OUT <- data$phasedata %>%
 lunar <- rbind(OUT, lunar)
 }
 
+write.csv(lunar, file.path(datadir, 'lunar.csv'))

@@ -24,14 +24,16 @@ tidal <- NULL
 elev <- read.csv(file.path(datadir, 'site-elevations.csv'))
 
 ## import daily precipitation totals
-TP <- read_csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
+TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
   select(date_time_gmt, TP_mm) %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2,
-         TP_mm > 0)
+         TP_mm > 0) %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'))
 
-## add lunar phase
-lnr <- TP %>%
-  mutate(moon = lunar.phase(date_time_gmt, shift = 0, name = F))
+## import lunar data
+lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
+  filter(date_time_gmt >= date1 & date_time_gmt <= date2 & phase %in% c('New Moon', 'Full Moon')) %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'))
 
 ## import & tidy hobo water level data
 for(i in 1:length(filz)) {
@@ -81,10 +83,6 @@ for (i in 1:length(SN)) {
   
   tidal2 <- rbind(OUT2, tidal2)
 }
-
-tidal3 <- tidal2 %>%
-  mutate(moon = lunar.phase(date_time_gmt, shift = 0, name = 8))
-
   
 ## import SINERR water level data from Lower Duplin
 # nerr <- read.csv(file.path(datadir, 'nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
@@ -152,14 +150,18 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     plot <- 
       ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
         geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-        geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) + 
+        geom_hline(aes(yintercept = well_ht), linetype = 'dashed',
+                   filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) +
+        geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
+        geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'Full Moon'), shape = 1, size = 5) +
+        geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'New Moon'), shape = 16, size = 5) +
         # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
         # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
         # geom_point(aes(date_time_gmt, Pred), data = ot2) +
         scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-        scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0)
-                           # sec.axis = sec_axis(~. * 15, 
-                           #                    name = expression(paste('Water Temperature (',degree,'C)')))
+        scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+                           sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                                             name = expression(paste('Total Daily Precipitation (mm)')))
                            ) +
       theme(axis.title = element_text(size = TEXT),
             axis.text = element_text(color = "black", size = TEXT),
