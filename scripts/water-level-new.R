@@ -83,7 +83,7 @@ for (i in 1:length(SN)) {
   
   tidal2 <- rbind(OUT2, tidal2)
 }
-  
+
 ## import SINERR water level data from Lower Duplin
 # nerr <- read.csv(file.path(datadir, 'nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
 #                  header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
@@ -150,8 +150,12 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     plot <- 
       ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
         geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-        geom_hline(aes(yintercept = well_ht), linetype = 'dashed',
+        geom_text(aes(yintercept = mean(water_depth_m)), linetype = 'dashed',
                    filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) +
+        geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed',
+                   filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
+       # geom_col(aes(date_time_gmt[100], well_ht), 
+        #          filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
         geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
         geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'Full Moon'), shape = 1, size = 5) +
         geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'New Moon'), shape = 16, size = 5) +
@@ -163,6 +167,8 @@ sites.graph <- function(df, na.rm = TRUE, ...){
                            sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                                              name = expression(paste('Total Daily Precipitation (mm)')))
                            ) +
+      # annotate("pointrange", x = date1, y = filter(df$well_ht, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2),
+      #          colour = "red", size = 1.5)
       theme(axis.title = element_text(size = TEXT),
             axis.text = element_text(color = "black", size = TEXT),
             axis.ticks.length = unit(-0.2, 'cm'),
