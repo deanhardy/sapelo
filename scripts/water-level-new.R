@@ -146,29 +146,38 @@ sites.graph <- function(df, na.rm = TRUE, ...){
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
   
+    df2 <- filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)
+    
     # create plot for each site in df 
     plot <- 
-      ggplot(filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2))  + 
-        geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-        geom_text(aes(yintercept = mean(water_depth_m)), linetype = 'dashed',
-                   filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) +
-        geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed',
-                   filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
-       # geom_col(aes(date_time_gmt[100], well_ht), 
-        #          filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
-        geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
-        geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'Full Moon'), shape = 1, size = 5) +
-        geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'New Moon'), shape = 16, size = 5) +
-        # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
-        # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
-        # geom_point(aes(date_time_gmt, Pred), data = ot2) +
-        scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-        scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
-                           sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                                             name = expression(paste('Total Daily Precipitation (mm)')))
-                           ) +
-      # annotate("pointrange", x = date1, y = filter(df$well_ht, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2),
-      #          colour = "red", size = 1.5)
+      ggplot(df2)  + 
+      geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
+      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
+                 # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
+      geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
+      geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'Full Moon'), shape = 1, size = 5) +
+      geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'New Moon'), shape = 16, size = 5) +
+      # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
+      # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
+      # geom_point(aes(date_time_gmt, Pred), data = ot2) +
+      scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
+      scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+                         sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                                           name = expression(paste('Total Daily Precipitation (mm)')))
+                         ) +
+      annotate("rect",
+               xmin = as.POSIXct('2018-10-12 00:48:00'),
+               xmax = as.POSIXct('2018-10-13 00:48:00'),
+               ymin = 0,
+               ymax = df2$well_ht,
+               alpha = 0.1) +
+      annotate("text",
+               x = as.POSIXct('2018-10-12 12:48:00'),
+               y = df2$well_ht+0.1,
+               label = 'Well Height',
+               angle = 90) +
+      # geom_text(aes(as.POSIXct('2018-10-13 00:48:00'), df2$well_ht, label = 'well height')) +
+      labs(caption = "Dashed line indicates mean water level. Symbols at 1.5m indicate New & Full Moons.") + 
       theme(axis.title = element_text(size = TEXT),
             axis.text = element_text(color = "black", size = TEXT),
             axis.ticks.length = unit(-0.2, 'cm'),
@@ -190,7 +199,6 @@ sites.graph <- function(df, na.rm = TRUE, ...){
             legend.title = element_text(size = TEXT),
             legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black')) + 
-  #    annotate(name) + 
       ggtitle(paste0(sites_list[i], " - Year ", year(date1)))
     
     # save plots as .png
