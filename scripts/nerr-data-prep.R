@@ -11,6 +11,7 @@ rm(list=ls())
 
 library(tidyverse)
 library(lubridate)
+library(timetk)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
@@ -21,9 +22,24 @@ nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2202
            header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
-         BP = as.numeric(BP)) %>%
-  select(date_time_gmt, BP) %>%
+         BP = as.numeric(BP),
+         TP = as.numeric(TotPrcp)) %>%
+  select(date_time_gmt, BP, TP) %>%
   drop_na()
+
+## calculate and export total daily precipitation values in mm 
+totprcp <- nerr_wx %>%
+  select(date_time_gmt, TP) %>%
+  summarise_by_time(
+    .date_var = date_time_gmt,
+    .by = 'day',
+    value = sum(TP))
+
+TP <- totprcp %>%
+  rename(TP_mm = value) %>%
+  mutate(date_time_gmt = date_time_gmt + hours(12) + minutes(00) + seconds(00))
+
+write.csv(TP, file.path(datadir, 'water-level/nerr-data/SAPMLMET_TP.csv')) 
 
 ## create datetime sequence that matches logger datetime stamps
 ## then interpolate baro press values and export for use in HOBOware
