@@ -37,10 +37,11 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
          phase = ifelse(phase == 'New Moon', 'New', 'Full'))
 
 ## import & tidy hobo water level data
+## note water level C is in meters and indicates water level in reference to wellcap 
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
                select = c(2:5),
-               col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_depth_m'),
+               col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'),
                stringsAsFactors = FALSE) %>%
     slice(., 5:(n()-7)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
@@ -57,22 +58,20 @@ for(i in 1:length(filz)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
-    mutate(sitename = paste(site, name)) %>%
-    rename(water_depth_A = water_depth_m)
-    # filter(water_depth_m >=0 & water_depth_m <2)
+    mutate(sitename = paste(site, name))
   tidal <- rbind(OUT, tidal)
 }
 
 ht <- tidal %>%
   group_by(date) %>%
-  arrange(desc(water_depth_A)) %>%
+  arrange(desc(water_level_C)) %>%
   slice(1) %>%
   ungroup()
 
 SN <- elev$name
 
 tidal2 <- NULL
-## correcting water levels from well cap to substrate reference elevation
+## adding references for water level from well cap to substrate (depth) and NAVD88
 for (i in 1:length(SN)) {
   
   el2 <- elev %>%
@@ -80,8 +79,8 @@ for (i in 1:length(SN)) {
   
   OUT2 <- tidal %>%
     filter(name == SN[[i]]) %>%
-    mutate(water_depth_m = water_depth_A + el2$well_ht_m,
-           water_depth_navd88 = water_depth_A + el2$site_navd88_m,
+    mutate(water_depth_m = water_level_C + el2$well_ht_m,
+           water_level_navd88 = el2$wellcap_navd88_m + water_level_C,
            well_ht = el2$well_ht)
   
   tidal2 <- rbind(OUT2, tidal2)
@@ -154,8 +153,8 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
+      geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
+      geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
                  # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
       geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = lnr, shape = 21, size = 5) +
@@ -166,7 +165,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
       # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
       # geom_point(aes(date_time_gmt, Pred), data = ot2) +
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Depth (m)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Level (NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                                            name = expression(paste('Total Daily Precipitation (mm)')))
                          ) +
@@ -208,7 +207,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                           'figures/', sites_list[i], ' ', date1, ' to ', date2, ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                           'figures/', sites_list[i], ' ', date1, ' to ', date2, ' NAVD88', ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
