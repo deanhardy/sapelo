@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2021-11-02') 
-date2 <- as.Date('2021-12-13')
+date1 <- as.Date('2018-10-12') 
+date2 <- as.Date('2019-01-18')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
@@ -57,14 +57,15 @@ for(i in 1:length(filz)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
-    mutate(sitename = paste(site, name))
+    mutate(sitename = paste(site, name)) %>%
+    rename(water_depth_A = water_depth_m)
     # filter(water_depth_m >=0 & water_depth_m <2)
   tidal <- rbind(OUT, tidal)
 }
 
 ht <- tidal %>%
   group_by(date) %>%
-  arrange(desc(water_depth_m)) %>%
+  arrange(desc(water_depth_A)) %>%
   slice(1) %>%
   ungroup()
 
@@ -79,7 +80,8 @@ for (i in 1:length(SN)) {
   
   OUT2 <- tidal %>%
     filter(name == SN[[i]]) %>%
-    mutate(water_depth_m = water_depth_m + el2$well_ht_m,
+    mutate(water_depth_m = water_depth_A + el2$well_ht_m,
+           water_depth_navd88 = water_depth_A + el2$site_navd88_m,
            well_ht = el2$well_ht)
   
   tidal2 <- rbind(OUT2, tidal2)
