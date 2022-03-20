@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2021-11-02') 
-date2 <- as.Date('2021-12-13')
+date1 <- as.Date('2021-11-01') 
+date2 <- as.Date('2021-11-30')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
