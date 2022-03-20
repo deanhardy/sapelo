@@ -21,7 +21,8 @@ rb <- df %>% filter(name == 'Raccoon Bluff')
 hh <- df %>% filter(name == 'Hog Hammock')
 
 # inund <- raster(file.path(datadir, 'spatial-data/inundation/inund2100hc.tif'))
-tidal <- raster(file.path(datadir, 'spatial-data/inundation/is01.tif'))
+tidal_hh <- raster(file.path(datadir, 'spatial-data/inundation/is01.tif'))
+tidal_rb <- raster(file.path(datadir, 'spatial-data/inundation/is0_rc.tif'))
 
 ##import inundation data
 inund <- st_read(file.path(datadir, 'spatial-data/inundation/inund2100hc_poly.shp'), stringsAsFactors = F) %>%
@@ -42,10 +43,10 @@ hh.ind <-
   tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
           title = 'Inundation Probability', group = 
             'funky') + 
-  tm_shape(tidal, raster.downsample = FALSE) + 
+  tm_shape(tidal_hh, raster.downsample = FALSE) + 
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(hh) + tm_borders(lwd = 1, col = 'black') + 
-  tm_credits('A)', fontface = "bold", position = c("right", 'top')) + 
+  tm_credits('A)', fontface = "bold", position = c("left", 'bottom')) + 
   tm_layout(frame = TRUE,
             legend.text.size = 0.7,
             legend.title.size = 0.8,
@@ -66,8 +67,10 @@ rb.ind <-
   tm_shape(inund) + 
    tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
           group = 'funky', legend.show = FALSE) + 
+  tm_shape(tidal_rb, raster.downsample = FALSE) + 
+  tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(rb) + tm_borders(lwd = 1, col = 'black') + 
-  tm_credits('B)', fontface = "bold", position = c("right", 'top')) + 
+  tm_credits('B)', fontface = "bold", position = c("left", 'bottom')) + 
   tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
   tm_compass(position = c(0.74, 0.11), text.size = 0.7)
 rb.ind
