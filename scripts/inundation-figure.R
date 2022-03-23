@@ -118,8 +118,8 @@ map.ind <-
 ## separate owner map with ag and water loggers
 map.own <- 
   tm_shape(df) + 
-  tm_fill('own3cat', palette = clr.own, 
-          title = 'B)\nOwner Category') + 
+  tm_fill('B)\nown3cat', palette = clr.own, 
+          title = 'Owner Category') + 
   tm_shape(df) + tm_borders(lwd = 1) + 
   # tm_shape(comp) + tm_borders('yellow') + 
   tm_shape(comp.hatch) + tm_lines() + 
@@ -148,12 +148,60 @@ map.own <-
                 labels = 'Water Loggers') + 
   tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
   tm_compass(position = c(0.74, 0.11), text.size = 0.7)
-# map.own
+map.own
 
 tiff(file.path(datadir, 'figures/HardyFigure1.tiff'), units = 'in', width = 7, height = 3.5, 
-     res = 600, compression = 'lzw')
+     res = 300, compression = 'lzw')
 tmap_arrange(map.ind, map.own, widths = c(0.5, 0.5))
 dev.off()
 
+## presentation slide for owner categories
+ts <- 1.3
+map.own <- 
+  tm_shape(df, unit = 'mi') + 
+  tm_fill('own3cat', palette = clr.own, 
+          title = 'Hog Hummock\nOwner Category') + 
+  tm_shape(df) + tm_borders(lwd = 1) + 
+  # tm_shape(comp) + tm_borders('yellow') + 
+  tm_shape(comp.hatch) + tm_lines() + 
+  # tm_shape(tidal, raster.downsample = FALSE) + 
+  # tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
+  tm_shape(ag_cntr) + 
+  tm_squares(col = 'green', 
+             size = 0.4,
+             border.col = 'black',
+             border.lwd = 1) + 
+  tm_shape(hobo) +
+  tm_symbols(col = 'steelblue1',
+             size = 0.5,
+             border.lwd = 1, 
+             border.col = 'black') + 
+  tm_layout(frame = TRUE,
+            legend.text.size = ts,
+            legend.title.size = ts+0.5,
+            legend.title.fontface = 2) +
+  tm_add_legend(type = 'symbol',
+                col = 'black',
+                shape = 12,
+                size = 1.2,
+                labels = 'Company-owned') + 
+  tm_add_legend(type = 'symbol',
+                shape = 22,
+                size = 1.2,
+                col = 'green',
+                labels = 'Agricultural Plot') + 
+  tm_add_legend(type = 'symbol',
+                shape = 21,
+                size = 1.2,
+                col = 'steelblue1',
+                labels = 'Water Level Site') + 
+  tm_scale_bar(breaks = c(0,0.2), text.size = ts, position = c(0.7,0)) + 
+  tm_compass(position = c(0.74, 0.11), text.size = ts)
+map.own
 
+jpeg(file.path(datadir, 'figures/hog-hummock_owner-categories.jpeg'), units = 'in', width = 7, height = 7, 
+     res = 300)
+map.own
+dev.off()
+ 
  
