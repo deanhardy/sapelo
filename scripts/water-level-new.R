@@ -10,13 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-<<<<<<< HEAD
-date1 <- as.Date('2021-11-01') 
-date2 <- as.Date('2021-11-30')
-=======
-date1 <- as.Date('2018-10-12') 
-date2 <- as.Date('2019-01-18')
->>>>>>> 5d1b4619d18a4fe91c00530f51f1f8b02c6b0d77
+date1 <- as.Date('2019-01-01') 
+date2 <- as.Date('2019-03-01')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
@@ -160,6 +155,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
       ggplot(df2)  + 
       geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
       geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
+      geom_vline(aes(xintercept = as.POSIXct('2019-01-18 00:12:00'))) + 
                  # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
       geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = lnr, shape = 21, size = 5) +
