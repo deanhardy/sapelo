@@ -222,5 +222,3 @@ sites.graph <- function(df, na.rm = TRUE, ...){
 
 # run graphing function on long df
 sites.graph(tidal2)
-
-
