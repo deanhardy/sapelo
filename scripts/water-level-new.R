@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-01-01') 
-date2 <- as.Date('2019-03-01')
+date1 <- as.Date('2019-05-15') 
+date2 <- as.Date('2019-10-22')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
@@ -46,7 +46,8 @@ for(i in 1:length(filz)) {
     slice(., 5:(n()-7)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
            date = as.Date(date_time_gmt, '%m/%d/%Y'),
-           site = str_sub(filz[i], -25,-24)) %>%
+           site = str_sub(filz[i], -25,-24),
+           water_level_C = as.numeric(water_level_C)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
                           if_else(site == 'Site-03', 'St. Lukes',
