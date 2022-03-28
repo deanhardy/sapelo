@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2019-05-15') 
-date2 <- as.Date('2019-10-22')
+date1 <- as.Date('2020-10-01') 
+date2 <- as.Date('2020-12-31')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
@@ -160,6 +160,7 @@ sites.graph <- function(df, na.rm = TRUE, ...){
                  # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
       geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 3) +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = lnr, shape = 21, size = 5) +
+      geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
       # geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'Full Moon'), shape = 1, size = 5) +
       # geom_point(aes(date_time_gmt, 1.5), data = filter(lnr, phase == 'New Moon'), shape = 16, size = 5) +

@@ -4,6 +4,7 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(lubridate)
+library(lunar)
 Sys.setenv(TZ='GMT')
 
 ## https://www.dataquest.io/blog/r-api-tutorial/
@@ -35,4 +36,12 @@ OUT <- data$phasedata %>%
 lunar <- rbind(OUT, lunar)
 }
 
-write.csv(lunar, file.path(datadir, 'lunar.csv'))
+df <- lunar.distance(lunar$date_time_gmt, towards = 0)
+df2 <- lunar.distance(lunar$date_time_gmt, name = T, strict = T)
+
+lunar2 <- lunar %>%
+  mutate(dist_rad = round(df, 1),
+         dist_km = df * 6378.16,
+         dist_name = df2)
+
+write.csv(lunar2, file.path(datadir, 'lunar.csv'))
