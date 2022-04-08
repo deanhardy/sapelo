@@ -6,12 +6,12 @@ library(data.table)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
-date1 <- as.Date('2020-10-01') 
-date2 <- as.Date('2020-12-31')
+date1 <- as.Date('2019-01-01') 
+date2 <- as.Date('2019-03-31')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data'),
