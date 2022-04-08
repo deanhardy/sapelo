@@ -6,7 +6,7 @@ library(data.table)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for graphs
@@ -45,7 +45,7 @@ for(i in 1:length(filz)) {
                stringsAsFactors = FALSE) %>%
     slice(., 5:(n()-7)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
-           date = as.Date(date_time_gmt, '%m/%d/%Y'),
+           date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz[i], -25,-24),
            water_level_C = as.numeric(water_level_C)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
