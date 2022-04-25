@@ -9,6 +9,9 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
+## define depth reference datum as NAVD88 or local substrate
+# level.var <- c('water_depth_m')
+
 # set dates for interval graphs
 int.date1 <- as.Date('2019-10-15') 
 int.date2 <- as.Date('2020-01-15')
@@ -89,8 +92,8 @@ for (i in 1:length(SN)) {
   tidal2 <- rbind(OUT2, tidal2)
 }
 
+## filter extreme values
 tidal3 <- tidal2 %>% filter(!(water_level_C < -4 | water_level_C >2.5))
-
 tidal2 <- tidal3
 
 ## daily high tide
@@ -118,6 +121,18 @@ ot2 <- ot %>%
                               format = '%Y/%m/%d %I:%M %p'))) %>%
   select(date_time_gmt, Pred, High.Low) %>%
   filter(High.Low == 'H')
+
+## summary of number of days active by site
+active.time <- tidal2 %>%
+  group_by(site, sitename) %>%
+  summarise(days = n_distinct(date)) %>%
+  mutate(weeks = days/7, years = weeks/52) %>%
+  arrange(factor(site, years))
+
+barplot(years ~ site, active.time,
+        horiz = F, 
+        angle = 45,
+        main = 'Length Water Level Survey Sites Active')
 
 ########################################################
 # create graphing function for daily high tides
@@ -149,7 +164,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
       # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
       # geom_point(aes(date_time_gmt, Pred), data = ot2) +
       scale_x_datetime(name = 'Month/Year', date_breaks = '2 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
-      scale_y_continuous(name = 'Water Depth (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Level (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                                            name = expression(paste('Total Daily Precipitation (mm)')))
                          ) +
@@ -192,7 +207,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                           'figures/', 'HT ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                           'figures/', 'Daily-HT ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
@@ -217,7 +232,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
   sites_list <- unique(df$sitename)
-  
+
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
@@ -238,7 +253,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
       # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
       # geom_point(aes(date_time_gmt, Pred), data = ot2) +
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Depth (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Level (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                                              name = expression(paste('Total Daily Precipitation (mm)')))
       ) +
@@ -280,7 +295,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                            'figures/', 'DEPTH ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                            'figures/', 'Interval-12-minute ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
