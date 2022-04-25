@@ -13,19 +13,25 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2019-10-15') 
-int.date2 <- as.Date('2020-01-15')
+int.date1 <- as.Date('2021-11-02') 
+int.date2 <- as.Date('2022-02-28')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
 ht.date2 <- as.Date('2022-01-31')
 
 ## import water level data files
-filz <- list.files(path = file.path(datadir, 'new-logger-data'),
+filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
                    pattern= '*.csv',
                    full.names = TRUE,
                    recursive = TRUE) 
 tidal <- NULL
+
+filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
+                   pattern= '*.CSV',
+                   full.names = TRUE,
+                   recursive = TRUE) 
+tidal.ve <- NULL
 
 ## import mllw elevation including lidar and RTK adjusted elevations 
 elev <- read.csv(file.path(datadir, 'site-elevations.csv'))
@@ -48,7 +54,7 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 ## import & tidy hobo water level data
-## note water level C is in meters and indicates water level in reference to wellcap 
+## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for Hobo)
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
                select = c(2:5),
@@ -70,9 +76,35 @@ for(i in 1:length(filz)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
-    mutate(sitename = paste(site, name))
+    mutate(sitename = paste(site, name)) %>%
+    select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
 }
+
+## import & tidy van essen water level data
+## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
+for(i in 1:length(filz.ve)) {
+  OUT <- fread(filz.ve[i],
+               select = c(1:3),
+               col.names = c('date_time_est', 'water_level_C', 'water_temp_c'),
+               stringsAsFactors = FALSE) %>%
+    # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
+    mutate(date_time_est = ymd_hms(date_time_est),
+           date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
+           site = str_sub(filz.ve[i], -26,-25),
+           water_level_C = as.numeric(water_level_C)/1000) %>%
+    mutate(site = paste('Site', site, sep = '-')) %>%
+    mutate(name = if_else(site == 'Site-15', 'Oakdale',
+                          if_else(site == 'Site-07', 'Cactus Patch', site))) %>%
+    mutate(sitename = paste(site, name))
+  tidal.ve <- rbind(OUT, tidal.ve)
+}
+
+tidal.ve2 <- tidal.ve %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5))) %>%
+  select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename)
+
+tidal1 <- rbind(tidal, tidal.ve2)
 
 SN <- elev$name
 
@@ -83,7 +115,7 @@ for (i in 1:length(SN)) {
   el2 <- elev %>%
   filter(name == SN[[i]]) 
   
-  OUT2 <- tidal %>%
+  OUT2 <- tidal1 %>%
     filter(name == SN[[i]]) %>%
     mutate(water_depth_m = water_level_C + el2$well_ht_m,
            water_level_navd88 = el2$wellcap_navd88_m + water_level_C,
