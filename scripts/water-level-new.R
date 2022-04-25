@@ -10,8 +10,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for interval graphs
-int.date1 <- as.Date('2019-03-01') 
-int.date2 <- as.Date('2019-05-31')
+int.date1 <- as.Date('2019-10-15') 
+int.date2 <- as.Date('2020-01-15')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -188,11 +188,11 @@ ht.graph <- function(df, na.rm = TRUE, ...){
             # legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black'),
             plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " - Daily High Tide Trend"))
+      ggtitle(paste0(sites_list[i], " - Daily High Tide Trend From ", ht.date1, ' to ', ht.date2))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                           'figures/', 'HT ', sites_list[i], ' ', ht.date1, ' to ', ht.date2, ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                           'figures/', 'HT ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
@@ -276,11 +276,11 @@ int.graph <- function(df, na.rm = TRUE, ...){
             # legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black'),
             plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " - Year ", year(int.date1)))
+      ggtitle(paste0(sites_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                            'figures/', 'DEPTH ', sites_list[i], ' ', int.date1, ' to ', int.date2, ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                            'figures/', 'DEPTH ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
