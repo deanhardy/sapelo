@@ -23,8 +23,9 @@ nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2202
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP),
-         TP = as.numeric(TotPrcp)) %>%
-  select(date_time_gmt, BP, TP) %>%
+         TP = as.numeric(TotPrcp),
+         Temp = as.numeric(ATemp)) %>%
+  select(date_time_gmt, BP, TP, Temp) %>%
   drop_na()
 
 ## calculate and export total daily precipitation values in mm 
@@ -52,19 +53,26 @@ tail(date_time_gmt)
 lgr_ts <- as.data.frame(date_time_gmt)
 
 ## interpolate values
-ip_values <- approx(nerr_wx$date_time_gmt, nerr_wx$BP, xout = lgr_ts$date_time_gmt, 
+ip_pres_values <- approx(nerr_wx$date_time_gmt, nerr_wx$BP, xout = lgr_ts$date_time_gmt, 
                     rule = 2, method = "linear", ties = mean)
+ip_temp_values <- approx(nerr_wx$date_time_gmt, nerr_wx$Temp, xout = lgr_ts$date_time_gmt, 
+                         rule = 2, method = "linear", ties = mean)
 
-nerr_wx2 <- data.frame(ip_values)
+nerr_wx2 <- data.frame(ip_pres_values)
+nerr_wx2.1 <- data.frame(ip_temp_values)
+nerr_wx2.2 <- merge(nerr_wx2, nerr_wx2.1, by = "x")
+
 
 ## prep formatting to match HOBO requirements
-nerr_wx3 <- nerr_wx2 %>%
-  mutate(Date = as.Date(as.character(x)), Time = format(x, '%H:%M:%S'), pres = y) %>%
+nerr_wx3 <- nerr_wx2.2 %>%
+  mutate(Date = as.Date(as.character(x)), Time = format(x, '%H:%M:%S'), pres = y.x) %>%
   mutate(Date = format(Date,'%m/%d/%y')) %>%
   mutate(Date = noquote(Date)) %>%
-  select(Date, Time, pres)
+  mutate(temp = y.y) %>%
+  mutate(date_time_gmt = as.POSIXct(x, format = '%m/%d/%y %H:%M:%S')) %>%
+  select(date_time_gmt, Date, Time, pres, temp)
 
-colnames(nerr_wx3) <- c('Date', 'Time (GMT)', 'pres (mbar)')
+colnames(nerr_wx3) <- c(' Date (GMT)', 'Date', 'Time (GMT)', 'pres (mbar)', 'temp (C)')
 
 nerr_wx4 <- nerr_wx3 %>%
   filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
