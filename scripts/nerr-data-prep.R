@@ -18,7 +18,7 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220221-sapmlmet/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220426-sapmlmet-allinclusive/SAPMLMET.csv'),
            header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
@@ -26,6 +26,8 @@ nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2202
          TP = as.numeric(TotPrcp),
          Temp = as.numeric(ATemp)) %>%
   select(date_time_gmt, BP, TP, Temp) %>%
+  filter(BP > 990) %>% ## filters erroneous data on 3/7/22
+  # filter_by_time(date_time_gmt, .start_date = '2022-03-07 00:00:00', .end_date = '2022-03-07 23:59:00') %>%
   drop_na()
 
 ## calculate and export total daily precipitation values in mm 
