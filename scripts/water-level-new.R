@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-11-02') 
-int.date2 <- as.Date('2022-02-28')
+int.date1 <- as.Date('2021-12-01') 
+int.date2 <- as.Date('2022-01-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
