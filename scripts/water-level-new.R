@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-12-01') 
-int.date2 <- as.Date('2022-01-31')
+int.date1 <- as.Date('2021-10-01') 
+int.date2 <- as.Date('2021-11-30')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -92,7 +92,7 @@ for(i in 1:length(filz.ve)) {
     mutate(date_time_est = ymd_hms(date_time_est),
            date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
            site = str_sub(filz.ve[i], -26,-25),
-           water_level_C = as.numeric(water_level_C)/1000) %>%
+           water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-15', 'Oakdale',
                           if_else(site == 'Site-07', 'Cactus Patch', site))) %>%
@@ -161,12 +161,23 @@ active.time <- tidal2 %>%
   mutate(weeks = days/7, years = weeks/52) %>%
   arrange(factor(site, years))
 
-barplot(years ~ site, active.time,
-        horiz = F, 
-        angle = 45,
-        main = 'Length Water Level Survey Sites Active')
+# Increase margin size
 
-########################################################
+df <- active.time[order(active.time$years, decreasing = TRUE),]
+
+jpeg(paste(datadir, "sites-active-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
+par(mar=c(4,10,4,4))
+barplot(df$years, names.arg = df$sitename,
+        horiz = T, 
+        las = 1,
+        ylab = '',
+        xlim = c(0,4),
+        xlab = 'Years Active',
+        main = 'Water Level Survey Sites')
+dev.off()
+
+
+ ########################################################
 # create graphing function for daily high tides
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################
