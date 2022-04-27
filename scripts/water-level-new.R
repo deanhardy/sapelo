@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-10-01') 
-int.date2 <- as.Date('2021-11-30')
+int.date1 <- as.Date('2020-12-01') 
+int.date2 <- as.Date('2021-01-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -95,7 +95,10 @@ for(i in 1:length(filz.ve)) {
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-15', 'Oakdale',
-                          if_else(site == 'Site-07', 'Cactus Patch', site))) %>%
+                          if_else(site == 'Site-07', 'Cactus Patch', 
+                                  if_else(site == 'Site-09', 'Mr. Tracy',
+                                          if_else(site == 'Site-11', 'Library', 
+                                                  if_else(site == 'Site-13', 'Purple Ribbon', site)))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
