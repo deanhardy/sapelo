@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2020-08-01') 
-int.date2 <- as.Date('2020-10-31')
+int.date1 <- as.Date('2021-11-01') 
+int.date2 <- as.Date('2022-01-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -137,11 +137,17 @@ for(i in 1:length(filz.psu)) {
            site = str_sub(filz.psu[i], -26,-25),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
-    mutate(name = if_else(site == 'Site-15', 'Oakdale',
-                          if_else(site == 'Site-07', 'Cactus Patch', 
-                                  if_else(site == 'Site-09', 'Mr. Tracy',
-                                          if_else(site == 'Site-11', 'Library', 
-                                                  if_else(site == 'Site-13', 'Purple Ribbon', site)))))) %>%
+    mutate(name = if_else(site == 'Site-02', 'Snagtree',
+                          if_else(site == 'Site-03', 'St. Lukes',
+                                  if_else(site == 'Site-05', 'Graball',
+                                          if_else(site == 'Site-06', 'Dani Trap',
+                                                  if_else(site == 'Site-07', 'Cactus Patch',
+                                                          if_else(site == 'Site-09', 'Mr. Tracy',
+                                                                  if_else(site == 'Site-11', 'Library',
+                                                                          if_else(site == 'Site-12', 'Mr. Smith',
+                                                                                  if_else(site == 'Site-13', 'Purple Ribbon',
+                                                                                          if_else(site == 'Site-14', 'Tidal Gate', 
+                                                                                                  if_else(site == 'Site-15', 'Oakdale', site)))))))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.psu <- rbind(OUT, tidal.psu)
 }
@@ -227,7 +233,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
       ggplot(df2)  + 
       geom_line(aes(date_time_gmt, water_depth_m), lwd = 0.5) + 
       geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 0.5) +
+      geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'red', size = 0.5) +
       geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Month/Year', date_breaks = '2 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
