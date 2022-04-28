@@ -3,6 +3,7 @@ rm(list=ls())
 library(tidyverse)
 library(lubridate)
 library(data.table)
+library("rio")
 Sys.setenv(TZ='GMT')
 
 ## define data directory
@@ -13,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2020-12-01') 
-int.date2 <- as.Date('2021-01-31')
+int.date1 <- as.Date('2020-08-01') 
+int.date2 <- as.Date('2020-10-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -32,6 +33,20 @@ filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
                    full.names = TRUE,
                    recursive = TRUE) 
 tidal.ve <- NULL
+
+## convert salinity Excel files to csv
+sal <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
+                       pattern= '*.xlsx',
+                       full.names = TRUE,
+                       recursive = TRUE) 
+created <- mapply(convert, sal, gsub("xlsx", "csv", sal))
+unlink(sal) # delete xlsx files
+
+filz.psu <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
+                      pattern= '*.csv',
+                      full.names = TRUE,
+                      recursive = TRUE) 
+tidal.psu <- NULL
 
 ## import mllw elevation including lidar and RTK adjusted elevations 
 elev <- read.csv(file.path(datadir, 'site-elevations.csv'))
@@ -109,6 +124,37 @@ tidal.ve2 <- tidal.ve %>%
 
 tidal1 <- rbind(tidal, tidal.ve2)
 
+## import & tidy van essen specific conductivity/salinity data
+## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
+for(i in 1:length(filz.psu)) {
+  OUT <- fread(filz.psu[i],
+               select = c(2:8),
+               col.names = c('date_time_est', 'pressure', 'water_temp_c', 'conductivity', 'water_level_C', 'datum_reference', 'salinity'),
+               stringsAsFactors = FALSE) %>%
+    # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
+    mutate(date_time_est = ymd_hms(date_time_est),
+           date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
+           site = str_sub(filz.psu[i], -26,-25),
+           water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
+    mutate(site = paste('Site', site, sep = '-')) %>%
+    mutate(name = if_else(site == 'Site-15', 'Oakdale',
+                          if_else(site == 'Site-07', 'Cactus Patch', 
+                                  if_else(site == 'Site-09', 'Mr. Tracy',
+                                          if_else(site == 'Site-11', 'Library', 
+                                                  if_else(site == 'Site-13', 'Purple Ribbon', site)))))) %>%
+    mutate(sitename = paste(site, name))
+  tidal.psu <- rbind(OUT, tidal.psu)
+}
+
+options(scipen=999)
+
+tidal.psu2 <- tidal.psu %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5))) %>%
+  select(date_time_gmt, sitename, salinity) %>%
+  filter(salinity < 50 | is.na(salinity))
+
+tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt'))
+
 SN <- elev$name
 
 tidal2 <- NULL
@@ -118,7 +164,7 @@ for (i in 1:length(SN)) {
   el2 <- elev %>%
   filter(name == SN[[i]]) 
   
-  OUT2 <- tidal1 %>%
+  OUT2 <- tidal1.1 %>%
     filter(name == SN[[i]]) %>%
     mutate(water_depth_m = water_level_C + el2$well_ht_m,
            water_level_navd88 = el2$wellcap_navd88_m + water_level_C,
@@ -134,28 +180,9 @@ tidal2 <- tidal3
 ## daily high tide
 ht <- tidal2 %>%
   group_by(site, date) %>%
-  slice_max(water_depth_m, with_ties = FALSE)
-
-## import SINERR water level data from Lower Duplin
-# nerr <- read.csv(file.path(datadir, 'nerr-data/lowerduplin-realtime-jan18-nov18.csv'),
-#                  header = TRUE, stringsAsFactors = FALSE, skip = 2) %>%
-#   slice(., 3:n()) %>%
-#   mutate(date_time_gmt = ymd_hms(Date),
-#          Depth = as.numeric(Depth)) %>%
-#   filter(date_time_gmt >= first(df$date_time_gmt) & date_time_gmt <= last(df$date_time_gmt))
-
-## import NOAA tide predictions for Sapelo Old Tower
-ot <- read.delim(file.path(datadir, 'nerr-data/OldTower-tide-predictions.txt'),
-                 sep = '\t', header = TRUE, skip = 19,
-                 stringsAsFactors = FALSE)
-colnames(ot) <- c('Date', 'Day', 'Time', 'Pred', 'High.Low', 'SKIP1', 'SKIP2')  
-
-## further tidy and filter data to just high tide
-ot2 <- ot %>% 
-  mutate(date_time_gmt = with(., as.POSIXct(paste(Date, Time), 
-                              format = '%Y/%m/%d %I:%M %p'))) %>%
-  select(date_time_gmt, Pred, High.Low) %>%
-  filter(High.Low == 'H')
+  slice_max(water_depth_m, with_ties = FALSE) %>%
+  # select(date_time_gmt, water_depth_m, salinity) %>%
+  ungroup()
 
 ## summary of number of days active by site
 active.time <- tidal2 %>%
@@ -180,7 +207,7 @@ barplot(df$years, names.arg = df$sitename,
 dev.off()
 
 
- ########################################################
+########################################################
 # create graphing function for daily high tides
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################
@@ -198,21 +225,17 @@ ht.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_depth_m), lwd = 0.5) +  ## convert to feet then add MLLW base elevation
+      geom_line(aes(date_time_gmt, water_depth_m), lwd = 0.5) + 
       geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      # geom_vline(aes(xintercept = as.POSIXct('2019-01-18 00:12:00'))) + 
-      #            # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
       geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'blue', size = 0.5) +
-      # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = lnr, shape = 21, size = 5) +
-      # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = lnr, vjust = -1) + 
+      geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
-      # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
-      # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
-      # geom_point(aes(date_time_gmt, Pred), data = ot2) +
       scale_x_datetime(name = 'Month/Year', date_breaks = '2 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
       scale_y_continuous(name = 'Water Level (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
-                         sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                                           name = expression(paste('Total Daily Precipitation (mm)')))
+                         # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                         #                   name = expression(paste('Total Daily Precipitation (mm)'))),
+                         sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
+                                             name = expression(paste('Salinity (psu)'))),
                          ) +
       annotate("rect",
                xmin = as.POSIXct(paste(ht.date1, '00:48:00')),
@@ -289,19 +312,17 @@ int.graph <- function(df, na.rm = TRUE, ...){
       ggplot(df2)  + 
       geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
       geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      # geom_vline(aes(xintercept = as.POSIXct('2019-01-18 00:12:00'))) + 
-      #            # filter(df, sitename == sites_list[i] & date_time_gmt >= date1 & date_time_gmt <= date2)) + 
-      geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, color = 'blue', size = 1) +
+      geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
+      geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
-      # geom_line(aes(date_time_gmt, water_temp_c/15), lty = 'dotted', color = 'black') + 
-      # geom_line(aes(date_time_gmt, Depth * 3.28084), data = nerr) + 
-      # geom_point(aes(date_time_gmt, Pred), data = ot2) +
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Level (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
-                         sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                                             name = expression(paste('Total Daily Precipitation (mm)')))
+      scale_y_continuous(name = 'Water Level & Total Daily Precipitation x10 (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+                         # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                         #                   name = expression(paste('Total Daily Precipitation (mm)'))),
+                         sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
+                                             name = expression(paste('Salinity (psu)'))),
       ) +
       annotate("rect",
                xmin = as.POSIXct(paste(int.date1, '00:48:00')),
@@ -346,7 +367,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
     #                        'projection_graphs/county_graphs/',
-    #                        count_list[i], ".pdf", sep=''), scale=2)
+    #                        count_list[i], ".pdf", sep=''), scale=2) 
     
     # print plots to screen
     # print(plot)
