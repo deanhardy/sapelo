@@ -18,7 +18,7 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220426-sapmlmet-allinclusive/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220514-sapmlmet-allinclusive/SAPMLMET.csv'),
            header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
@@ -66,20 +66,36 @@ nerr_wx2.2 <- merge(nerr_wx2, nerr_wx2.1, by = "x")
 
 
 ## prep formatting to match HOBO requirements
-nerr_wx3 <- nerr_wx2.2 %>%
+nerr_wx3h <- nerr_wx2.2 %>%
+  mutate(Date = as.Date(as.character(x)), Time = format(x, '%H:%M:%S'), pres = y.x) %>%
+  mutate(Date = format(Date,'%m/%d/%y')) %>%
+  # mutate(Date = noquote(Date)) %>%
+  mutate(temp = y.y) %>%
+  mutate(date_time_gmt = as.POSIXct(x, format = '%m/%d/%y %H:%M:%S')) %>%
+  mutate(date.est = date_time_gmt - hours(5)) %>%
+  select(Date, Time, pres) # for HOBOs
+
+colnames(nerr_wx3h) <- c('Date', 'Time (GMT)', 'pres (mbar)') ## for HOBOs
+
+write.table(nerr_wx3h, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-hobo.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+            quote = FALSE)
+
+
+## prep formatting to match Diver requirements
+nerr_wx3d <- nerr_wx2.2 %>%
   mutate(Date = as.Date(as.character(x)), Time = format(x, '%H:%M:%S'), pres = y.x) %>%
   mutate(Date = format(Date,'%m/%d/%y')) %>%
   mutate(Date = noquote(Date)) %>%
   mutate(temp = y.y) %>%
   mutate(date_time_gmt = as.POSIXct(x, format = '%m/%d/%y %H:%M:%S')) %>%
   mutate(date.est = date_time_gmt - hours(5)) %>%
-  select(date_time_gmt, date.est, Date, Time, pres, temp)
+  select(date_time_gmt, date.est, Date, Time, pres, temp) ## for Divers
 
-colnames(nerr_wx3) <- c(' Date (GMT)', 'Date (EST)', 'Date', 'Time (GMT)', 'pres (mbar)', 'temp (C)')
+colnames(nerr_wx3d) <- c(' Date (GMT)', 'Date (EST)', 'Date', 'Time (GMT)', 'pres (mbar)', 'temp (C)') ## for Divers
 
-nerr_wx4 <- nerr_wx3 %>%
+nerr_wx4d <- nerr_wx3d %>%
   filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
-  
-write.table(nerr_wx4, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+
+write.table(nerr_wx4d, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-diver.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 
