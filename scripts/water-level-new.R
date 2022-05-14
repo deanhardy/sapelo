@@ -8,18 +8,17 @@ Sys.setenv(TZ='GMT')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
-# datadir <- '/Users/Rebecca/Dropbox/r_data/sapelo/water-level/'
 
 ## define depth reference datum as NAVD88 or local substrate
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-11-01') 
-int.date2 <- as.Date('2022-01-31')
+int.date1 <- as.Date('2022-03-01') 
+int.date2 <- as.Date('2022-05-12')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
-ht.date2 <- as.Date('2022-01-31')
+ht.date2 <- as.Date('2022-04-30')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
@@ -113,7 +112,8 @@ for(i in 1:length(filz.ve)) {
                           if_else(site == 'Site-07', 'Cactus Patch', 
                                   if_else(site == 'Site-09', 'Mr. Tracy',
                                           if_else(site == 'Site-11', 'Library', 
-                                                  if_else(site == 'Site-13', 'Purple Ribbon', site)))))) %>%
+                                                  if_else(site == 'Site-13', 'Purple Ribbon', 
+                                                          if_else(site == 'Site-19', 'The Trunk', site))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
@@ -147,8 +147,9 @@ for(i in 1:length(filz.psu)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', 
-                                                                                                  if_else(site == 'Site-15', 'Oakdale', site)))))))))))) %>%
-    mutate(sitename = paste(site, name))
+                                                                                                  if_else(site == 'Site-15', 'Oakdale', 
+                                                                                                          if_else(site == 'Site-19', 'The Trunk', site))))))))))))) %>%   
+             mutate(sitename = paste(site, name))
   tidal.psu <- rbind(OUT, tidal.psu)
 }
 
