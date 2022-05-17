@@ -88,10 +88,10 @@ nerr_wx3d <- nerr_wx2.2 %>%
   mutate(Date = noquote(Date)) %>%
   mutate(temp = y.y) %>%
   mutate(date_time_gmt = as.POSIXct(x, format = '%m/%d/%y %H:%M:%S')) %>%
-  mutate(date.est = date_time_gmt - hours(5)) %>%
-  select(date_time_gmt, date.est, Date, Time, pres, temp) ## for Divers
+  mutate(date.est = date_time_gmt - hours(5), date.edt = date_time_gmt - hours(4)) %>%
+  select(date_time_gmt, date.est, date.edt, Date, Time, pres, temp) ## for Divers
 
-colnames(nerr_wx3d) <- c(' Date (GMT)', 'Date (EST)', 'Date', 'Time (GMT)', 'pres (mbar)', 'temp (C)') ## for Divers
+colnames(nerr_wx3d) <- c(' Date (GMT)', 'Date (EST)', 'Date (EDT)', 'Date', 'Time (GMT)', 'pres (mbar)', 'temp (C)') ## for Divers
 
 nerr_wx4d <- nerr_wx3d %>%
   filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
