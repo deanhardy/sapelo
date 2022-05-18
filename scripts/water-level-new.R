@@ -112,8 +112,9 @@ for(i in 1:length(filz.ve)) {
                           if_else(site == 'Site-07', 'Cactus Patch', 
                                   if_else(site == 'Site-09', 'Mr. Tracy',
                                           if_else(site == 'Site-11', 'Library', 
-                                                  if_else(site == 'Site-13', 'Purple Ribbon', 
-                                                          if_else(site == 'Site-19', 'The Trunk', site))))))) %>%
+                                                  if_else(site == 'Site-13', 'Purple Ribbon',
+                                                          if_else(site == 'Site-19', 'The Trunk', 
+                                                                  if_else(site == 'Site-14', 'Tidal Gate', site)))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
@@ -157,10 +158,20 @@ options(scipen=999)
 
 tidal.psu2 <- tidal.psu %>%
   mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5))) %>%
-  select(date_time_gmt, sitename, salinity) %>%
+  select(date_time_gmt, site, sitename, salinity) %>%
   filter(salinity < 50 | is.na(salinity))
 
-tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt'))
+## plot salinity at all sites
+## this plot still needs lots of work as does the data collection process
+p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
+q <- p + facet_grid(rows = vars(site))
+
+png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 6.5, height = 9, units = 'in', res = 300)
+q
+dev.off()
+
+tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %>%
+  select(!(site.y))
 
 SN <- elev$name
 
@@ -300,7 +311,7 @@ ht.graph(ht)
 
 
 ########################################################
-# create graphing function for 12-minute intervals
+# create graphing function for 12-minute intervals over specified interval
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################
 TEXT = 15 ## set font size for figures
