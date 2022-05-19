@@ -165,10 +165,11 @@ tidal.psu2 <- tidal.psu %>%
 ## this plot still needs lots of work as does the data collection process
 p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
 q <- p + facet_grid(rows = vars(site))
-
-png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 6.5, height = 9, units = 'in', res = 300)
 q
-dev.off()
+
+# png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
+# q
+# dev.off()
 
 tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %>%
   select(!(site.y))
