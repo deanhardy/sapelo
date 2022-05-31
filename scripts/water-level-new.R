@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-03-01') 
-int.date2 <- as.Date('2022-05-12')
+int.date1 <- as.Date('2021-10-01') 
+int.date2 <- as.Date('2021-12-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -167,9 +167,10 @@ p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
 q <- p + facet_grid(rows = vars(site))
 q
 
-# png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
-# q
-# dev.off()
+png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
+quartz()
+q
+dev.off()
 
 tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %>%
   select(!(site.y))
@@ -193,18 +194,19 @@ for (i in 1:length(SN)) {
 }
 
 ## filter extreme values
-tidal3 <- tidal2 %>% filter(!(water_level_C < -4 | water_level_C >2.5))
-tidal2 <- tidal3
+tidal3 <- tidal2 %>% 
+  filter(!(water_level_C < -4 | water_level_C >2.5)) %>%
+  rename(site = site.x)
 
 ## daily high tide
-ht <- tidal2 %>%
+ht <- tidal3 %>%
   group_by(site, date) %>%
   slice_max(water_depth_m, with_ties = FALSE) %>%
   # select(date_time_gmt, water_depth_m, salinity) %>%
   ungroup()
 
 ## summary of number of days active by site
-active.time <- tidal2 %>%
+active.time <- tidal3 %>%
   group_by(site, sitename) %>%
   summarise(days = n_distinct(date)) %>%
   mutate(weeks = days/7, years = weeks/52) %>%
@@ -226,10 +228,10 @@ barplot(df$years, names.arg = df$sitename,
 dev.off()
 
 
-########################################################
-# create graphing function for daily high tides
+########################################################################
+# create graphing function for daily highest tides' water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-########################################################
+########################################################################
 TEXT = 10 ## set font size for figures
 ht.graph <- function(df, na.rm = TRUE, ...){
   
@@ -311,10 +313,10 @@ ht.graph <- function(df, na.rm = TRUE, ...){
 ht.graph(ht)
 
 
-########################################################
-# create graphing function for 12-minute intervals over specified interval
+##############################################################################################
+# create graphing function for 12-minute intervals over specified interval using water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-########################################################
+##############################################################################################
 TEXT = 15 ## set font size for figures
 int.graph <- function(df, na.rm = TRUE, ...){
   
@@ -329,15 +331,15 @@ int.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
+      geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
+      geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
       geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
       geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Level & Total Daily Precipitation x10 (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Level (NAVD88) & Total Daily Precipitation x10 (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                          #                   name = expression(paste('Total Daily Precipitation (mm)'))),
                          sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
@@ -381,7 +383,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                            'figures/', 'Interval-12-minute ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                            'figures/', 'NAVD88 ', 'Interval-12-minute ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
     # save plots as .pdf
     # ggsave(plot, file=paste(results, 
@@ -394,4 +396,4 @@ int.graph <- function(df, na.rm = TRUE, ...){
 }
 
 # run graphing function on long df
-int.graph(tidal2)
+int.graph(tidal3)
