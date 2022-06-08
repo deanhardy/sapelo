@@ -23,8 +23,10 @@ latest_sales <- sales %>%
 
 sales2012 <- sales %>%
   filter(date >= as.Date("2012-01-01") & price > 0)
-  
-  
+
+money <- filter(sales, price > 0)
+mean(money$price.acre)
+
 ## export sales data as table in PDF
 # pdf("sales_table.pdf", height=11, width=8.5)
 # grid.table(sales)
@@ -38,43 +40,46 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
   geom_smooth(aes(date, price.acre/100000, color = sale.type, fill = sale.type),
               method = "loess", se = TRUE,
               linetype = 'dashed', lwd = 0.5, show.legend = F) +
-  geom_point(aes(date, price.acre/100000, size = acres), alpha = 0.5) +
-  scale_x_date(name = "Year", date_breaks = "5 year", date_labels = "%Y",
+  geom_point(aes(date, price.acre/100000, size = acres), alpha = 0.5, show.legend = F) +
+  scale_x_date(name = "Year", date_breaks = "2 year", date_labels = "%y",
                date_minor_breaks = "1 year", expand = c(0,0)) +
   scale_y_continuous(name = "Sale price per acre (x $100,000)",
-                     breaks = seq(0,20, 5),
-                     limits = c(-20,20), expand = c(0.05,0),
-                     sec.axis = sec_axis(~., breaks = seq(0,20,5), labels = NULL)) +
-  coord_x_date(ylim = c(0,20), xlim = c('1990-01-01', '2020-01-01')) +
+                     breaks = seq(0,16, 1),
+                     limits = c(-16,16), expand = c(0.05,0),
+                     sec.axis = sec_axis(~., breaks = seq(0,16,1), labels = NULL)) +
+  coord_x_date(ylim = c(0,16), xlim = c('1992-01-01', '2022-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                     labels = c('Land Only', 'Land with Building')) +
   scale_size_continuous(name = 'Parcel Size (Ac)', range = c(1, 4)) +
-  ggtitle('B)') + 
+  # ggtitle('B)') + 
   theme(axis.title = element_text(size = fnt),
-        axis.title.x = element_text(margin = margin(t=-10,r=0,b=0,l=0)),
-        axis.title.y = element_text(margin = margin(t=0,r=-10,b=0,l=0)),
+        axis.title.x = element_text(margin = margin(t=0,r=0,b=0,l=0)),
+        axis.title.y = element_text(margin = margin(t=0,r=0,b=0,l=0)),
         axis.text = element_text(color = "black", size = fnt),
-        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks.length = unit(-0.1, 'cm'),
         axis.ticks = element_line(color = 'black'),
-        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+        axis.text.x = element_text(margin=unit(c(0.2,0.2,0.2,0.2), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.2,0.2,0.2,0.2), "cm")),
         axis.line = element_line(color = 'black'),
         panel.background = element_rect(fill = FALSE, color = 'black'),
         panel.grid = element_blank(),
-        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
-        plot.margin = margin(1,1,0.5,0.5, 'cm'),
-        legend.position = c(0.28,0.7),
+        # panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        # panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.25,0.25,0.5,0.5, 'cm'),
+        legend.position = c(0.15,0.75),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
         legend.key = element_blank(),
-        legend.spacing.y = unit(0.005, 'cm'),
-        legend.box.margin = margin(0.05,0.05,0.05,0.05, 'cm'),
-        legend.box.background = element_rect(color = 'black'))
+        legend.spacing.y = unit(-0.05, 'cm'),
+        legend.box.margin = margin(0.005,0.005,0.005,0.005, 'cm'),
+        legend.box.background = element_rect(color = 'black')) 
+  # guides(color = guide_legend(byrow = TRUE),
+  #        fill = guide_legend(byrow = TRUE))
 saleplot
 
-tiff(file.path(datadir, "figures/sales_priceperha.tif"), units = "in", height = 5, width = 5, res = 300, compression = "lzw")
+tiff(file.path(datadir, "figures/sales_priceperacre-cwbp-rb02.tif"), units = "in", height = 3, width = 5, res = 300, compression = "lzw")
 saleplot
 dev.off()
 
