@@ -27,7 +27,7 @@ plt = get_brewer_pal('YlOrRd', n = 7)
 
 ## map appraisal value changes
 taxmap <- tm_shape(pt) + 
-  tm_fill('assval_chg', title = '(a)\nAssessed Value\nChange (%)',
+  tm_fill('assval_chg', title = '(b)\n2011 Assessed Value\nChange (%)',
           breaks = c(0,250,500,750,1000,5000), palette = plt) + 
   tm_borders(col = 'black') +
   # tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.65, 0)) + 
@@ -37,22 +37,22 @@ taxmap <- tm_shape(pt) +
            legend.title.size = 0.6)
 taxmap 
 
-tiff(file.path(datadir, 'figures/map_assval_chg.tiff'), res = 300, units = 'in',
-     width = 2.5, height = 2.5)
-taxmap
-dev.off()
+# tiff(file.path(datadir, 'figures/map_assval_chg.tiff'), res = 300, units = 'in',
+#      width = 2.5, height = 2.5)
+# taxmap
+# dev.off()
 
 ## map owners by category
 prcl <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
-  filter(own4cat != 'County' & gis_acres != 'NA') %>%
-  mutate(own3cat = ifelse(own3cat == 'Non-traditional', 'Outsider', own3cat))
+  filter(own4cat != 'County' & gis_acres != 'NA')
+  # mutate(own3cat = ifelse(own3cat == 'Non-traditional', 'Outsider', own3cat))
 
 clr3 <- c('grey20', 'grey60', 'grey90')
 
 ownmap <- tm_shape(prcl) + 
-  tm_fill('own3cat', title = '(b)\nOwner Category', palette = clr3) + 
+  tm_fill('own3cat', title = '(a)\nOwner Category', palette = clr3) + 
   tm_borders(col = 'black') +
   tm_scale_bar(breaks = c(0, 0.25), size = 0.5, position = c(0.72, 0)) + 
   tm_compass(type = 'arrow', size = 1.5, position = c(0.73, 0.1)) + 
@@ -61,12 +61,12 @@ ownmap <- tm_shape(prcl) +
             legend.title.size = 0.6)
 ownmap
 
-tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = 'in',
-     width = 2.5, height = 2.5)
-ownmap
-dev.off()
+# tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = 'in',
+#      width = 2.5, height = 2.5)
+# ownmap
+# dev.off()
 
-tiff(file.path(datadir, 'figures/EPE-987366-RevisedFigure4.tiff'), res = 300, units = 'in',
-     width = 5, height = 2.5)
-tmap_arrange(taxmap, ownmap, widths = c(0.5,0.5))
+tiff(file.path(datadir, 'figures/hh-taxhike-ownercat-rb02.tiff'), res = 600, units = 'in',
+     width = 7.5, height = 3.9)
+tmap_arrange(ownmap, taxmap, widths = c(0.5,0.5))
 dev.off()

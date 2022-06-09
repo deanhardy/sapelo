@@ -79,7 +79,7 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
   #        fill = guide_legend(byrow = TRUE))
 saleplot
 
-tiff(file.path(datadir, "figures/sales_priceperacre-cwbp-rb02.tif"), units = "in", height = 3, width = 5, res = 300, compression = "lzw")
+tiff(file.path(datadir, "figures/sales_priceperacre-cwbp-rb02.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
 saleplot
 dev.off()
 

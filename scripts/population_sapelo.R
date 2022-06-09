@@ -34,7 +34,7 @@ fig <- ggplot() +
   geom_text(aes(x = date, y = seq(990, 150, -(990-150)/(nrow(filter(evt, date >= break.date))-1)), 
                 label = paste(event, ' ', '(', source, ')', sep = '')),
             filter(evt, date >= break.date), 
-            hjust = -0.01, size = 2.5) +
+            hjust = -0.01, size = 2) +
   scale_x_date(name = "Year", 
                breaks = break.vec,
                # date_breaks = "10 years",
@@ -54,13 +54,23 @@ fig <- ggplot() +
         #panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(1,1,0.5,0.5, 'cm'),
         legend.position = c(0.9,0.9),
-        legend.text = element_text(size = 8))
+        legend.text = element_text(size = 7))
 fig 
-
-tiff(file.path(datadir, 'figures/population_sapelo_revised.tif'), compression = 'lzw', unit = 'in', height = 5,
-     width = 8.8, res = 300)
+ 
+tiff(file.path(datadir, 'figures/population_sapelo_cwbp-no1.tif'), compression = 'lzw', unit = 'in', height = 3.9,
+     width = 7.5, res = 600)
 fig
 dev.off()
+
+# jpeg(file.path(datadir, 'figures/population_sapelo_cwbp-no1.jpeg'), height = 3.9,
+#      width = 7.5, units = 'in', res = 300, pointsize = 10, type = c("cairo", "Xlib", "quartz"))
+# fig
+# dev.off()
+
+# pdf(file.path(datadir, 'figures/population_sapelo_cwbp-no1.pdf'), height = 3.9,
+#      width = 7.5)
+# fig
+# dev.off()
 
 slide <- ggplot() +
   geom_col(aes(y = population, x = date, fill = race), filter(pop, race == 'unknown'), width = 500) + 

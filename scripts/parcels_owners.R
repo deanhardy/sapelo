@@ -11,7 +11,7 @@ library(tmap)
 
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
-clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
+clr4 <- c('grey30', 'grey60', 'white', 'grey10')
 clr5 <- c('black', 'grey60', 'red', 'grey10')
 
 
@@ -93,8 +93,8 @@ sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres)) +
         axis.ticks.x = element_line(colour = 'white'))
 sumplot2
 
-tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 5, width = 5, unit = "in", 
-     compression = "lzw", res = 300)
+tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
+     compression = "lzw", res = 600)
 sumplot2
 dev.off()
 # new_o <- o %>% group_by(owner) %>%
@@ -130,9 +130,10 @@ dev.off()
 
 ## map owners by 3 class category
 map2 <- tm_shape(po3) + 
-  tm_fill('own3cat', palette = clr4, title = 'B)\nOwner Category') + 
+  tm_fill('own3cat', palette = clr4, title = 'Owner Category') + 
   tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
+  tm_shape(filter(po3, own4cat == 'Company')) +
+  tm_borders(col = 'red', lwd = 2) +
   tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
   tm_layout(frame = FALSE,
             legend.text.size = 0.8,
@@ -140,7 +141,7 @@ map2 <- tm_shape(po3) +
 map2
 
 tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
-    width = 5, height = 5)
+    width = 3.75, height = 3.9)
 map2
 dev.off()
 
@@ -192,3 +193,40 @@ heirs <- po %>%
   filter(str_detect(owner, c('EST', 'ETAL', 'C/O')))
 
 
+#######################
+## TAX HIKE EVAL
+#######################
+
+p <- st_read(file.path(datadir, 'spatial-data/prcl_id_sap2015'), stringsAsFactors = F) %>%
+  st_transform(utm) %>%
+  rename(parcel_id = PARCEL_ID)
+
+t <- read.csv(file.path(datadir, 'property/taxes/parcels_assessed_values.txt')) %>%
+  rename(parcel_id = PARCEL_ID) %>%
+  mutate(assval_chg = ((HISTVAL2 - HISTVAL3)/HISTVAL3) * 100) %>%
+  select(parcel_id, assval_chg)
+
+pt <- left_join(p, t, by = 'parcel_id') %>%
+  filter(grepl('101A|102A', parcel_id)) %>%
+  filter(assval_chg >= 0 & !is.na(assval_chg) & assval_chg != 'Inf')
+
+plt = get_brewer_pal('YlOrRd', n = 7)
+
+## map appraisal value changes
+taxmap <- tm_shape(pt) + 
+  tm_fill('assval_chg', title = 'B)\n2011 Assessed Value\nChange (%)',
+          breaks = c(0,250,500,750,1000,5000), palette = plt) + 
+  tm_borders(col = 'black') +
+  # tm_scale_bar(breaks = c(0, 0.4), size = 0.8, position = c(0.65, 0)) + 
+  # tm_compass(type = 'arrow', size = 3, position = c(0.71, 0.09)) +
+  tm_layout(frame = FALSE,
+            legend.text.size = 0.8,
+            legend.title.size = 1)
+taxmap 
+
+
+## export combined figures
+tiff(file.path(datadir, 'figures/hh-taxhike-ownercat-rb02.tiff'), res = 600, units = 'in',
+     width = 7.5, height = 3.9)
+tmap_arrange(map2, sumplot2, widths = c(0.5,0.5))
+dev.off()
