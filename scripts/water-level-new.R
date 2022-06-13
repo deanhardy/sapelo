@@ -198,6 +198,9 @@ tidal3 <- tidal2 %>%
   filter(!(water_level_C < -4 | water_level_C >2.5)) %>%
   rename(site = site.x)
 
+## export combined data
+write.csv(tidal3, paste(datadir, 'wls_data.csv'))
+
 ## daily high tide
 ht <- tidal3 %>%
   group_by(site, date) %>%
