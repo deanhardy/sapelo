@@ -193,14 +193,19 @@ for (i in 1:length(SN)) {
   tidal2 <- rbind(OUT2, tidal2)
 }
 
-## filter extreme values
+## filter extreme values & convert F temps to C temps
 tidal3 <- tidal2 %>% 
   filter(!(water_level_C < -4 | water_level_C >2.5)) %>%
+  mutate(water_temp_c = if_else(water_temp_c >= 40, (water_temp_c -32) * 5/9, water_temp_c)) %>%
   rename(site = site.x)
 
 ## export combined data
 write.csv(tidal3, paste(datadir, 'wls_data.csv'))
 
+ggplot(tidal3, aes(water_temp_c)) + 
+  geom_histogram(bins = 25) + 
+  scale_x_continuous(breaks = seq(0,120, 5))
+  
 ## daily high tide
 ht <- tidal3 %>%
   group_by(site, date) %>%
