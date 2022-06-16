@@ -24,15 +24,64 @@ latest_sales <- sales %>%
 sales2012 <- sales %>%
   filter(date >= as.Date("2012-01-01") & price > 0)
 
+##################################
+## financial transactions analysis
+##################################
 money <- filter(sales, price > 0)
 mean(money$price.acre)
+
+m.cost <- sales %>% 
+  filter(price > 0) %>%
+  group_by(year, sale.type) %>%
+  summarise(count = n(),
+            mean = mean(price.acre),
+            median = median(price.acre))
+
+fnt = 7
+
+annual.cost <- ggplot(m.cost, aes(year, mean/1000, color = sale.type)) +
+  geom_point() + 
+  geom_smooth(method = 'lm') + 
+  # stat_smooth(geom='lm', aes(ymin = ifelse(..ymin.. < 0, 0, ..ymin..)), 
+  #             alpha = .3) +
+  scale_y_continuous(name = 'Average Annual Sale Price ($1,000)',
+                     breaks = seq(0,1000, 100),
+                     limits = c(-20,1000),
+                     expand = c(0,0)) + 
+  scale_x_continuous(name = "Year",
+                     breaks = seq(1990, 2020, 5)) + 
+  scale_color_manual(name = "Category", values = c('black', 'red')) + 
+  theme(axis.title = element_text(size = fnt),
+        axis.title.x = element_text(margin = margin(t=0,r=0,b=0,l=0)),
+        axis.title.y = element_text(margin = margin(t=0,r=0,b=0,l=0)),
+        axis.text = element_text(color = "black", size = fnt),
+        axis.ticks.length = unit(-0.1, 'cm'),
+        axis.ticks = element_line(color = 'black'),
+        axis.text.x = element_text(margin=unit(c(0.2,0.2,0.2,0.2), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.2,0.2,0.2,0.2), "cm")),
+        axis.line = element_line(color = 'black'),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
+        panel.grid = element_blank(),
+        # panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        # panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.25,0.25,0.5,0.5, 'cm'),
+        legend.position = c(0.2,0.8),
+        legend.text = element_text(size = fnt),
+        legend.title = element_text(size = fnt),
+        legend.key = element_blank(),
+        legend.box.margin = margin(0.005,0.005,0.005,0.005, 'cm'),
+        legend.box.background = element_rect(color = 'black')) 
+annual.cost
+
+tiff(file.path(datadir, "figures/sales_priceperacre-cwbp-rb02.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+annual.cost
+dev.off()
 
 ## export sales data as table in PDF
 # pdf("sales_table.pdf", height=11, width=8.5)
 # grid.table(sales)
 # dev.off()
 
-fnt = 8
 # size_legend <- guides(color = 'black', fill = 'none')
 ## sales prices per acre
 saleplot <- ggplot(filter(sales, reason != "MT", price != 0),  

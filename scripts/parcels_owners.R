@@ -11,9 +11,8 @@ library(tmap)
 
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
-clr4 <- c('grey30', 'grey60', 'white', 'grey10')
-clr5 <- c('black', 'grey60', 'red', 'grey10')
-
+clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
+clr5 <- c('grey30', 'grey60', 'grey90', 'white', 'red')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
@@ -78,19 +77,26 @@ dev.off()
 sum2 <- po %>%
   group_by(own4cat) %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
-  filter(!(own4cat %in% c('County', 'Unknown')))
+  filter(!(own4cat %in% c('County', 'Unknown'))) %>%
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company')))
+
+sum.colors <- c('red', 'grey30', 'grey60', 'grey90')
+names(sum.colors) <- levels(sum2$own4cat)
 
 ## plot freq of land holdings by owner 4 class category
 sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres)) +
-  geom_col(fill = 'black', show.legend = F, width = 0.3) +
-  labs(x = 'Owner Category', y = "Acres") + 
+  geom_col(fill = sum.colors, show.legend = T, width = 0.3) +
+  labs(x = '', y = "Acres") + 
   scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
-  scale_fill_manual(values = clr4) +
+  # scale_fill_manual(values = clr5) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
+        plot.margin = margin(1, 0, 0, 0, "cm"),
         axis.line.y = element_line(color = 'black'),
         axis.text = element_text(color = 'black'),
-        axis.ticks.x = element_line(colour = 'white'))
+        axis.ticks.x = element_line(colour = 'white'),
+        axis.text.x = element_blank()
+        )
 sumplot2
 
 tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
@@ -107,10 +113,12 @@ dev.off()
 
 po2 <- po %>% 
   mutate(own3cat = ifelse(own3cat %in% c('Unknown', 'County'), 'Other', own3cat)) %>%
-  mutate(own3cat = as_factor(own3cat))
+  mutate(own3cat = as_factor(own3cat)) 
 
 ## remove empty geometries
-po3 <- po2 %>% filter(!st_is_empty(.))
+po3 <- po2 %>% filter(!st_is_empty(.)) %>%
+  mutate(own4cat = if_else(own3cat == 'Other', 'Other', own4cat)) %>%
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company', 'Other')))
 
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
 
@@ -128,19 +136,23 @@ tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = '
 map
 dev.off()
 
+map2.colors <- c('grey30', 'grey60', 'grey90', 'red', 'black')
+names(map2.colors) <- levels(po3$own4cat)
+
 ## map owners by 3 class category
 map2 <- tm_shape(po3) + 
-  tm_fill('own3cat', palette = clr4, title = 'Owner Category') + 
+  tm_fill('own4cat', palette = map2.colors, title = 'Owner Category') + 
   tm_borders(col = 'black') +
-  tm_shape(filter(po3, own4cat == 'Company')) +
-  tm_borders(col = 'red', lwd = 2) +
-  tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
+  # tm_shape(filter(po3, own4cat == 'Company')) +
+  # tm_fill(col = 'red', lwd = 1) +
+  tm_compass(type = 'arrow', size = 3, position = c(0.75, 0.09)) +
   tm_layout(frame = FALSE,
             legend.text.size = 0.8,
-            legend.title.size = 1)
+            legend.title.size = 1,
+            legend.position = c(0.01,0.675))
 map2
 
-tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 300, units = 'in',
+tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 600, units = 'in',
     width = 3.75, height = 3.9)
 map2
 dev.off()
@@ -226,7 +238,7 @@ taxmap
 
 
 ## export combined figures
-tiff(file.path(datadir, 'figures/hh-taxhike-ownercat-rb02.tiff'), res = 600, units = 'in',
-     width = 7.5, height = 3.9)
-tmap_arrange(map2, sumplot2, widths = c(0.5,0.5))
-dev.off()
+# tiff(file.path(datadir, 'figures/hh-taxhike-ownercat-rb02.tiff'), res = 600, units = 'in',
+#      width = 7.5, height = 3.9)
+# tmap_arrange(map2, sumplot2, widths = c(0.5,0.5))
+# dev.off()
