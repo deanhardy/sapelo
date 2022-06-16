@@ -12,7 +12,7 @@ library(tmap)
 utm <- 2150 ## NAD83 17N
 clr3 <- c('grey30', 'grey60', 'grey90')
 clr4 <- c('grey30', 'grey60', 'grey90', 'grey10')
-clr5 <- c('grey30', 'grey60', 'grey90', 'white', 'red')
+clr5 <- c('grey30', 'grey60', 'grey90', 'white', '#BA0C2F')
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
@@ -80,7 +80,7 @@ sum2 <- po %>%
   filter(!(own4cat %in% c('County', 'Unknown'))) %>%
   mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company')))
 
-sum.colors <- c('red', 'grey30', 'grey60', 'grey90')
+sum.colors <- c('#BA0C2F', 'grey30', 'grey60', 'grey90')
 names(sum.colors) <- levels(sum2$own4cat)
 
 ## plot freq of land holdings by owner 4 class category
@@ -91,7 +91,7 @@ sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres)) +
   # scale_fill_manual(values = clr5) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
-        plot.margin = margin(1, 0, 0, 0, "cm"),
+        plot.margin = margin(1, 0, 0, 0.5, "cm"),
         axis.line.y = element_line(color = 'black'),
         axis.text = element_text(color = 'black'),
         axis.ticks.x = element_line(colour = 'white'),
@@ -120,7 +120,7 @@ po3 <- po2 %>% filter(!st_is_empty(.)) %>%
   mutate(own4cat = if_else(own3cat == 'Other', 'Other', own4cat)) %>%
   mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company', 'Other')))
 
-st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
+st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), 'GEOJSON', delete_dsn=TRUE)
 
 ## map owners by category
 map <- tm_shape(po3) + 
@@ -136,10 +136,10 @@ tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = '
 map
 dev.off()
 
-map2.colors <- c('grey30', 'grey60', 'grey90', 'red', 'black')
+map2.colors <- c('grey30', 'grey60', 'grey90', '#BA0C2F', 'black')
 names(map2.colors) <- levels(po3$own4cat)
 
-## map owners by 3 class category
+## map owners by 4 class category
 map2 <- tm_shape(po3) + 
   tm_fill('own4cat', palette = map2.colors, title = 'Owner Category') + 
   tm_borders(col = 'black') +
