@@ -16,6 +16,29 @@ sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv")
   mutate(price.ha = price/(acres * 0.404686)) %>%
   filter(acres != 'na')
 
+## descendant and outsiders losses and gains
+loss <- sales %>% 
+  filter(grantor_category %in% c('descendant', 'l_descendant') & grantee_category %in% c('outsider', 'l_outsider'))
+sum(loss$price)
+
+l.yr <- loss %>% 
+  distinct(parcel.id, .keep_all = TRUE) %>%
+  filter(price > 0) %>%
+  group_by(year) %>%
+  summarize(acres = sum(acres), count = n())
+
+ggplot(l.yr, aes(year, acres)) +
+  geom_col() + 
+  geom_smooth(method = 'lm', se = F)
+
+## acres sold/lost per year
+sum(l.yr$acres) / (last(l.yr$year) - first(l.yr$year))
+
+gain <- sales %>% 
+  filter(grantee_category %in% c('descendant', 'l_descendant') & grantor_category %in% c('outsider', 'l_outsider'))
+sum(gain$price)
+gain %>% distinct(parcel.id, .keep_all = TRUE) %>% summarize(sum(acres))
+
 ## select most recent sales for each property
 latest_sales <- sales %>%
   group_by(parcel.id) %>%
