@@ -27,9 +27,50 @@ l.yr <- loss %>%
   group_by(year) %>%
   summarize(acres = sum(acres), count = n())
 
-ggplot(l.yr, aes(year, acres)) +
+## plot annual loss totals
+dl <- ggplot(l.yr, aes(year, acres)) +
   geom_col() + 
-  geom_smooth(method = 'lm', se = F)
+  # geom_smooth(method = 'lm', se = F) + 
+  scale_y_continuous(name = 'Acres',
+                   breaks = seq(0,4, 1),
+                   limits = c(0,4),
+                   expand = c(0,0)) + 
+  scale_x_continuous(name = "Year",
+                     breaks = seq(2000, 2020, 5)) +
+  ggtitle("Estimated Descendant Land Losses") + 
+  theme(
+    panel.background = element_rect(fill = FALSE, color = 'black'),
+    panel.grid = element_blank(),
+    panel.grid.major.y = element_line(linetype = 'dashed')
+  )
+dl
+
+tiff(file.path(datadir, "figures/descendant-landloss.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+dl
+dev.off()
+
+## plots loss trends
+trend <- ggplot(filter(loss, price > 0), aes(year, acres)) +
+  geom_point(size = 1) + 
+  geom_smooth(method = 'loess', se = T, span = 0.5) + 
+  # geom_smooth(method = 'lm', se = T) + 
+  scale_y_continuous(name = 'Acres',
+                     breaks = seq(0,2, 0.5),
+                     limits = c(0,2),
+                     expand = c(0,0)) + 
+  scale_x_continuous(name = "Year",
+                     breaks = seq(2000, 2020, 5)) +
+  ggtitle("Estimated Descendant Land Loss Trend") + 
+  theme(
+    panel.background = element_rect(fill = FALSE, color = 'black'),
+    panel.grid = element_blank(),
+    panel.grid.major.y = element_line(linetype = 'dashed')
+  )
+trend
+
+tiff(file.path(datadir, "figures/descendant-landloss-trend.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+trend
+dev.off()
 
 ## acres sold/lost per year
 sum(l.yr$acres) / (last(l.yr$year) - first(l.yr$year))
