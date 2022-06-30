@@ -23,12 +23,14 @@ sum(loss$price)
 
 l.yr <- loss %>% 
   distinct(parcel.id, .keep_all = TRUE) %>%
-  filter(price > 0) %>%
+  filter(price > 0) 
+
+sum.yr <- l.yr %>%
   group_by(year) %>%
   summarize(acres = sum(acres), count = n())
 
 ## plot annual loss totals
-dl <- ggplot(l.yr, aes(year, acres)) +
+dl <- ggplot(sum.yr, aes(year, acres)) +
   geom_col() + 
   # geom_smooth(method = 'lm', se = F) + 
   scale_y_continuous(name = 'Acres',
@@ -37,7 +39,7 @@ dl <- ggplot(l.yr, aes(year, acres)) +
                    expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
                      breaks = seq(2000, 2020, 5)) +
-  ggtitle("Estimated Descendant Land Losses") + 
+  # ggtitle("Estimated Descendant Land Losses") + 
   theme(
     panel.background = element_rect(fill = FALSE, color = 'black'),
     panel.grid = element_blank(),

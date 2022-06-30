@@ -103,6 +103,21 @@ tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width 
      compression = "lzw", res = 600)
 sumplot2
 dev.off()
+
+# plot categorical proportion ownership
+## https://r-graph-gallery.com/piechart-ggplot2.html
+propplot <- 
+  ggplot(sum2, aes(x="", y=acres)) +
+  geom_bar(fill=sum.colors, stat="identity", width=1, show.legend = F) +
+  coord_polar("y", start=0)
+propplot
+
+tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
+     compression = "lzw", res = 600)
+propplot
+dev.off()
+
+
 # new_o <- o %>% group_by(owner) %>%
 #   summarise(table(owner), own_cat = first(own_cat)) %>%
 #   mutate(own_cat_freq)
