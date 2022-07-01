@@ -76,25 +76,28 @@ dev.off()
 ## summarize by owner 4 class categories
 sum2 <- po %>%
   group_by(own4cat) %>%
+  st_drop_geometry() %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
-  filter(!(own4cat %in% c('County', 'Unknown'))) %>%
-  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company')))
+  filter(!(own4cat %in% c('County', 'Unknown', 'Heritage Authority'))) %>%
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Non-traditional', 'Company'))) %>%
+  mutate(percent = round(100 * acres/sum(acres), 0))
 
-sum.colors <- c('#BA0C2F', 'grey30', 'grey60', 'grey90')
+sum.colors <- c('#BA0C2F', 'grey30', 'grey90')
 names(sum.colors) <- levels(sum2$own4cat)
 
 ## plot freq of land holdings by owner 4 class category
-sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -acres), acres)) +
-  geom_col(fill = sum.colors, show.legend = T, width = 0.3) +
-  labs(x = '', y = "Acres") + 
-  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
-  # scale_fill_manual(values = clr5) +
+sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -percent), percent)) +
+  geom_col(fill = sum.colors, show.legend = F, width = 0.8) +
+  labs(x = '', y = "Percent") + 
+  scale_y_continuous(limits = c(0,100), expand = c(0,0), breaks = seq(0,100,10)) +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
+        panel.grid.major.y = element_line(linetype = 'dashed'),
         plot.margin = margin(1, 0, 0, 0.5, "cm"),
         axis.line.y = element_line(color = 'black'),
+        axis.line.x = element_line(color = 'black'),
         axis.text = element_text(color = 'black'),
-        axis.ticks.x = element_line(colour = 'white'),
+        axis.ticks.x = element_blank(),
         axis.text.x = element_blank()
         )
 sumplot2
@@ -106,13 +109,25 @@ dev.off()
 
 # plot categorical proportion ownership
 ## https://r-graph-gallery.com/piechart-ggplot2.html
+# Compute the position of labels
+data <- sum2 %>% 
+  arrange(desc(percent)) %>%
+  mutate(prop = percent / sum(sum2$percent) *100) %>%
+  mutate(ypos = cumsum(prop)- 0.1*prop )
+
+prop.colors <- c('grey30', 'grey60', 'grey90', '#BA0C2F')
+names(prop.colors) <- levels(data$own4cat)
+
 propplot <- 
-  ggplot(sum2, aes(x="", y=acres)) +
-  geom_bar(fill=sum.colors, stat="identity", width=1, show.legend = F) +
-  coord_polar("y", start=0)
+  ggplot(data, aes(x="", y=acres)) +
+  geom_bar(fill=prop.colors, stat="identity", width=1, show.legend = F) +
+  coord_polar("y", start=0) + 
+  theme_void() + 
+  geom_text(aes(y = ypos, label = percent), color = "white", size=6) +
+  scale_fill_brewer(palette="Set1")
 propplot
 
-tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
+tiff(file.path(datadir, "figures/owner4category_prop.tif"), height = 3.9, width = 3.75, unit = "in", 
      compression = "lzw", res = 600)
 propplot
 dev.off()
