@@ -29,17 +29,17 @@ sum.yr <- l.yr %>%
   group_by(year) %>%
   summarize(acres = sum(acres), count = n())
 
-## plot annual loss totals
+## plot total annual acreage losses
 dl <- ggplot(sum.yr, aes(year, acres)) +
-  geom_col() + 
-  # geom_smooth(method = 'lm', se = F) + 
+  geom_point() + 
+  geom_smooth(method = 'lm', se = T) + 
   scale_y_continuous(name = 'Acres',
                    breaks = seq(0,4, 1),
                    limits = c(0,4),
                    expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
                      breaks = seq(2000, 2020, 5)) +
-  # ggtitle("Estimated Descendant Land Losses") + 
+  ggtitle("Estimated Total Acres Lost Yearly") + 
   theme(
     panel.background = element_rect(fill = FALSE, color = 'black'),
     panel.grid = element_blank(),
@@ -47,14 +47,18 @@ dl <- ggplot(sum.yr, aes(year, acres)) +
   )
 dl
 
-tiff(file.path(datadir, "figures/descendant-landloss.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+tiff(file.path(datadir, "figures/descendant-landloss-total-acres-annually.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
 dl
 dev.off()
 
-## plots loss trends
-trend <- ggplot(filter(loss, price > 0), aes(year, acres)) +
+png(file.path(datadir, "figures/descendant-landloss-total-acres-annually.png"), units = "in", height = 3, width = 5, res = 150)
+dl
+dev.off()
+
+## plots acreage loss trends by individual parcels
+ind <- ggplot(filter(loss, price > 0), aes(year, acres)) +
   geom_point(size = 1) + 
-  geom_smooth(method = 'loess', se = T, span = 0.5) + 
+  geom_smooth(method = 'lm', se = T) + 
   # geom_smooth(method = 'lm', se = T) + 
   scale_y_continuous(name = 'Acres',
                      breaks = seq(0,2, 0.5),
@@ -62,16 +66,20 @@ trend <- ggplot(filter(loss, price > 0), aes(year, acres)) +
                      expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
                      breaks = seq(2000, 2020, 5)) +
-  ggtitle("Estimated Descendant Land Loss Trend") + 
+  # ggtitle("Estimated Land Losses") + 
   theme(
     panel.background = element_rect(fill = FALSE, color = 'black'),
     panel.grid = element_blank(),
     panel.grid.major.y = element_line(linetype = 'dashed')
   )
-trend
+ind
 
-tiff(file.path(datadir, "figures/descendant-landloss-trend.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
-trend
+tiff(file.path(datadir, "figures/descendant-landloss-individual.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+ind
+dev.off()
+
+png(file.path(datadir, "figures/descendant-landloss-individual.png"), units = "in", height = 3, width = 5, res = 150)
+ind
 dev.off()
 
 ## acres sold/lost per year
