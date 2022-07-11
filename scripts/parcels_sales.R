@@ -21,6 +21,7 @@ loss <- sales %>%
   filter(grantor_category %in% c('descendant', 'l_descendant') & grantee_category %in% c('outsider', 'l_outsider'))
 sum(loss$price)
 
+## filter by unique parcel IDs and with financial exchange
 l.yr <- loss %>% 
   distinct(parcel.id, .keep_all = TRUE) %>%
   filter(price > 0) 
@@ -28,6 +29,22 @@ l.yr <- loss %>%
 sum.yr <- l.yr %>%
   group_by(year) %>%
   summarize(acres = sum(acres), count = n())
+sum(sum.yr$acres)
+
+## filter to land lost since 2001 (last two decades)
+d2.loss <- sum.yr %>% filter(year >= 2001)
+sum(d2.loss$acres)
+
+## filter to land lost during tax hike
+t.hike <- sum.yr %>% filter(year %in% c(2013, 2014, 2015))
+sum(t.hike$acres)
+
+## percent loss during t.hike
+sum(t.hike$acres) / sum(d2.loss$acres) *100
+
+## plot number sales per year with financial exchange
+ggplot(sum.yr, aes(year, count)) +
+  geom_col()
 
 ## plot total annual acreage losses
 dl <- ggplot(sum.yr, aes(year, acres)) +
