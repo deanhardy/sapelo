@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-10-01') 
-int.date2 <- as.Date('2021-12-31')
+int.date1 <- as.Date('2021-05-01') 
+int.date2 <- as.Date('2021-06-30')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -58,6 +58,9 @@ TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'))
 
 int.TP <- filter(TP, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+
+ggplot(TP, aes(TP_mm)) +
+  geom_histogram()
 
 ## import lunar data
 lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
@@ -168,7 +171,6 @@ q <- p + facet_grid(rows = vars(site))
 q
 
 png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
-quartz()
 q
 dev.off()
 
@@ -200,7 +202,7 @@ tidal3 <- tidal2 %>%
   rename(site = site.x)
 
 ## export combined data
-write.csv(tidal3, paste(datadir, 'wls_data.csv'))
+# write.csv(tidal3, paste(datadir, 'wls_data.csv'))
 
 ggplot(tidal3, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
