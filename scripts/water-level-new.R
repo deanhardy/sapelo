@@ -81,6 +81,7 @@ for(i in 1:length(filz)) {
     mutate(date_time_gmt = mdy_hms(date_time_gmt),
            date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz[i], -25,-24),
+           serial = str_sub(filz[i], -22,-19),
            water_level_C = as.numeric(water_level_C)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
@@ -92,11 +93,16 @@ for(i in 1:length(filz)) {
                                                                   if_else(site == 'Site-11', 'Library',
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
-                                                                                          if_else(site == 'Site-14', 'Tidal Gate', site))))))))))) %>%
+                                                                                          if_else(site == 'Site-14', 'Tidal Gate', 
+                                                                                                  if_else(site == 'Site-19', 'The Trunk', site)))))))))))) %>%
     mutate(sitename = paste(site, name)) %>%
     select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
 }
+
+tidal.01 <- tidal %>%
+  mutate(logger = 'hobo') %>%
+  select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename, logger, serial)
 
 ## import & tidy van essen water level data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
@@ -109,24 +115,26 @@ for(i in 1:length(filz.ve)) {
     mutate(date_time_est = ymd_hms(date_time_est),
            date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
            site = str_sub(filz.ve[i], -26,-25),
+           serial = str_sub(filz.ve[i], -23,-19),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
-    mutate(name = if_else(site == 'Site-15', 'Oakdale',
-                          if_else(site == 'Site-07', 'Cactus Patch', 
-                                  if_else(site == 'Site-09', 'Mr. Tracy',
-                                          if_else(site == 'Site-11', 'Library', 
-                                                  if_else(site == 'Site-13', 'Purple Ribbon',
-                                                          if_else(site == 'Site-19', 'The Trunk', 
-                                                                  if_else(site == 'Site-14', 'Tidal Gate', site)))))))) %>%
+    mutate(name = if_else(site == 'Site-07', 'Cactus Patch', 
+                          if_else(site == 'Site-09', 'Mr. Tracy',
+                                  if_else(site == 'Site-11', 'Library',
+                                          if_else(site == 'Site-13', 'Purple Ribbon',
+                                                  if_else(site == 'Site-14', 'Tidal Gate',
+                                                          if_else(site == 'Site-15', 'Oakdale',
+                                                                  if_else(site == 'Site-19', 'The Trunk', site)))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
 
 tidal.ve2 <- tidal.ve %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5))) %>%
-  select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename)
+  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5)),
+         logger = 'van essen') %>%
+  select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename, logger, serial)
 
-tidal1 <- rbind(tidal, tidal.ve2)
+tidal1 <- rbind(tidal.01, tidal.ve2)
 
 ## import & tidy van essen specific conductivity/salinity data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
