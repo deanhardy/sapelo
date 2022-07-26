@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-06-01') 
-int.date2 <- as.Date('2022-06-30')
+int.date1 <- as.Date('2021-07-15') 
+int.date2 <- as.Date('2021-08-15')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -82,6 +82,7 @@ for(i in 1:length(filz)) {
            date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz[i], -25,-24),
            serial = str_sub(filz[i], -22,-19),
+           water_temp_c = as.numeric(water_temp_c),
            water_level_C = as.numeric(water_level_C)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
@@ -109,11 +110,11 @@ tidal.01 <- tidal %>%
 for(i in 1:length(filz.ve)) {
   OUT <- fread(filz.ve[i],
                select = c(1:3),
-               col.names = c('date_time_est', 'water_level_C', 'water_temp_c'),
+               col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
                stringsAsFactors = FALSE) %>%
     # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
-    mutate(date_time_est = ymd_hms(date_time_est),
-           date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
+    mutate(date_time_gmt = ymd_hms(date_time_gmt),
+           date = as.Date(date_time_gmt, '%y/%m/%d', tz = 'GMT'),
            site = str_sub(filz.ve[i], -26,-25),
            serial = str_sub(filz.ve[i], -23,-19),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
@@ -130,7 +131,7 @@ for(i in 1:length(filz.ve)) {
 }
 
 tidal.ve2 <- tidal.ve %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5)),
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt),
          logger = 'van essen') %>%
   select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename, logger, serial)
 
@@ -147,6 +148,7 @@ for(i in 1:length(filz.psu)) {
     mutate(date_time_est = ymd_hms(date_time_est),
            date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
            site = str_sub(filz.psu[i], -26,-25),
+           water_temp_c = as.numeric(water_temp_c),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
@@ -206,6 +208,7 @@ for (i in 1:length(SN)) {
 ## filter extreme values & convert F temps to C temps
 tidal3 <- tidal2 %>% 
   filter(!(water_level_C < -4 | water_level_C >2.5)) %>%
+  mutate(water_temp_c = as.numeric(water_temp_c)) %>%
   mutate(water_temp_c = if_else(water_temp_c >= 40, (water_temp_c -32) * 5/9, water_temp_c)) %>%
   rename(site = site.x)
 
@@ -357,7 +360,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
       geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Level (NAVD88) & Total Daily Precipitation x10 (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Level (NAVD88) & Total Daily Precipitation x10 (meters)', breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0),
                          # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                          #                   name = expression(paste('Total Daily Precipitation (mm)'))),
                          sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
