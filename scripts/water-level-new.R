@@ -13,12 +13,12 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-05-01') 
-int.date2 <- as.Date('2021-06-30')
+int.date1 <- as.Date('2022-06-01') 
+int.date2 <- as.Date('2022-06-30')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
-ht.date2 <- as.Date('2022-04-30')
+ht.date2 <- as.Date('2022-06-30')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
@@ -174,13 +174,13 @@ tidal.psu2 <- tidal.psu %>%
 
 ## plot salinity at all sites
 ## this plot still needs lots of work as does the data collection process
-p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
-q <- p + facet_grid(rows = vars(site))
-q
+# p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
+# q <- p + facet_grid(rows = vars(site))
 
-png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
-q
-dev.off()
+
+# png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
+# q
+# dev.off()
 
 tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %>%
   select(!(site.y))
