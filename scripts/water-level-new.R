@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-07-15') 
-int.date2 <- as.Date('2021-08-15')
+int.date1 <- as.Date('2022-06-02') 
+int.date2 <- as.Date('2022-07-19')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -112,7 +112,7 @@ for(i in 1:length(filz.ve)) {
                select = c(1:3),
                col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
                stringsAsFactors = FALSE) %>%
-    # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
+    slice(., 1:(n()-2)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = ymd_hms(date_time_gmt),
            date = as.Date(date_time_gmt, '%y/%m/%d', tz = 'GMT'),
            site = str_sub(filz.ve[i], -26,-25),

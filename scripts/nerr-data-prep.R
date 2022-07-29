@@ -18,16 +18,18 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet/SAPMLMET.csv'),
-# nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet-allinclusive/SAPMLMET.csv'),
+# nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet-allinclusive/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP),
+         F_BP = (F_BP),
          TP = as.numeric(TotPrcp),
          Temp = as.numeric(ATemp)) %>%
-  select(date_time_gmt, BP, TP, Temp) %>%
+  select(date_time_gmt, BP, F_BP, TP, Temp) %>%
   filter(BP > 990) %>% ## filters erroneous data on 3/7/22
+  filter(!str_detect(F_BP, '<-3>|<-4>')) %>% ## filters rejected data, but keeps suspect data
   # filter_by_time(date_time_gmt, .start_date = '2022-03-07 00:00:00', .end_date = '2022-03-07 23:59:00') %>%
   drop_na()
 
@@ -78,7 +80,7 @@ nerr_wx3h <- nerr_wx2.2 %>%
 
 colnames(nerr_wx3h) <- c('Date', 'Time (GMT)', 'pres (mbar)') ## for HOBOs
 
-write.table(nerr_wx3h, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-hobo.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+write.table(nerr_wx3h, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-hobo-ai.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 
 
@@ -97,6 +99,6 @@ colnames(nerr_wx3d) <- c(' Date (GMT)', 'Date (EST)', 'Date (EDT)', 'Date', 'Tim
 nerr_wx4d <- nerr_wx3d %>%
   filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
 
-write.table(nerr_wx4d, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-diver.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+write.table(nerr_wx4d, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-diver-ai.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 
