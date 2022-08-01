@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-06-02') 
-int.date2 <- as.Date('2022-07-19')
+int.date1 <- as.Date('2021-06-01') 
+int.date2 <- as.Date('2021-07-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -211,6 +211,7 @@ tidal3 <- tidal2 %>%
   mutate(water_temp_c = as.numeric(water_temp_c)) %>%
   mutate(water_temp_c = if_else(water_temp_c >= 40, (water_temp_c -32) * 5/9, water_temp_c)) %>%
   rename(site = site.x)
+
 
 ## export combined data
 # write.csv(tidal3, paste(datadir, 'wls_data.csv'))
@@ -418,3 +419,89 @@ int.graph <- function(df, na.rm = TRUE, ...){
 
 # run graphing function on long df
 int.graph(tidal3)
+
+## adding transect IDs
+tidal4 <- tidal3 %>%
+  mutate(transect = if_else(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site 18'), 'lot1-transect',
+                            if_else(site %in% c('Site-02', 'Site-03','Site-05', 'Site-11', 'Site-23'), 'stlukes-transect', 
+                                    if_else(site %in% c('Site-07', 'Site-09', 'Site-26'), 'tracys-transect',
+                                            if_else(site %in% c('Site-15'), 'oakdale-transect', 
+                                                    if_else(site %in% c('Site-20'), 'walker-transect','NA'))))))
+
+
+##############################################################################################
+# TRANSECTS create graphing function for 12-minute intervals over specified interval using water depth
+# https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
+##############################################################################################
+TEXT = 15 ## set font size for figures
+int.graph <- function(df, na.rm = TRUE, ...){
+  
+  # create list of logger sites in data to loop over 
+  transect_list <- unique(df$transect)
+  
+  # create for loop to produce ggplot2 graphs 
+  for (i in seq_along(transect_list)) {
+    
+    df2 <- filter(df, transect == transect_list[i] & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+    
+    # create plot for each site in df 
+    plot <- 
+      ggplot(df2)  + 
+      geom_line(aes(date_time_gmt, water_level_navd88, color = site)) + 
+      # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
+      # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
+      # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
+      # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
+      # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
+      # scale_fill_manual(values = c('white', 'black')) + 
+      scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
+      scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0)) +
+      # annotate("rect",
+      #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
+      #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
+      #          ymin = 0,
+      #          ymax = df2$well_ht,
+      #          alpha = 0.1) +
+      # annotate("text",
+      #          x = as.POSIXct(paste(int.date1, '06:48:00')),
+      #          y = df2$well_ht+0.1,
+      #          label = 'Well Height',
+      #          angle = 90) +
+      theme(axis.title = element_text(size = TEXT),
+            axis.text = element_text(color = "black", size = TEXT),
+            axis.ticks.length = unit(-0.2, 'cm'),
+            axis.ticks = element_line(color = 'black'),
+            axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+            axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+            axis.line = element_line(color = 'black'),
+            axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+            axis.title.y.right = element_text(color = 'blue'),
+            axis.line.y.right = element_line(color = "blue"), 
+            axis.ticks.y.right = element_line(color = "blue"),
+            panel.background = element_rect(fill = FALSE, color = 'black'),
+            panel.grid = element_blank(),
+            panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+            plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+            legend.position = c(0.1, 0.92),
+            legend.text = element_text(size = TEXT),
+            legend.title = element_text(size = TEXT),
+            legend.box.background = element_rect(color = 'black'),
+            plot.title = element_text(size = TEXT, face = "bold")) + 
+      ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
+    
+    # save plots as .png
+    ggsave(plot, file=paste(datadir,
+                            'figures/', 'Transect-NAVD88 ', 'Interval-12-minute ', transect_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+    
+    # save plots as .pdf
+    # ggsave(plot, file=paste(results, 
+    #                        'projection_graphs/county_graphs/',
+    #                        count_list[i], ".pdf", sep=''), scale=2) 
+    
+    # print plots to screen
+    # print(plot)
+  }
+}
+
+# run graphing function on long df
+int.graph(tidal4)
