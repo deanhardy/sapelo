@@ -151,6 +151,7 @@ po3 <- po2 %>% filter(!st_is_empty(.)) %>%
   mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company', 'Other')))
 
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), 'GEOJSON', delete_dsn=TRUE)
+st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
 
 ## map owners by category
 map <- tm_shape(po3) + 
