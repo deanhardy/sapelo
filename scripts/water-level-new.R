@@ -216,6 +216,14 @@ tidal3 <- tidal2 %>%
 ## export combined data
 # write.csv(tidal3, paste(datadir, 'wls_data.csv'))
 
+## export for A.W.
+sites <- filter(tidal3, date_time_gmt >= as.Date('2021-01-01') 
+              & date_time_gmt <= as.Date('2021-12-31')) %>%
+  select(site, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
+
+ggplot(sites, aes(date_time_gmt, water_level_navd88, color = site)) + 
+  geom_smooth()
+
 ggplot(tidal3, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
   scale_x_continuous(breaks = seq(0,120, 5))
