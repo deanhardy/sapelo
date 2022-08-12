@@ -19,7 +19,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-traditional'), 'Non-traditional', own_cat)) %>%
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-traditional'), 'Non-descendant', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
 
 p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
@@ -53,25 +53,54 @@ sum <- po %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
   filter(!(own3cat %in% c('County', 'Unknown')))
 
-## plot freq of land holdings by owner 3 class category
-sumplot <- ggplot(sum, aes(own3cat, acres)) +
+## summarize state claims into classes
+sum.st <- po %>%
+  group_by(state_claim) %>%
+  summarise(num = n(), acres = sum(gis_acres, na.rm = T))
+
+## plot acres of land holdings by owner 3 class category
+own.acres <- ggplot(sum, aes(own3cat, acres)) +
   geom_col(fill = 'black', show.legend = F, width = 0.2) + 
   # geom_text(aes(own3cat, acres+5), label = sum$num) + 
   labs(x = '', y = "Acres") + 
-  scale_y_continuous(limits = c(0,200), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,200), breaks = seq(0,200,20), expand = c(0,0)) +
   # scale_fill_manual(values = 'black') +
   theme(panel.background = element_rect(fill = 'white'),
         panel.grid = element_blank(),
         axis.line.y = element_line(color = 'black'),
+        axis.line.y.right = element_line(color = 'black'),
+        panel.grid.major.y = element_line(color = 'grey40'),
+        panel.grid.minor.y = element_line(color = 'grey60'),
         axis.text = element_text(color = 'black'),
-        axis.ticks.x = element_line(colour = 'white'))
-sumplot
+        axis.ticks.x = element_line(colour = 'white')) + 
+  ggtitle(paste0('Printed'), Sys.Date())
+own.acres
 
-tiff(file.path(datadir, "figures/owner3category_sums.tif"), height = 5, width = 5, unit = "in", 
-     compression = "lzw", res = 300)
-sumplot
+png(file.path(datadir, "figures/owners/owner3class_acres.png"), height = 5, width = 5, unit = "in", res = 150)
+own.acres
 dev.off()
 
+## plot freq of land holdings by owner 3 class category
+own.num <- ggplot(sum, aes(own3cat, num)) +
+  geom_col(fill = 'black', show.legend = F, width = 0.2) + 
+  # geom_text(aes(own3cat, acres+5), label = sum$num) + 
+  labs(x = '', y = "Number Parcels") + 
+  scale_y_continuous(limits = c(0,200), breaks = seq(0,200,20), expand = c(0,0)) +
+  # scale_fill_manual(values = 'black') +
+  theme(panel.background = element_rect(fill = 'white'),
+        panel.grid = element_blank(),
+        axis.line.y = element_line(color = 'black'),
+        axis.line.y.right = element_line(color = 'black'),
+        panel.grid.major.y = element_line(color = 'grey40'),
+        panel.grid.minor.y = element_line(color = 'grey60'),
+        axis.text = element_text(color = 'black'),
+        axis.ticks.x = element_line(colour = 'white')) + 
+  ggtitle(paste0('Printed'), Sys.Date())
+own.num
+
+png(file.path(datadir, "figures/owners/owner3class_num.png"), height = 5, width = 5, unit = "in", res = 150)
+own.num
+dev.off()
 
 ## summarize by owner 4 class categories
 sum2 <- po %>%
@@ -102,7 +131,7 @@ sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -percent), percent)) +
         )
 sumplot2
 
-tiff(file.path(datadir, "figures/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
+tiff(file.path(datadir, "figures/owners/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
      compression = "lzw", res = 600)
 sumplot2
 dev.off()
