@@ -234,7 +234,6 @@ png(paste0(datadir, '/figures/Smoothed_', date1, "-to-",
 sm.plot
 dev.off()
 
-## plot temps
 ggplot(tidal3, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
   scale_x_continuous(breaks = seq(0,120, 5))
