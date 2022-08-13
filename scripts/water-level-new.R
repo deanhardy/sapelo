@@ -218,8 +218,8 @@ tidal3 <- tidal2 %>%
 
 ## esda of smoothed water levels across sites
 
-date1 <- as.Date('2022-01-01') 
-date2 <- as.Date('2022-12-31') 
+date1 <- as.Date('2019-01-01') 
+date2 <- as.Date('2021-12-31') 
   
 sites <- filter(tidal3, date_time_gmt >= date1
               & date_time_gmt <= date2) %>%
