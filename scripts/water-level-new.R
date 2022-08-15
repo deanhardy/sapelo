@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-06-01') 
-int.date2 <- as.Date('2021-07-31')
+int.date1 <- as.Date('2020-10-01') 
+int.date2 <- as.Date('2020-12-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -215,6 +215,24 @@ tidal3 <- tidal2 %>%
 
 ## export combined data
 # write.csv(tidal3, paste(datadir, 'wls_data.csv'))
+
+## esda of smoothed water levels across sites
+
+date1 <- as.Date('2019-01-01') 
+date2 <- as.Date('2021-12-31') 
+  
+sites <- filter(tidal3, date_time_gmt >= date1
+              & date_time_gmt <= date2) %>%
+  select(site, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
+
+sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88, color = site)) + 
+  geom_smooth(na.rm = T) + 
+  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2))
+
+png(paste0(datadir, '/figures/Smoothed_', date1, "-to-", 
+           date2, '.png'), units = 'in', width = 6, height = 4, res = 150)
+sm.plot
+dev.off()
 
 ggplot(tidal3, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
