@@ -55,8 +55,10 @@ sum <- po %>%
 
 ## summarize state claims into classes
 sum.st <- po %>%
+  st_drop_geometry() %>%
   group_by(state_claim) %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T))
+sum.st
 
 ## plot acres of land holdings by owner 3 class category
 own.acres <- ggplot(sum, aes(own3cat, acres)) +
