@@ -19,7 +19,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-traditional'), 'Non-descendant', own_cat)) %>%
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Non-descendant', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
 
 p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
@@ -55,8 +55,10 @@ sum <- po %>%
 
 ## summarize state claims into classes
 sum.st <- po %>%
+  st_drop_geometry() %>%
   group_by(state_claim) %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T))
+sum.st
 
 ## plot acres of land holdings by owner 3 class category
 own.acres <- ggplot(sum, aes(own3cat, acres)) +
@@ -102,19 +104,19 @@ png(file.path(datadir, "figures/owners/owner3class_num.png"), height = 5, width 
 own.num
 dev.off()
 
-## summarize by owner 4 class categories
+## summarize by owner 3 class categories no SIHA
 sum2 <- po %>%
   group_by(own4cat) %>%
   st_drop_geometry() %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
   filter(!(own4cat %in% c('County', 'Unknown', 'Heritage Authority'))) %>%
-  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Non-traditional', 'Company'))) %>%
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Non-descendant', 'Company'))) %>%
   mutate(percent = round(100 * acres/sum(acres), 0))
 
 sum.colors <- c('#BA0C2F', 'grey30', 'grey90')
 names(sum.colors) <- levels(sum2$own4cat)
 
-## plot freq of land holdings by owner 4 class category
+## plot freq of land holdings by owner 3 class category with no SIHA
 sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -percent), percent)) +
   geom_col(fill = sum.colors, show.legend = F, width = 0.8) +
   labs(x = '', y = "Percent") + 
@@ -131,7 +133,7 @@ sumplot2 <- ggplot(sum2, aes(reorder(own4cat, -percent), percent)) +
         )
 sumplot2
 
-tiff(file.path(datadir, "figures/owners/owner4category_sums.tif"), height = 3.9, width = 3.75, unit = "in", 
+tiff(file.path(datadir, "figures/owners/owner3category_sums_noSIHA.tif"), height = 3.9, width = 3.75, unit = "in", 
      compression = "lzw", res = 600)
 sumplot2
 dev.off()
@@ -147,19 +149,19 @@ data <- sum2 %>%
 prop.colors <- c('grey30', 'grey60', 'grey90', '#BA0C2F')
 names(prop.colors) <- levels(data$own4cat)
 
-propplot <- 
-  ggplot(data, aes(x="", y=acres)) +
-  geom_bar(fill=prop.colors, stat="identity", width=1, show.legend = F) +
-  coord_polar("y", start=0) + 
-  theme_void() + 
-  geom_text(aes(y = ypos, label = percent), color = "white", size=6) +
-  scale_fill_brewer(palette="Set1")
-propplot
-
-tiff(file.path(datadir, "figures/owner4category_prop.tif"), height = 3.9, width = 3.75, unit = "in", 
-     compression = "lzw", res = 600)
-propplot
-dev.off()
+# propplot <- 
+#   ggplot(data, aes(x="", y=acres)) +
+#   geom_bar(fill=prop.colors, stat="identity", width=1, show.legend = F) +
+#   coord_polar("y", start=0) + 
+#   theme_void() + 
+#   geom_text(aes(y = ypos, label = percent), color = "white", size=6) +
+#   scale_fill_brewer(palette= prop.colors)
+# propplot
+# 
+# tiff(file.path(datadir, "figures/owner4category_prop.tif"), height = 3.9, width = 3.75, unit = "in", 
+#      compression = "lzw", res = 600)
+# propplot
+# dev.off()
 
 
 # new_o <- o %>% group_by(owner) %>%
@@ -177,7 +179,7 @@ po2 <- po %>%
 ## remove empty geometries
 po3 <- po2 %>% filter(!st_is_empty(.)) %>%
   mutate(own4cat = if_else(own3cat == 'Other', 'Other', own4cat)) %>%
-  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-traditional', 'Company', 'Other')))
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-descendant', 'Company', 'Other')))
 
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), 'GEOJSON', delete_dsn=TRUE)
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
@@ -191,7 +193,7 @@ map <- tm_shape(po3) +
   tm_layout(frame = FALSE)
 map 
 
-tiff(file.path(datadir, 'figures/map_owner_category.tiff'), res = 300, units = 'in',
+tiff(file.path(datadir, 'figures/owners/map_owner_category.tiff'), res = 300, units = 'in',
      width = 5, height = 5)
 map
 dev.off()
@@ -212,27 +214,11 @@ map2 <- tm_shape(po3) +
             legend.position = c(0.01,0.675))
 map2
 
-tiff(file.path(datadir, 'figures/map_owner3category.tiff'), res = 600, units = 'in',
+tiff(file.path(datadir, 'figures/owners/map_owner4category.tiff'), res = 600, units = 'in',
     width = 3.75, height = 3.9)
 map2
 dev.off()
 
-
-## map owners by 3 class category with companies highlighted
-map3 <- tm_shape(po3) + 
-  tm_fill('own3cat', palette = clr5, title = 'Owner Category') + 
-  tm_borders(col = 'black') +
-  tm_scale_bar(breaks = c(0,0.5), size = 0.7, position = c(0.65, 0)) + 
-  tm_compass(type = 'arrow', size = 3, position = c(0.72, 0.09)) +
-  tm_layout(frame = FALSE,
-            legend.text.size = 0.8,
-            legend.title.size = 1)
-map3
-
-tiff(file.path(datadir, 'figures/map_owner4category_llc-highlighted.tiff'), res = 300, units = 'in',
-     width = 5, height = 5)
-map3
-dev.off()
 
 ownsum <- po %>%
   group_by(own3cat) %>%
@@ -249,7 +235,7 @@ sum(llcsum$`n()`)
 sum(llcsum$ha)/sum(ownsum$ha)
 
 outsidersum <- po %>%
-  filter(own3cat == 'Non-traditional') %>%
+  filter(own3cat == 'Non-descendant') %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 sum(outsidersum$`n()`)
