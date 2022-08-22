@@ -219,15 +219,16 @@ tidal3 <- tidal2 %>%
 ## esda of smoothed water levels across sites
 
 date1 <- as.Date('2019-01-01') 
-date2 <- as.Date('2021-12-31') 
+date2 <- as.Date('2019-12-31') 
   
 sites <- filter(tidal3, date_time_gmt >= date1
               & date_time_gmt <= date2) %>%
   select(site, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88, color = site)) + 
-  geom_smooth(na.rm = T) + 
+  geom_smooth(na.rm = T, n = 1200) + 
   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2))
+sm.plot
 
 png(paste0(datadir, '/figures/Smoothed_', date1, "-to-", 
            date2, '.png'), units = 'in', width = 6, height = 4, res = 150)
