@@ -18,8 +18,8 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-# nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet/SAPMLMET.csv'),
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220725-sapmlmet-allinclusive/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220903-sapmlmet/SAPMLMET.csv'),
+# nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220903-sapmlmet-allinclusive/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
@@ -80,7 +80,7 @@ nerr_wx3h <- nerr_wx2.2 %>%
 
 colnames(nerr_wx3h) <- c('Date', 'Time (GMT)', 'pres (mbar)') ## for HOBOs
 
-write.table(nerr_wx3h, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-hobo-ai.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+write.table(nerr_wx3h, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-hobo.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 
 
@@ -99,6 +99,6 @@ colnames(nerr_wx3d) <- c(' Date (GMT)', 'Date (EST)', 'Date (EDT)', 'Date', 'Tim
 nerr_wx4d <- nerr_wx3d %>%
   filter(date_time_gmt >= first('2018-10-12 00:00:00') & date_time_gmt <= Sys.time())
 
-write.table(nerr_wx4d, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-diver-ai.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
+write.table(nerr_wx4d, file.path(datadir, 'water-level/nerr-data/SAPMLMETADJ-diver.txt'), sep = ',', row.names = FALSE, col.names = TRUE,
             quote = FALSE)
 
