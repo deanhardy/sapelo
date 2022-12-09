@@ -6,6 +6,8 @@ library(lubridate)
 library(readxl)
 library(sf)
 library(tmap)
+library(tidygeocoder)
+library(ggplot2)
 
 utm <- 2150 ## NAD83 17N
 
@@ -41,3 +43,27 @@ po <- full_join(p, o, by = 'parcel_id') %>%
   mutate(own_cat = ifelse(is.na(own_cat), 'Unknown', own_cat)) %>%
   mutate(own3cat = ifelse(is.na(own3cat), 'Unknown', own3cat)) %>%
   mutate(own4cat = ifelse(is.na(own4cat), 'Unknown', own4cat))
+
+po <- po %>% 
+  # filter(street != '') %>%
+  mutate(address = paste(house_no, street, city, state, zip))
+
+lat_longs <- po %>%
+  geocode(address, method = 'arcgis', lat = latitude , long = longitude)
+
+# lat_longs_cascade <- po %>%
+#     geocode_combine( 
+#     queries = list(
+#       list(method = 'census', mode = 'batch'),
+#       list(method = 'census', mode = 'single'),
+#       list(method = 'osm')
+#     ),
+#     global_params = list(street = 'street', 
+#                          city = 'city', state = 'state', postalcode = 'zip'),
+#     query_names = c('census batch', 'census single', 'osm')
+#   )
+
+ggplot(lat_longs, aes(longitude, latitude), color = "grey99") +
+  borders("state") + geom_point() +
+  # ggrepel::geom_label_repel(aes(label = own_cat)) +
+  theme_void()
