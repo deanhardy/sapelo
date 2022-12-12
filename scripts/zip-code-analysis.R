@@ -50,20 +50,20 @@ po <- po %>%
 
 lat_longs <- po %>%
   geocode(address, method = 'arcgis', lat = latitude , long = longitude)
+  
+ll <- lat_longs %>%
+  filter(longitude < 0)
+  
+library(usmap)
+plot_usmap(regions = "states") + 
+    labs(title = "US State",
+         subtitle = "This is a blank map of the counties of the United States.") + 
+    theme(panel.background = element_rect(color = "black", fill = "lightblue"))
 
-# lat_longs_cascade <- po %>%
-#     geocode_combine( 
-#     queries = list(
-#       list(method = 'census', mode = 'batch'),
-#       list(method = 'census', mode = 'single'),
-#       list(method = 'osm')
-#     ),
-#     global_params = list(street = 'street', 
-#                          city = 'city', state = 'state', postalcode = 'zip'),
-#     query_names = c('census batch', 'census single', 'osm')
-#   )
+# sf version 0.3-4, 0.4-0
+DT_sf = st_as_sf(ll, coords = c("longitude", "latitude"), 
+                 crs = 4326, agr = "constant")
+plot(DT_sf)
 
-ggplot(lat_longs, aes(longitude, latitude), color = "grey99") +
-  borders("state") + geom_point() +
-  # ggrepel::geom_label_repel(aes(label = own_cat)) +
-  theme_void()
+ggplot(DT_sf) +
+  geom_sf()
