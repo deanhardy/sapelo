@@ -8,6 +8,10 @@ library(sf)
 library(tmap)
 library(tidygeocoder)
 library(ggplot2)
+library(maps)
+
+# load United States state map data
+MainStates <- map_data("state")
 
 utm <- 2150 ## NAD83 17N
 
@@ -19,8 +23,9 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Non-descendant', own_cat)) %>%
-  mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Non-descendant', own_cat),
+         own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat),
+         zip = ifelse(str_length(zip) == 4, paste0("0", zip), zip))
 
 p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
   st_transform(utm) %>%
@@ -54,16 +59,20 @@ lat_longs <- po %>%
 ll <- lat_longs %>%
   filter(longitude < 0)
   
-library(usmap)
-plot_usmap(regions = "states") + 
-    labs(title = "US State",
-         subtitle = "This is a blank map of the counties of the United States.") + 
-    theme(panel.background = element_rect(color = "black", fill = "lightblue"))
+# library(usmap)
+# plot_usmap(regions = "states") + 
+#     labs(title = "US State",
+#          subtitle = "This is a blank map of the counties of the United States.") + 
+#     theme(panel.background = element_rect(color = "black", fill = "lightblue"))
 
 # sf version 0.3-4, 0.4-0
-DT_sf = st_as_sf(ll, coords = c("longitude", "latitude"), 
-                 crs = 4326, agr = "constant")
-plot(DT_sf)
+hh.geo = st_as_sf(ll, coords = c("longitude", "latitude"), 
+                 crs = 4326, agr = "constant") %>%
+  filter(!own3cat %in% c('Heritage Authority', 'County'))
 
-ggplot(DT_sf) +
-  geom_sf()
+ggplot(hh.geo) +
+  geom_polygon(data=MainStates, aes(x=long, y=lat, group=group),
+                color="black", fill="white") +
+  geom_sf(aes(color = own3cat)) +
+  coord_sf(default_crs = sf::st_crs(4326)) + 
+  theme_void()
