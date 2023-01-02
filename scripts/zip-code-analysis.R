@@ -73,6 +73,11 @@ hh.geo = st_as_sf(ll, coords = c("longitude", "latitude"),
 ggplot(hh.geo) +
   geom_polygon(data=MainStates, aes(x=long, y=lat, group=group),
                 color="black", fill="white") +
-  geom_sf(aes(color = own3cat)) +
+  geom_sf(aes(color = own4cat)) +
   coord_sf(default_crs = sf::st_crs(4326)) + 
   theme_void()
+
+off.island <- hh.geo %>% filter(zip != 31327)
+off.island.outsider <- off.island %>% filter(own3cat == 'Non-descendant')
+
+

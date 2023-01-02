@@ -219,18 +219,25 @@ tidal3 <- tidal2 %>%
 ## esda of smoothed water levels across sites
 
 date1 <- as.Date('2019-01-01') 
-date2 <- as.Date('2019-12-31') 
+date2 <- as.Date('2022-12-31') 
   
 sites <- tidal3 %>%
-  # filter(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05')) %>% ## ditches sites
-  filter(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12')) %>% ## marsh sites
+  mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15'), 'ditch', 
+                       ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12'), 'creek', site))) %>% ## ditches sites
+  # filter(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12')) %>% ## marsh sites
+  mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site-18'), 'Lot 1', 
+                           ifelse(site %in% c('Site-02', 'Site-03', 'Site-05', 'Site-11', 'Site-23'), 'St Lukes',
+                                  ifelse(site %in% c('Site-07', 'Site-09'), 'Tracys', 
+                                         ifelse(site %in% c('Site-16', 'Site-15'), "Oakdale",
+                                                ifelse(site %in% c('Site-20'), 'Walker',
+                                                       ifelse(site %in% c('Site-24'), 'Johnson', site))))))) %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2) %>%
-  select(site, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
+  select(site, type, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 # write.csv(sites, paste0(datadir, 'sapelo-ditch-water-levels-2019.csv'), row.names = FALSE) ## for A.W.
 
-sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88, color = site)) + 
-  geom_smooth(na.rm = T, n = 1200) + 
+sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88)) + 
+  geom_smooth(na.rm = T, n = 1200, aes(color = type, linetype = transect)) + 
   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2))
 sm.plot
 
