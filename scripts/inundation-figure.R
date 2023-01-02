@@ -15,7 +15,7 @@ library(gridExtra)
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import parcel owner data and trans
-df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = F) %>%
+df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner),
          own3cat = ifelse(own3cat == 'Non-traditional', 'Non-Descendant', own3cat)) %>%
@@ -33,14 +33,18 @@ ag_cntr <- st_centroid(ag) %>%
   filter(name != 'PH1')
 
 ## import water level data
-hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/'), stringsAsFactors = F) %>%
+hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/hobo_sites2.shp'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
-  rename(site = Id)
-info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
-  mutate(install_date = as.Date(install.date, '%m/%d/%y'),
-         site = as.numeric(site)) %>%
-  dplyr::select(site, install_date)
-hobo <- left_join(hobo, info)
+  filter(!site %in% c(14, 15, 16))
+# info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
+#   mutate(install_date = as.Date(install.date, '%m/%d/%y'),
+#          site = as.numeric(site)) %>%
+#   dplyr::select(site, install_date)
+# hobo <- left_join(hobo, info)
+
+trsct <- st_read(file.path(datadir, 'spatial-data/hobo_sites/wls_transeects.shp'), stringsAsFactors = F) %>%
+  st_transform(4326) %>%
+  filter(Id != 6)
 
 # inund <- raster(file.path(datadir, 'spatial-data/inundation/inund2100hc.tif'))
 tidal <- raster(file.path(datadir, 'spatial-data/inundation/is01.tif'))
@@ -91,6 +95,7 @@ leafIcon <- tmap_icons("http://leafletjs.com/examples/custom-icons/leaf-green.pn
 df <- df %>% filter(!st_is_empty(.))
 
 tmap_options(check.and.fix = TRUE)
+ts <- 1.3 ## set figure text size 
 
 ## separate inundation map
 map.ind <- 
@@ -103,74 +108,38 @@ map.ind <-
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(df) + tm_borders(lwd = 1, col = 'black') + 
   tm_layout(frame = TRUE,
-            legend.text.size = 0.7,
-            legend.title.size = 0.8,
+            legend.text.size = ts,
+            legend.title.size = ts,
+            legend.title.fontface = 1,
             legend.bg.color = 'white',
             legend.frame = 'black',
-            title.snap.to.legend = TRUE) +
+            legend.width = 1.1,
+            inner.margins=c(0.05,0,0,0.05), 
+            title.snap.to.legend = FALSE) +
   tm_add_legend(type = 'fill',
                 labels = 'Tidal Marsh',
                 col = '#89cd66',
                 border.lwd = 0,
-                group = 'funky')
+                group = 'funky',
+                size = ts)
 # map.ind
 
-## separate owner map with ag and water loggers
-map.own <- 
-  tm_shape(df) + 
-  tm_fill('B)\nown3cat', palette = clr.own, 
-          title = 'Owner Category') + 
-  tm_shape(df) + tm_borders(lwd = 1) + 
-  # tm_shape(comp) + tm_borders('yellow') + 
-  tm_shape(comp.hatch) + tm_lines() + 
-  tm_shape(tidal, raster.downsample = FALSE) + 
-  tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
-  tm_shape(ag_cntr) + 
-  tm_squares(col = 'green', 
-             size = 0.4,
-             border.col = 'black',
-             border.lwd = 1) + 
-  tm_shape(hobo) +
-  tm_symbols(col = 'steelblue1',
-             size = 0.5,
-             border.lwd = 1, 
-             border.col = 'black') + 
-  tm_layout(frame = TRUE,
-            legend.text.size = 0.7,
-            legend.title.size = 0.8) +
-  tm_add_legend(type = 'fill',
-                shape = 19,
-                col = 'green',
-                labels = 'Agricultural Plots') + 
-  tm_add_legend(type = 'symbol',
-                shape = 21,
-                col = 'steelblue1',
-                labels = 'Water Loggers') + 
-  tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
-  tm_compass(position = c(0.74, 0.11), text.size = 0.7)
-map.own
-
-tiff(file.path(datadir, 'figures/HardyFigure1.tiff'), units = 'in', width = 7, height = 3.5, 
-     res = 300, compression = 'lzw')
-tmap_arrange(map.ind, map.own, widths = c(0.5, 0.5))
-dev.off()
-
-## presentation slide for owner categories
-ts <- 1.3
 map.own <- 
   tm_shape(df, unit = 'mi') + 
   tm_fill('own3cat', palette = clr.own, 
-          title = 'Hog Hummock\nOwner Category') + 
+          title = 'B)\nOwner Category') + 
   tm_shape(df) + tm_borders(lwd = 1) + 
   # tm_shape(comp) + tm_borders('yellow') + 
   tm_shape(comp.hatch) + tm_lines() + 
-  # tm_shape(tidal, raster.downsample = FALSE) + 
-  # tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
+  tm_shape(tidal, raster.downsample = FALSE) +
+  tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) +
   tm_shape(ag_cntr) + 
   tm_squares(col = 'green', 
              size = 0.4,
              border.col = 'black',
              border.lwd = 1) + 
+  tm_shape(trsct) + 
+  tm_lines(col = 'blue') + 
   tm_shape(hobo) +
   tm_symbols(col = 'steelblue1',
              size = 0.5,
@@ -178,30 +147,38 @@ map.own <-
              border.col = 'black') + 
   tm_layout(frame = TRUE,
             legend.text.size = ts,
-            legend.title.size = ts+0.5,
-            legend.title.fontface = 2) +
+            legend.title.size = ts,
+            inner.margins=c(0.05,0,0,0.05), 
+            legend.title.fontface = 1) +
   tm_add_legend(type = 'symbol',
                 col = 'black',
                 shape = 12,
-                size = 1.2,
-                labels = 'Company-owned') + 
-  tm_add_legend(type = 'symbol',
-                shape = 22,
-                size = 1.2,
-                col = 'green',
-                labels = 'Agricultural Plot') + 
+                size = ts,
+                labels = 'Registered Company') + 
   tm_add_legend(type = 'symbol',
                 shape = 21,
-                size = 1.2,
+                size = ts,
                 col = 'steelblue1',
                 labels = 'Water Level Site') + 
+  tm_add_legend(type = 'symbol',
+                shape = 22,
+                size = ts,
+                col = 'green',
+                labels = 'Ag Plot') + 
   tm_scale_bar(breaks = c(0,0.2), text.size = ts, position = c(0.7,0)) + 
   tm_compass(position = c(0.74, 0.11), text.size = ts)
 map.own
 
-jpeg(file.path(datadir, 'figures/hog-hummock_owner-categories.jpeg'), units = 'in', width = 7, height = 7, 
-     res = 300)
-map.own
+## export for publication
+# tiff(file.path(datadir, 'figures/HardyFigure1.tiff'), units = 'in', width = 7, height = 3.5, 
+#      res = 300, compression = 'lzw')
+# tmap_arrange(map.own, map.ind, widths = c(0.5, 0.5))
+# dev.off()
+
+## export for presentations
+png(file.path(datadir, 'figures/HogHammock-LandLoss.png'), units = 'in', width = 13, height = 7, 
+     res = 150)
+tmap_arrange(map.ind, map.own, widths = c(0.5, 0.5))
 dev.off()
  
  

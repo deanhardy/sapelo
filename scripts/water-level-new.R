@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-06-01') 
-int.date2 <- as.Date('2022-09-03')
+int.date1 <- as.Date('2018-11-01') 
+int.date2 <- as.Date('2019-01-31')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -218,7 +218,7 @@ tidal3 <- tidal2 %>%
 
 ## esda of smoothed water levels across sites
 
-date1 <- as.Date('2019-01-01') 
+date1 <- as.Date('2018-10-01') 
 date2 <- as.Date('2022-12-31') 
   
 sites <- tidal3 %>%
@@ -232,17 +232,19 @@ sites <- tidal3 %>%
                                                 ifelse(site %in% c('Site-20'), 'Walker',
                                                        ifelse(site %in% c('Site-24'), 'Johnson', site))))))) %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2) %>%
-  select(site, type, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
+  select(site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 # write.csv(sites, paste0(datadir, 'sapelo-ditch-water-levels-2019.csv'), row.names = FALSE) ## for A.W.
 
 sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88)) + 
-  geom_smooth(na.rm = T, n = 1200, aes(color = type, linetype = transect)) + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2))
+  geom_smooth(na.rm = T, aes(linetype = site, color = type)) + 
+  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
+  labs(x = 'Date') + 
+  theme_bw(base_size = 20)
 sm.plot
 
 png(paste0(datadir, '/figures/Smoothed_', date1, "-to-", 
-           date2, '.png'), units = 'in', width = 6, height = 4, res = 150)
+           date2, '.png'), units = 'in', width = 10, height = 6, res = 150)
 sm.plot
 dev.off()
 
