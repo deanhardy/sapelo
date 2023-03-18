@@ -138,6 +138,17 @@ tiff(file.path(datadir, "figures/owners/owner3category_sums_noSIHA.tif"), height
 sumplot2
 dev.off()
 
+attach(sum2)
+sum3 <- sum2[order(percent),]
+detach(sum2)
+
+## pie chart of the above percent ownership categories
+tiff(file.path(datadir, "figures/owners/owner3category_sums_noSIHA.tif"), height = 3.9, width = 3.75, unit = "in", 
+     compression = "lzw", res = 600)
+pie(sum3$percent, col = c('#BA0C2F', 'grey90', 'grey30'), labels = paste0(sum3$percent, '%'), 
+    init.angle = 90, radius = 1)
+dev.off()
+
 # plot categorical proportion ownership
 ## https://r-graph-gallery.com/piechart-ggplot2.html
 # Compute the position of labels
