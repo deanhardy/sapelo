@@ -146,7 +146,7 @@ detach(sum2)
 tiff(file.path(datadir, "figures/owners/owner3category_sums_noSIHA.tif"), height = 3.9, width = 3.75, unit = "in", 
      compression = "lzw", res = 600)
 pie(sum3$percent, col = c('#BA0C2F', 'grey90', 'grey30'), labels = paste0(sum3$percent, '%'), 
-    init.angle = 90, radius = 1)
+    init.angle = 90, radius = 1, main = 'Percentage Acres Owned\nby Ownership Category')
 dev.off()
 
 # plot categorical proportion ownership
@@ -220,6 +220,8 @@ map2 <- tm_shape(po3) +
   # tm_fill(col = 'red', lwd = 1) +
   tm_compass(type = 'arrow', size = 3, position = c(0.75, 0.09)) +
   tm_layout(frame = FALSE,
+            title = 'Hog Hammock Community Ownership',
+            title.position = c('center', "TOP"),
             legend.text.size = 0.8,
             legend.title.size = 1,
             legend.position = c(0.01,0.675))

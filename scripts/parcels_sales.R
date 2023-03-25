@@ -26,9 +26,11 @@ l.yr <- loss %>%
   distinct(parcel.id, .keep_all = TRUE) %>%
   filter(price > 0) 
 
+## calculate total land losses annually as well as cumulatively
 sum.yr <- l.yr %>%
   group_by(year) %>%
-  summarize(acres = sum(acres), count = n())
+  summarize(acres = sum(acres), count = n()) %>%
+  mutate(cumulative = CUMULATIVE_SUM(acres))
 sum(sum.yr$acres)
 
 ## filter to land lost since 2001 (last two decades)
@@ -47,28 +49,47 @@ ggplot(sum.yr, aes(year, count)) +
   geom_col()
 
 ## plot total annual acreage losses
+fnt <- 20
 dl <- ggplot(sum.yr, aes(year, acres)) +
-  geom_point() + 
-  geom_smooth(method = 'lm', se = T) + 
-  scale_y_continuous(name = 'Acres',
-                   breaks = seq(0,4, 1),
-                   limits = c(0,4),
+  geom_point(color = 'black') +
+  geom_line(aes(year, cumulative), color = 'red') + 
+  # geom_rect(aes(xmin = year(ymd('2013-01-01'), xmax = year(ymd('2015-12-31'), ymin = 0, ymax = 25,
+  # fill = 'grey50')))) + 
+  # geom_vline(xintercept = year(ymd('2013-01-01'))) + 
+  # geom_vline(xintercept = year(ymd('2015-12-31'))) + 
+  # geom_smooth(method = 'lm', se = T) + 
+  scale_y_continuous(name = 'Annual and Cumulative Losses (Acres)',
+                   breaks = seq(0,25, 5),
+                   limits = c(0,25),
                    expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
-                     breaks = seq(2000, 2020, 5)) +
-  ggtitle("Estimated Total Acres Lost Yearly") + 
+                     breaks = seq(2000, 2020, 2)) +
+  ggtitle("Descendant Land Losses") + 
   theme(
     panel.background = element_rect(fill = FALSE, color = 'black'),
-    panel.grid = element_blank(),
-    panel.grid.major.y = element_line(linetype = 'dashed')
-  )
+    # panel.grid = element_blank(),
+    panel.grid.major.y = element_line(linetype = 'dashed', color = 'grey'),
+    plot.title = element_text(size =fnt),
+    axis.title = element_text(size = fnt),
+    axis.text = element_text(size = fnt),
+    legend.position = c(0.15,0.7),
+    legend.text = element_text(size = fnt),
+    legend.title = element_text(size = fnt),
+    legend.key = element_blank(),
+    legend.box.margin = margin(0.005,0.005,0.005,0.005, 'cm'),
+    legend.box.background = element_rect(color = 'black')
+  ) + 
+annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 25,
+           alpha = .1,fill = "blue")
 dl
 
-tiff(file.path(datadir, "figures/descendant-landloss-total-acres-annually.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+tiff(file.path(datadir, "figures/descendant-landloss.tif"), units = "in", 
+     height = 3, width = 5, res = 600, compression = "lzw")
 dl
 dev.off()
 
-png(file.path(datadir, "figures/descendant-landloss-total-acres-annually.png"), units = "in", height = 3, width = 5, res = 150)
+png(file.path(datadir, "figures/descendant-landloss.png"), units = "in", 
+    height = 7.5, width = 13.33, res = 150)
 dl
 dev.off()
 
@@ -128,20 +149,22 @@ m.cost <- sales %>%
             mean = mean(price.acre),
             median = median(price.acre))
 
-fnt = 7
+fnt = 20
 
-annual.cost <- ggplot(m.cost, aes(year, mean/1000, color = sale.type)) +
-  geom_point() + 
-  geom_smooth(method = 'lm') + 
+annual.cost <- ggplot(filter(sales, year >= 1990 & price >0), aes(year, price/100000, color = sale.type)) +
+  geom_point(aes(size = acres)) + 
+  geom_smooth(method = 'lm', se = F) + 
   # stat_smooth(geom='lm', aes(ymin = ifelse(..ymin.. < 0, 0, ..ymin..)), 
   #             alpha = .3) +
-  scale_y_continuous(name = 'Average Annual Sale Price ($1,000)',
-                     breaks = seq(0,1000, 100),
-                     limits = c(-20,1000),
+  scale_y_continuous(name = 'Sale Price (x$100,000)',
+                     breaks = seq(0,10, 1),
+                     limits = c(0,10),
                      expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
-                     breaks = seq(1990, 2020, 5)) + 
+                     breaks = seq(1990, 2020, 5),
+                     ) + 
   scale_color_manual(name = "Category", values = c('black', 'red')) + 
+  ggtitle('Property Sales Trends') + 
   theme(axis.title = element_text(size = fnt),
         axis.title.x = element_text(margin = margin(t=0,r=0,b=0,l=0)),
         axis.title.y = element_text(margin = margin(t=0,r=0,b=0,l=0)),
@@ -156,7 +179,9 @@ annual.cost <- ggplot(m.cost, aes(year, mean/1000, color = sale.type)) +
         # panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         # panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(0.25,0.25,0.5,0.5, 'cm'),
-        legend.position = c(0.2,0.8),
+        panel.grid.major.y = element_line(linetype = 'dashed'),
+        plot.title = element_text(size = 20),
+        legend.position = c(0.15,0.7),
         legend.text = element_text(size = fnt),
         legend.title = element_text(size = fnt),
         legend.key = element_blank(),
@@ -165,6 +190,10 @@ annual.cost <- ggplot(m.cost, aes(year, mean/1000, color = sale.type)) +
 annual.cost
 
 tiff(file.path(datadir, "figures/sales_priceperacre-cwbp-rb02.tif"), units = "in", height = 3, width = 5, res = 600, compression = "lzw")
+annual.cost
+dev.off()
+
+png(file.path(datadir, "figures/sales_priceperacre.png"), units = "in", height = 7, width = 13, res = 150)
 annual.cost
 dev.off()
 
