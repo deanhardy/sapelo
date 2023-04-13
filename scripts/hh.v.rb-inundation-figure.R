@@ -38,7 +38,7 @@ tmap_options(check.and.fix = TRUE)
 
 ## separate inundation map
 hh.ind <- 
-  tm_shape(hh) + tm_borders() + 
+  tm_shape(hh, unit = 'mi') + tm_borders() + 
   tm_shape(inund) + 
   tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
           title = 'Inundation Probability', group = 
@@ -46,7 +46,7 @@ hh.ind <-
   tm_shape(tidal_hh, raster.downsample = FALSE) + 
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(hh) + tm_borders(lwd = 1, col = 'black') + 
-  tm_credits('A)', fontface = "bold", position = c("left", 'bottom')) + 
+  tm_credits('A)', fontface = "bold", position = c("right", 'top')) + 
   tm_layout(frame = TRUE,
             legend.text.size = 0.7,
             legend.title.size = 0.8,
@@ -58,24 +58,24 @@ hh.ind <-
                 col = '#89cd66',
                 border.lwd = 0,
                 group = 'funky') +
-  tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0))  
-  hh.ind
+  tm_scale_bar(breaks = c(0,0.25), text.size = 0.7, position = c(0.65,0))  
+hh.ind
 
 ## separate inundation map
 rb.ind <- 
-  tm_shape(rb) + tm_borders() + 
+  tm_shape(rb, unit = 'mi') + tm_borders() + 
   tm_shape(inund) + 
    tm_fill('prb_smplfy', alpha = 0.5, palette = clr.ind,
           group = 'funky', legend.show = FALSE) + 
   tm_shape(tidal_rb, raster.downsample = FALSE) + 
   tm_raster(title = '', alpha = 1, palette = '#89cd66', legend.show = FALSE) + 
   tm_shape(rb) + tm_borders(lwd = 1, col = 'black') + 
-  tm_credits('B)', fontface = "bold", position = c("left", 'bottom')) + 
-  tm_scale_bar(breaks = c(0,0.3), text.size = 0.7, position = c(0.7,0)) + 
-  tm_compass(position = c(0.74, 0.11), text.size = 0.7)
+  tm_credits('B)', fontface = "bold", position = c("right", 'top')) + 
+  tm_scale_bar(breaks = c(0,0.25), text.size = 0.7, position = c(0.7,0)) + 
+  tm_compass(position = c(0.75, 0.11), text.size = 0.7)
 rb.ind
 
-tiff(file.path(datadir, 'figures/hh.v.rb-inundation.tiff'), units = 'in', width = 7, height = 3.5, 
+tiff(file.path(datadir, 'figures/inundation/hh.v.rb-inundation.tiff'), units = 'cm', width = 19, height = 9.5, 
      res = 300, compression = 'lzw')
 tmap_arrange(hh.ind, rb.ind, widths = c(0.5, 0.5))
 dev.off() 

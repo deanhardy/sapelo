@@ -19,8 +19,9 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Non-descendant', own_cat)) %>%
-  mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company', own_cat))
+  mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
+  mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
+                          if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))
 
 p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
   st_transform(utm) %>%
@@ -110,7 +111,7 @@ sum2 <- po %>%
   st_drop_geometry() %>%
   summarise(num = n(), acres = sum(gis_acres, na.rm = T)) %>%
   filter(!(own4cat %in% c('County', 'Unknown', 'Heritage Authority'))) %>%
-  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Non-descendant', 'Company'))) %>%
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Outsider', 'Company'))) %>%
   mutate(percent = round(100 * acres/sum(acres), 0))
 
 sum.colors <- c('#BA0C2F', 'grey30', 'grey90')
@@ -190,7 +191,7 @@ po2 <- po %>%
 ## remove empty geometries
 po3 <- po2 %>% filter(!st_is_empty(.)) %>%
   mutate(own4cat = if_else(own3cat == 'Other', 'Other', own4cat)) %>%
-  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Non-descendant', 'Company', 'Other')))
+  mutate(own4cat = factor(own4cat, levels = c('Descendant', 'Heritage Authority', 'Outsider', 'Company', 'Other')))
 
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), 'GEOJSON', delete_dsn=TRUE)
 st_write(po3, file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), 'ESRI Shapefile', delete_dsn=TRUE)
@@ -220,7 +221,7 @@ map2 <- tm_shape(po3) +
   # tm_fill(col = 'red', lwd = 1) +
   tm_compass(type = 'arrow', size = 3, position = c(0.75, 0.09)) +
   tm_layout(frame = FALSE,
-            title = 'Hog Hammock Community Ownership',
+            # title = 'Hog Hammock Community Ownership',
             title.position = c('center', "TOP"),
             legend.text.size = 0.8,
             legend.title.size = 1,
@@ -248,7 +249,7 @@ sum(llcsum$`n()`)
 sum(llcsum$ha)/sum(ownsum$ha)
 
 outsidersum <- po %>%
-  filter(own3cat == 'Non-descendant') %>%
+  filter(own3cat == 'Outsider') %>%
   group_by(owner) %>%
   summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 sum(outsidersum$`n()`)
