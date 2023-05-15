@@ -16,7 +16,10 @@ sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv")
   mutate(price.ha = price/(acres * 0.404686)) %>%
   filter(acres != 'na')
 
-#### descendant and outsiders losses and gains
+############################################
+## descendant and outsiders losses and gains
+############################################
+
 ## descendant losses
 loss <- sales %>% 
   filter(grantor_category %in% c('descendant', 'l_descendant') & grantee_category %in% c('outsider', 'l_outsider'))
@@ -25,25 +28,25 @@ sum(loss$price)
 ## filter by unique parcel IDs and with financial exchange
 l.yr <- loss %>% 
   distinct(parcel.id, .keep_all = TRUE) %>%
-  filter(price > 0) 
+  filter(price > 0 | reason %in% c('Sherriff Deed', 'SC')) 
 
 ## calculate total land losses annually as well as cumulatively
 sum.yr <- l.yr %>%
   group_by(year) %>%
   summarize(acres = sum(acres), count = n()) %>%
   mutate(cumulative = CUMULATIVE_SUM(acres))
-sum(sum.yr$acres)
+sum(sum.yr$acres) ## cumulative losses
 
 ## filter to land lost since 2001 (last two decades)
 d2.loss <- sum.yr %>% filter(year >= 2001)
-sum(d2.loss$acres)
+sum(d2.loss$acres) ## cumulative losses since 2001
 
 ## filter to land lost during tax hike
 t.hike <- sum.yr %>% filter(year %in% c(2013, 2014, 2015))
-sum(t.hike$acres)
+sum(t.hike$acres) ## tax hike losses
 
 ## percent loss during t.hike
-sum(t.hike$acres) / sum(d2.loss$acres) *100
+sum(t.hike$acres) / sum(d2.loss$acres) *100 ## percent losses during tax hike
 
 ## plot number sales per year with financial exchange
 ggplot(sum.yr, aes(year, count)) +
@@ -55,8 +58,8 @@ dl <- ggplot(sum.yr) +
   geom_col(aes(year, acres, fill = 'Annual')) +
   geom_line(aes(year, cumulative, color = 'Cumulative')) + 
   scale_y_continuous(name = 'Descendant Land Losses (Acres)',
-                   breaks = seq(0,25, 5),
-                   limits = c(0,25),
+                   breaks = seq(0,35, 5),
+                   limits = c(0,35),
                    expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
                      breaks = seq(1999, 2022, 1)) +
@@ -76,7 +79,7 @@ dl <- ggplot(sum.yr) +
     legend.box.margin = margin(0.005,0.005,0.005,0.005, 'cm'),
     legend.box.background = element_rect(color = 'black')
   ) + 
-  annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 25,
+  annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 35,
            alpha = .1,fill = "blue") +
   geom_text(aes(label = 'TAX HIKE PERIOD >>>', x = 2008, y = 17.5),
             size = 3, hjust = 0) +
@@ -95,7 +98,7 @@ dl
 dev.off()
 
 ## plots acreage loss trends by individual parcels
-ind <- ggplot(filter(loss, price > 0), aes(year, acres)) +
+ind <- ggplot(filter(loss, price > 0 | reason %in% c('Sherriff Deed', 'SC')), aes(year, acres)) +
   geom_point(size = 1) + 
   geom_smooth(method = 'lm', se = T) + 
   # geom_smooth(method = 'lm', se = T) + 
@@ -217,7 +220,7 @@ saleplot <- ggplot(filter(sales, reason != "MT", price != 0),
                      breaks = seq(0,16, 1),
                      limits = c(-16,16), expand = c(0.05,0),
                      sec.axis = sec_axis(~., breaks = seq(0,16,1), labels = NULL)) +
-  coord_x_date(ylim = c(0,16), xlim = c('1992-01-01', '2022-01-01')) +
+  coord_x_date(ylim = c(0,16), xlim = c('1992-01-01', '2023-01-01')) +
   scale_color_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
                      labels = c('Land Only', 'Land with Building')) +
   scale_fill_manual(name = "Sale Type", values = c('darkgreen', 'grey75'),
@@ -267,7 +270,7 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
   #             method = "lm", se = TRUE, linetype = "dashed", lwd =0.5, show.legend = F) +
   geom_col(aes(year, freq, fill = group), width = 0.5) + 
 #           position = position_dodge2(width = 0.3, padding = 0)) +
-  scale_x_continuous(name = "Year", limits = c(1990,2020), 
+  scale_x_continuous(name = "Year", limits = c(1990,2023), 
                      breaks = seq(1990,2020,5), expand = c(0,0)) +
                      # sec.axis = sec_axis(~., labels = NULL, 
                      #                     breaks = seq(1990,2020,5))) +
@@ -286,7 +289,7 @@ sale_rate <- ggplot(filter(sales2, year > 1990)) +
         axis.title.y = element_text(margin = margin(t=0,r=-10,b=0,l=0)),
         axis.text = element_text(color = "black",
                                    size = fnt),
-        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks.length = unit(0.2, 'cm'),
         axis.ticks = element_line(color = 'black'),
         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
@@ -355,3 +358,4 @@ who <- 'PFS GROUP LLC'
 
 test <- sales %>%
   filter(grantor %in% who | grantee %in% who)
+
