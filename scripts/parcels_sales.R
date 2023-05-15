@@ -16,7 +16,8 @@ sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv")
   mutate(price.ha = price/(acres * 0.404686)) %>%
   filter(acres != 'na')
 
-## descendant and outsiders losses and gains
+#### descendant and outsiders losses and gains
+## descendant losses
 loss <- sales %>% 
   filter(grantor_category %in% c('descendant', 'l_descendant') & grantee_category %in% c('outsider', 'l_outsider'))
 sum(loss$price)
@@ -48,23 +49,18 @@ sum(t.hike$acres) / sum(d2.loss$acres) *100
 ggplot(sum.yr, aes(year, count)) +
   geom_col()
 
-## plot total annual acreage losses
-fnt <- 20
-dl <- ggplot(sum.yr, aes(year, acres)) +
-  geom_point(color = 'black') +
-  geom_line(aes(year, cumulative), color = 'red') + 
-  # geom_rect(aes(xmin = year(ymd('2013-01-01'), xmax = year(ymd('2015-12-31'), ymin = 0, ymax = 25,
-  # fill = 'grey50')))) + 
-  # geom_vline(xintercept = year(ymd('2013-01-01'))) + 
-  # geom_vline(xintercept = year(ymd('2015-12-31'))) + 
-  # geom_smooth(method = 'lm', se = T) + 
-  scale_y_continuous(name = 'Annual and Cumulative Losses (Acres)',
+## plot acreage losses by year, cumulative, with tax hike period highlighted
+fnt <- 12
+dl <- ggplot(sum.yr) +
+  geom_col(aes(year, acres, fill = 'Annual')) +
+  geom_line(aes(year, cumulative, color = 'Cumulative')) + 
+  scale_y_continuous(name = 'Descendant Land Losses (Acres)',
                    breaks = seq(0,25, 5),
                    limits = c(0,25),
                    expand = c(0,0)) + 
   scale_x_continuous(name = "Year",
-                     breaks = seq(2000, 2020, 2)) +
-  ggtitle("Descendant Land Losses") + 
+                     breaks = seq(1999, 2022, 1)) +
+  # ggtitle("Descendant Land Losses") + 
   theme(
     panel.background = element_rect(fill = FALSE, color = 'black'),
     # panel.grid = element_blank(),
@@ -72,19 +68,24 @@ dl <- ggplot(sum.yr, aes(year, acres)) +
     plot.title = element_text(size =fnt),
     axis.title = element_text(size = fnt),
     axis.text = element_text(size = fnt),
-    legend.position = c(0.15,0.7),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+    legend.position = 'bottom',
     legend.text = element_text(size = fnt),
     legend.title = element_text(size = fnt),
-    legend.key = element_blank(),
+    # legend.key = element_blank(),
     legend.box.margin = margin(0.005,0.005,0.005,0.005, 'cm'),
     legend.box.background = element_rect(color = 'black')
   ) + 
-annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 25,
-           alpha = .1,fill = "blue")
+  annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 25,
+           alpha = .1,fill = "blue") +
+  geom_text(aes(label = 'TAX HIKE PERIOD >>>', x = 2008, y = 17.5),
+            size = 3, hjust = 0) +
+  guides(color = guide_legend(title="Loss Category"),
+         fill = guide_legend(title = element_blank()))
 dl
 
 tiff(file.path(datadir, "figures/descendant-landloss.tif"), units = "in", 
-     height = 3, width = 5, res = 600, compression = "lzw")
+     height = 5, width = 7, res = 300, compression = "lzw")
 dl
 dev.off()
 
