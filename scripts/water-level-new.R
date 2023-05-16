@@ -13,12 +13,12 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-09-01') 
-int.date2 <- as.Date('2021-11-30') 
+int.date1 <- as.Date('2022-10-01') 
+int.date2 <- as.Date('2023-12-31') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
-ht.date2 <- as.Date('2022-06-30')
+ht.date2 <- as.Date('2023-04-25')
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
@@ -95,7 +95,12 @@ for(i in 1:length(filz)) {
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
                                                                                           if_else(site == 'Site-14', 'Tidal Gate', 
-                                                                                                  if_else(site == 'Site-19', 'The Trunk', site)))))))))))) %>%
+                                                                                                  if_else(site == 'Site-19', 'The Trunk',
+                                                                                                          if_else(site == 'Site-16', 'South Oakdale', 
+                                                                                                                  if_else(site == 'Site-18', 'NW Corner', 
+                                                                                                                          if_else(site == 'Site-20', 'Walker', 
+                                                                                                                                  if_else(site == 'Site-23', 'Hillery',
+                                                                                                                                          if_else(site == 'Site-24', 'Johnson', site))))))))))))))))) %>%
     mutate(sitename = paste(site, name)) %>%
     select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
@@ -221,18 +226,25 @@ tidal3 <- tidal2 %>%
 ## esda of smoothed water levels across sites
 ####################################################
 date1 <- as.Date('2018-10-01') 
-date2 <- as.Date('2022-12-31') 
+date2 <- as.Date('2023-04-25') 
   
-sites <- tidal3 %>%
-  mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15'), 'ditch', 
-                       ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12'), 'creek', site))) %>% ## ditches sites
+tidal4 <- tidal3 %>%
+  mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15', 'Site-18', 'Site-20', 'Site-23', 'Site-24'), 'ditch', 
+                       ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12', 'Site-16'), 'creek', site))) %>% ## ditches sites
   # filter(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12')) %>% ## marsh sites
-  mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site-18'), 'Lot 1', 
-                           ifelse(site %in% c('Site-02', 'Site-03', 'Site-05', 'Site-11', 'Site-23'), 'St Lukes',
-                                  ifelse(site %in% c('Site-07', 'Site-09'), 'Tracys', 
-                                         ifelse(site %in% c('Site-16', 'Site-15'), "Oakdale",
-                                                ifelse(site %in% c('Site-20'), 'Walker',
-                                                       ifelse(site %in% c('Site-24'), 'Johnson', site))))))) %>%
+  mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site-18'), 'T1', 
+                           ifelse(site %in% c('Site-02', 'Site-03', 'Site-05','Site-11', 'Site-23'), 'T2',
+                                  ifelse(site %in% c('Site-07', 'Site-09'), 'T3N', 
+                                         ifelse(site %in% c('Site-16', 'Site-15'), "T5",
+                                                ifelse(site %in% c('Site-20'), 'T4',
+                                                       ifelse(site %in% c('Site-07', 'Site-24'), 'T3S', site))))))) 
+
+## working on renaming sites to be more logical related to transects; site-05 is a branch of T2
+# tidal5 <- tidal4 %>%
+#   mutate(site_new = if_else(site = 'Site-02', 'T2-01',
+#                             if_else()))
+  
+sites <- tidal4 %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2) %>%
   select(site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
@@ -280,8 +292,8 @@ ht <- tidal3 %>%
 active.time <- tidal3 %>%
   group_by(site, sitename) %>%
   summarise(days = n_distinct(date)) %>%
-  mutate(weeks = days/7, years = weeks/52) %>%
-  arrange(factor(site, years))
+  mutate(weeks = days/7, years = weeks/52)
+  # arrange(factor(site, years))
 
 # Increase margin size
 
@@ -293,7 +305,7 @@ barplot(df$years, names.arg = df$sitename,
         horiz = T, 
         las = 1,
         ylab = '',
-        xlim = c(0,4),
+        xlim = c(0,5),
         xlab = 'Years Active',
         main = 'Water Level Survey Sites')
 dev.off()
