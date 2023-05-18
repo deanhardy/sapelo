@@ -120,8 +120,8 @@ for(i in 1:length(filz.ve)) {
     slice(., 1:(n()-2)) %>% ## removes first and last ## readings
     mutate(date_time_gmt = ymd_hms(date_time_gmt),
            date = as.Date(date_time_gmt, '%y/%m/%d', tz = 'GMT'),
-           site = str_sub(filz.ve[i], -26,-25),
-           serial = str_sub(filz.ve[i], -23,-19),
+           site = str_sub(filz.ve[i], 5,6),
+           serial = str_sub(filz.ve[i], 8,12),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-07', 'Cactus Patch', 
