@@ -228,6 +228,7 @@ tidal3 <- tidal2 %>%
 date1 <- as.Date('2018-10-01') 
 date2 <- as.Date('2023-04-25') 
   
+## adding transects with idea that they work north to south then east to west, or clockwise around the community
 tidal3.1 <- tidal3 %>%
   mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15', 'Site-18', 'Site-20', 'Site-23', 'Site-24'), 'ditch', 
                        ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12', 'Site-16'), 'creek', site))) %>% ## ditches sites
@@ -238,7 +239,7 @@ tidal3.1 <- tidal3 %>%
                                          ifelse(site %in% c('Site-16', 'Site-15'), "T5",
                                                 ifelse(site %in% c('Site-20'), 'T2', site))))))
 
-## working on renaming sites to be more logical related to transects; site-05 is a branch of T2
+## working on renaming sites to be more logical related to transects; site-05 is a branch of T3
 tidal3.2 <- tidal3.1 %>%
   mutate(site_new = if_else(site == 'Site-06', 'T1-01',
                             if_else(site == 'Site-12', 'T1-02', 
@@ -259,15 +260,16 @@ tidal3.2 <- tidal3.1 %>%
 
 sites <- tidal3.2 %>%
   filter(date_time_gmt >= date1 & date_time_gmt <= date2) %>%
-  select(site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
+  select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 # write.csv(sites, paste0(datadir, 'sapelo-ditch-water-levels-2019.csv'), row.names = FALSE) ## for A.W.
 
 sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88)) + 
-  geom_smooth(na.rm = T, aes(linetype = site, color = type)) + 
+  geom_smooth(na.rm = T, aes(color = site_new, linetype = type)) + 
   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
   labs(x = 'Date') + 
-  theme_bw(base_size = 20)
+  theme_bw(base_size = 20) + 
+  facet_wrap(~ transect)
 sm.plot
 
 png(paste0(datadir, '/figures/Smoothed_', date1, "-to-", 
@@ -280,14 +282,14 @@ dev.off()
 ## averages by unit time
 ##########################
 df <- sites %>%
-  mutate(prd = floor_date(date_time_gmt, "week")) %>%
-  group_by(site, prd) %>%
-  summarize(avg = mean(water_level_navd88)) %>%
-  filter(site != 'Site-19')
+  mutate(prd = floor_date(date_time_gmt, "month")) %>%
+  group_by(transect, site_new, prd) %>%
+  summarize(avg = mean(water_level_navd88))
 
-ggplot(df, aes(prd, avg, group = site)) + 
-  geom_point(aes(color = site)) + 
-  geom_smooth(method = lm, se = F)
+ggplot(df, aes(prd, avg, group = site_new)) + 
+  geom_line(aes(color = site_new)) + 
+  # geom_smooth(method = lm, se = F) + 
+  facet_wrap(~ transect)
 
 ## plot temperatures
 ggplot(tidal3, aes(water_temp_c)) + 
