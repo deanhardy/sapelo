@@ -53,7 +53,7 @@ ggplot(sum.yr, aes(year, count)) +
   geom_col()
 
 ## plot acreage losses by year, cumulative, with tax hike period highlighted
-fnt <- 12
+fnt <- 18
 dl <- ggplot(sum.yr) +
   geom_col(aes(year, acres, fill = 'Annual')) +
   geom_line(aes(year, cumulative, color = 'Cumulative')) + 
@@ -81,8 +81,8 @@ dl <- ggplot(sum.yr) +
   ) + 
   annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 35,
            alpha = .1,fill = "blue") +
-  geom_text(aes(label = 'TAX HIKE PERIOD >>>', x = 2008, y = 17.5),
-            size = 3, hjust = 0) +
+  # geom_text(aes(label = 'TAX HIKE PERIOD >>>', x = 2008, y = 17.5),
+  #           size = 3, hjust = 0) +
   guides(color = guide_legend(title="Loss Category"),
          fill = guide_legend(title = element_blank()))
 dl
@@ -93,7 +93,7 @@ dl
 dev.off()
 
 png(file.path(datadir, "figures/descendant-landloss.png"), units = "in", 
-    height = 7.5, width = 13.33, res = 150)
+    height = 7, width = 13.33, res = 150)
 dl
 dev.off()
 
