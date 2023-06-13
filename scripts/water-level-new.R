@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-10-01') 
-int.date2 <- as.Date('2023-12-31') 
+int.date1 <- as.Date('2021-10-01') 
+int.date2 <- as.Date('2021-11-30') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -324,6 +324,58 @@ barplot(df$years, names.arg = df$sitename,
         xlab = 'Years Active',
         main = 'Water Level Survey Sites')
 dev.off()
+
+
+########################################################################
+# create graphing function for stacking transects 
+# 
+########################################################################
+tdate1 <- as.Date('2021-10-20') 
+tdate2 <- as.Date('2021-11-20')
+
+library(lubridate)
+daily.mn <- sites %>%
+  mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
+  group_by(transect, site_new, date) %>%
+  summarize(mean = mean(water_level_navd88))
+
+ggplot(filter(sites, transect == 'T1' & date_time_gmt >= tdate1 & date_time_gmt <= tdate2 & site_new != 'T1-05'))  + 
+  geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) +  ## convert to feet then add MLLW base elevation
+  geom_line(aes(date, mean, color = site_new), 
+            data = filter(daily.mn, transect == 'T1' & date >= tdate1 & date <= tdate2)) +
+  # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
+  # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
+  # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
+  # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
+  scale_fill_manual(values = c('white', 'black')) + 
+  scale_x_datetime(name = 'Date', date_breaks = '1 week', date_labels = '%m/%d') + 
+  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.9,0.1), limits = c(0,2), expand = c(0,0),
+                     # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                     #                   name = expression(paste('Total Daily Precipitation (mm)')))
+  ) +
+  # labs(fill = 'Moon Phase', caption = "Dashed line indicates mean water level.") + 
+  theme(axis.title = element_text(size = TEXT),
+        axis.text = element_text(color = "black", size = TEXT),
+        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks = element_line(color = 'black'),
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+        axis.line = element_line(color = 'black'),
+        axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+        axis.title.y.right = element_text(color = 'blue'),
+        axis.line.y.right = element_line(color = "blue"), 
+        axis.ticks.y.right = element_line(color = "blue"),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
+        panel.grid = element_blank(),
+        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+        legend.position = c(0.1, 0.92),
+        legend.text = element_text(size = TEXT),
+        legend.title = element_text(size = TEXT),
+        # legend.key = element_blank(),
+        legend.box.background = element_rect(color = 'black'),
+        plot.title = element_text(size = TEXT, face = "bold"))
+# ggtitle(paste0(sites_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
 
 
 ########################################################################
