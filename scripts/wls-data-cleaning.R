@@ -229,7 +229,8 @@ tidal3.2 <- tidal3.1 %>%
                                                                                                                     if_else(site == 'Site-09', 'T4-02',
                                                                                                                             if_else(site == 'Site-24', 'T4S-01',
                                                                                                                                     if_else(site == 'Site-16', 'T5-01',
-                                                                                                                                            if_else(site == 'Site-15', 'T5-02', site)))))))))))))))))
+                                                                                                                                            if_else(site == 'Site-15', 'T5-02', site))))))))))))))))) %>%
+  mutate(sitename_new = paste(site_new, name))
 
 
 ## export merged and cleaned data

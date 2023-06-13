@@ -20,12 +20,23 @@ int.date2 <- as.Date('2021-11-30')
 ht.date1 <- as.Date('2018-10-01') 
 ht.date2 <- as.Date('2023-04-25')
 
-###############
-## import data
-##############
+# # set dates for esda graphs
+# date1 <- as.Date('2018-10-01') 
+# date2 <- as.Date('2023-04-25') 
+
+######################
+## import & tidy data
+#####################
 
 ## import cleaned water level data
-df <- read.csv(paste(datadir, 'wls_data.csv'))
+df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt),
+         date = as.POSIXct(date))
+
+## filter to interval dates
+df.int <- df %>%
+  filter(date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+# select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 ## import daily precipitation totals
 TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
@@ -50,72 +61,61 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 ## filter lunar data to match water data
 int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
-####################################################
-## esda of smoothed water levels across sites
-####################################################
-date1 <- as.Date('2018-10-01') 
-date2 <- as.Date('2023-04-25') 
+#########
+## esda 
+#########
 
-## select relevant data columns from merged and cleaned data
-sites <- tidal3.2 %>%
-  filter(date_time_gmt >= date1 & date_time_gmt <= date2) %>%
-  select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
-
-# write.csv(sites, paste0(datadir, 'sapelo-ditch-water-levels-2019.csv'), row.names = FALSE) ## for A.W.
-
-sm.plot <- ggplot(sites, aes(date_time_gmt, water_level_navd88)) + 
+## facet wrap of water levels across transects and sites
+sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) + 
   geom_smooth(na.rm = T, aes(color = site_new, linetype = type)) + 
   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
   labs(x = 'Date') + 
   theme_bw(base_size = 20) + 
   facet_wrap(~ transect)
-sm.plot
+# sm.plot
 
-png(paste0(datadir, '/figures/Smoothed_', date1, "-to-", 
-           date2, '.png'), units = 'in', width = 10, height = 6, res = 150)
-sm.plot
-dev.off()
+## export facet wrap
+# png(paste0(datadir, '/figures/FacetWrap_', int.date1, "-to-", 
+#            int.date2, '.png'), units = 'in', width = 10, height = 6, res = 150)
+# sm.plot
+# dev.off()
 
-
-##########################
 ## averages by unit time
-##########################
-df <- sites %>%
+df.avg <- df %>%
   mutate(prd = floor_date(date_time_gmt, "month")) %>%
   group_by(transect, site_new, prd) %>%
   summarize(avg = mean(water_level_navd88))
 
-ggplot(df, aes(prd, avg, group = site_new)) + 
+ggplot(df.avg, aes(prd, avg, group = site_new)) + 
   geom_line(aes(color = site_new)) + 
   # geom_smooth(method = lm, se = F) + 
   facet_wrap(~ transect)
 
-## plot temperatures
-ggplot(tidal3, aes(water_temp_c)) + 
+## plot temperatures all time
+ggplot(df, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
   scale_x_continuous(breaks = seq(0,120, 5))
 
 ## daily high tide
-ht <- tidal3 %>%
-  group_by(site, date) %>%
+df.ht <- df %>%
+  group_by(site_new, date) %>%
   slice_max(water_depth_m, with_ties = FALSE) %>%
   # select(date_time_gmt, water_depth_m, salinity) %>%
   ungroup()
 
 ## summary of number of days active by site
-active.time <- tidal3 %>%
-  group_by(site, sitename) %>%
+active.time <- df %>%
+  group_by(sitename_new) %>%
   summarise(days = n_distinct(date)) %>%
   mutate(weeks = days/7, years = weeks/52)
 # arrange(factor(site, years))
 
-# Increase margin size
+df.active <- active.time[order(active.time$sitename_new, decreasing = TRUE),]
 
-df <- active.time[order(active.time$years, decreasing = TRUE),]
-
-jpeg(paste(datadir, "sites-active-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
+## export active time for all sites
+jpeg(paste0(datadir, "figures/sites-active-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
 par(mar=c(4,10,4,4))
-barplot(df$years, names.arg = df$sitename,
+barplot(df.active$years, names.arg = df.active$sitename_new,
         horiz = T, 
         las = 1,
         ylab = '',
@@ -259,7 +259,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
 }
 
 # run graphing function on long df
-ht.graph(ht)
+ht.graph(df)
 
 
 ##############################################################################################
@@ -334,34 +334,18 @@ int.graph <- function(df, na.rm = TRUE, ...){
     ggsave(plot, file=paste(datadir,
                             'figures/', 'NAVD88 ', 'Interval-12-minute ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
-    # save plots as .pdf
-    # ggsave(plot, file=paste(results, 
-    #                        'projection_graphs/county_graphs/',
-    #                        count_list[i], ".pdf", sep=''), scale=2) 
-    
-    # print plots to screen
-    # print(plot)
   }
 }
 
 # run graphing function on long df
-int.graph(tidal3)
-
-## adding transect IDs
-tidal4 <- tidal3 %>%
-  mutate(transect = if_else(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site 18'), 'lot1-transect',
-                            if_else(site %in% c('Site-02', 'Site-03','Site-05', 'Site-11', 'Site-23'), 'stlukes-transect', 
-                                    if_else(site %in% c('Site-07', 'Site-09', 'Site-26'), 'tracys-transect',
-                                            if_else(site %in% c('Site-15'), 'oakdale-transect', 
-                                                    if_else(site %in% c('Site-20'), 'walker-transect','NA'))))))
-
+int.graph(df)
 
 ##############################################################################################
 # TRANSECTS create graphing function for 12-minute intervals over specified interval using water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
-int.graph <- function(df, na.rm = TRUE, ...){
+tx.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
   transect_list <- unique(df$transect)
@@ -431,4 +415,4 @@ int.graph <- function(df, na.rm = TRUE, ...){
 }
 
 # run graphing function on long df
-int.graph(tidal4)
+tx.graph(df)
