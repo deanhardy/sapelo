@@ -13,8 +13,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2021-10-01') 
-int.date2 <- as.Date('2021-11-30') 
+int.date1 <- as.Date('2022-09-01') 
+int.date2 <- as.Date('2022-10-31') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -98,7 +98,7 @@ ggplot(df, aes(water_temp_c)) +
 
 ## daily high tide
 df.ht <- df %>%
-  group_by(site_new, date) %>%
+  group_by(sitename_new, date) %>%
   slice_max(water_depth_m, with_ties = FALSE) %>%
   # select(date_time_gmt, water_depth_m, salinity) %>%
   ungroup()
@@ -126,58 +126,6 @@ dev.off()
 
 
 ########################################################################
-# create graphing function for stacking transects 
-# 
-########################################################################
-tdate1 <- as.Date('2021-10-20') 
-tdate2 <- as.Date('2021-11-20')
-
-library(lubridate)
-daily.mn <- sites %>%
-  mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
-  group_by(transect, site_new, date) %>%
-  summarize(mean = mean(water_level_navd88))
-
-ggplot(filter(sites, transect == 'T1' & date_time_gmt >= tdate1 & date_time_gmt <= tdate2 & site_new != 'T1-05'))  + 
-  geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) +  ## convert to feet then add MLLW base elevation
-  geom_line(aes(date, mean, color = site_new), 
-            data = filter(daily.mn, transect == 'T1' & date >= tdate1 & date <= tdate2)) +
-  # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
-  # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
-  # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
-  # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
-  scale_fill_manual(values = c('white', 'black')) + 
-  scale_x_datetime(name = 'Date', date_breaks = '1 week', date_labels = '%m/%d') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.9,0.1), limits = c(0,2), expand = c(0,0),
-                     # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                     #                   name = expression(paste('Total Daily Precipitation (mm)')))
-  ) +
-  # labs(fill = 'Moon Phase', caption = "Dashed line indicates mean water level.") + 
-  theme(axis.title = element_text(size = TEXT),
-        axis.text = element_text(color = "black", size = TEXT),
-        axis.ticks.length = unit(-0.2, 'cm'),
-        axis.ticks = element_line(color = 'black'),
-        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-        axis.line = element_line(color = 'black'),
-        axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
-        axis.title.y.right = element_text(color = 'blue'),
-        axis.line.y.right = element_line(color = "blue"), 
-        axis.ticks.y.right = element_line(color = "blue"),
-        panel.background = element_rect(fill = FALSE, color = 'black'),
-        panel.grid = element_blank(),
-        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
-        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-        legend.position = c(0.1, 0.92),
-        legend.text = element_text(size = TEXT),
-        legend.title = element_text(size = TEXT),
-        # legend.key = element_blank(),
-        legend.box.background = element_rect(color = 'black'),
-        plot.title = element_text(size = TEXT, face = "bold"))
-# ggtitle(paste0(sites_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
-
-
-########################################################################
 # create graphing function for daily highest tides' water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################################
@@ -185,12 +133,12 @@ TEXT = 10 ## set font size for figures
 ht.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df$sitename)
+  sites_list <- unique(df.ht$sitename_new)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
-    df2 <- filter(df, sitename == sites_list[i] & date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2)
+    df2 <- filter(df, sitename_new == sites_list[i] & date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2)
     
     # create plot for each site in df 
     plot <- 
@@ -201,7 +149,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
       geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Month/Year', date_breaks = '2 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
-      scale_y_continuous(name = 'Water Level (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Depth (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                          #                   name = expression(paste('Total Daily Precipitation (mm)'))),
                          sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
@@ -341,7 +289,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
 int.graph(df)
 
 ##############################################################################################
-# TRANSECTS create graphing function for 12-minute intervals over specified interval using water depth
+# TRANSECTS STACKED create graphing function for 12-minute intervals over specified interval
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
@@ -355,17 +303,24 @@ tx.graph <- function(df, na.rm = TRUE, ...){
     
     df2 <- filter(df, transect == transect_list[i] & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
     
+    daily.mn <- df2 %>%
+      mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
+      group_by(transect, sitename_new, date) %>%
+      summarize(mean = mean(water_level_navd88))
+    
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_level_navd88, color = site)) + 
+      geom_line(aes(date_time_gmt, water_level_navd88, color = sitename_new)) + 
+      geom_line(aes(date, mean, color = sitename_new), 
+                data = filter(daily.mn)) +
       # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
       # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
       # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       # scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
+      scale_x_datetime(name = paste('Date', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
       scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0)) +
       # annotate("rect",
       #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
@@ -378,6 +333,7 @@ tx.graph <- function(df, na.rm = TRUE, ...){
       #          y = df2$well_ht+0.1,
       #          label = 'Well Height',
       #          angle = 90) +
+    labs(color = 'Site Name') + 
     theme(axis.title = element_text(size = TEXT),
           axis.text = element_text(color = "black", size = TEXT),
           axis.ticks.length = unit(-0.2, 'cm'),
@@ -393,7 +349,7 @@ tx.graph <- function(df, na.rm = TRUE, ...){
           panel.grid = element_blank(),
           panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
           plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-          legend.position = c(0.1, 0.92),
+          legend.position = c(0.2, 0.9),
           legend.text = element_text(size = TEXT),
           legend.title = element_text(size = TEXT),
           legend.box.background = element_rect(color = 'black'),
