@@ -96,13 +96,6 @@ ggplot(df, aes(water_temp_c)) +
   geom_histogram(bins = 25) + 
   scale_x_continuous(breaks = seq(0,120, 5))
 
-## daily high tide
-df.ht <- df %>%
-  group_by(sitename_new, date) %>%
-  slice_max(water_depth_m, with_ties = FALSE) %>%
-  # select(date_time_gmt, water_depth_m, salinity) %>%
-  ungroup()
-
 ## summary of number of days active by site
 active.time <- df %>%
   group_by(sitename_new) %>%
@@ -130,42 +123,51 @@ dev.off()
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ########################################################################
 TEXT = 10 ## set font size for figures
-ht.graph <- function(df, na.rm = TRUE, ...){
+ht.graph <- function(df.ht, na.rm = TRUE, ...){
+  
+  ## filter to daily high tide
+  df <- df %>%
+    group_by(sitename_new, date) %>%
+    slice_max(water_level_navd88, with_ties = FALSE) %>%
+    # select(date_time_gmt, water_depth_m, salinity) %>%
+    ungroup()
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df.ht$sitename_new)
+  sites_list <- unique(df$sitename_new)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
     df2 <- filter(df, sitename_new == sites_list[i] & date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2)
     
+    ## set parameters
+    my.formula <- y ~ x # generic formula for use in equation
+    # D <- P+1
+    
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_depth_m), lwd = 0.5) + 
-      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'red', size = 0.5) +
-      geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
+      geom_point(aes(date_time_gmt, water_level_navd88, color = logger), size = 0.5) + 
+      geom_smooth(aes(date_time_gmt, water_level_navd88), method = 'lm', formula = my.formula) +  
+      # geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
+      # geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'red', size = 0.5) +
+      # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Month/Year', date_breaks = '2 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
-      scale_y_continuous(name = 'Water Depth (meters)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
-                         # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                         #                   name = expression(paste('Total Daily Precipitation (mm)'))),
-                         sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
-                                             name = expression(paste('Salinity (psu)'))),
+      scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
+      scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
+                         sec.axis = sec_axis(~., breaks = seq(0,1.8,0.1))
       ) +
-      annotate("rect",
-               xmin = as.POSIXct(paste(ht.date1, '00:48:00')),
-               xmax = as.POSIXct(paste(ht.date1, '23:48:00')),
-               ymin = 0,
-               ymax = df2$well_ht,
-               alpha = 0.1) +
-      annotate("text",
-               x = as.POSIXct(paste(ht.date1, '06:48:00')),
-               y = df2$well_ht+0.1,
-               label = 'Well Height',
-               angle = 90) +
+      # annotate("rect",
+      #          xmin = as.POSIXct(paste(ht.date1, '00:48:00')),
+      #          xmax = as.POSIXct(paste(ht.date1, '23:48:00')),
+      #          ymin = 0, 
+      #          ymax = df2$well_ht,
+      #          alpha = 0.1) +
+      # annotate("text",
+      #          x = as.POSIXct(paste(ht.date1, '06:48:00')),
+      #          y = df2$well_ht+0.1,
+      #          label = 'Well Height',
+      #          angle = 90) +
       # geom_text(aes(as.POSIXct('2018-10-13 00: 48:00'), df2$well_ht, label = 'well height')) +
       # labs(fill = 'Moon Phase', caption = "Dashed line indicates mean water level.") + 
       theme(axis.title = element_text(size = TEXT),
@@ -190,7 +192,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
             # legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black'),
             plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " - Daily High Tide Trend From ", ht.date1, ' to ', ht.date2))
+      ggtitle(paste0(sites_list[i], " (", df2$type, ")"," - Daily High Tide Trend From ", ht.date1, ' to ', ht.date2))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
