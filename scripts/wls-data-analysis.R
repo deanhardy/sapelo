@@ -62,6 +62,10 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 ## filter lunar data to match water data
 int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
+
+###############################################################
+## QA/QC for each field day to check for data alignment issues
+###############################################################
 ## import field measurements data
 wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
                         sheet = 'field measurements',
@@ -73,6 +77,8 @@ wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/dat
 field.smry <- wls.field %>%
   group_by(date) %>%
   summarise(sites = list(Site))
+
+
 
 #########
 ## esda 
