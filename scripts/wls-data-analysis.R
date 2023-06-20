@@ -3,6 +3,7 @@ rm(list=ls())
 library(tidyverse)
 library(lubridate)
 library(data.table)
+library(readxl)
 library("rio")
 Sys.setenv(TZ='GMT')
 
@@ -60,6 +61,18 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 
 ## filter lunar data to match water data
 int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+
+## import field measurements data
+wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
+                        sheet = 'field measurements',
+                        skip = 6) %>%
+  mutate(date = as.Date(GMT, '%m/%d/%y', tz = 'GMT')) %>%
+  select(date, Site, Name, Serial, Activity, Category)
+
+## filter to just field outing dates with list of sites visited
+field.smry <- wls.field %>%
+  group_by(date) %>%
+  summarise(sites = list(Site))
 
 #########
 ## esda 
@@ -119,7 +132,7 @@ dev.off()
 
 ## sites active time by date
 df.date <- df %>%
-  group_by(sitename_new) %>%
+  group_by(sitename_new, serial, logger) %>%
   mutate(date = as.Date(date, "%Y-%m-%d")) %>%
   arrange(date) %>%
   mutate(start_date = first(date),
@@ -133,7 +146,8 @@ sites.timeline <-
   geom_linerange(aes(x = reorder(sitename_new, desc(sitename_new)),
                      ymax = end_date,
                      ymin = start_date,
-                 linetype = type),
+                 linetype = type,
+                 color = logger),
                  show.legend = T) +
   # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
   #                   ymax = as.Date("2000-01-01"),

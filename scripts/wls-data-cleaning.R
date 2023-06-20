@@ -5,7 +5,6 @@ library(lubridate)
 library(data.table)
 library("rio")
 Sys.setenv(TZ='GMT')
-
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
@@ -78,7 +77,8 @@ for(i in 1:length(filz)) {
                                                                                                                   if_else(site == 'Site-18', 'NW Corner',
                                                                                                                           if_else(site == 'Site-20', 'Walker',
                                                                                                                                   if_else(site == 'Site-23', 'Hillery',
-                                                                                                                                          if_else(site == 'Site-24', 'Johnson', site))))))))))))))))) %>%
+                                                                                                                                          if_else(site == 'Site-24', 'Johnson', 
+                                                                                                                                                  if_else(site == 'Site-15', 'Oakdale', site)))))))))))))))))) %>%
     mutate(sitename = paste(site, name)) %>%
     select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
