@@ -66,12 +66,12 @@ int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 #########
 
 ## facet wrap of water levels across transects and sites
-sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) + 
-  geom_smooth(na.rm = T, aes(color = site_new, linetype = type)) + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
-  labs(x = 'Date') + 
-  theme_bw(base_size = 20) + 
-  facet_wrap(~ transect)
+# sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) + 
+#   geom_smooth(na.rm = T, aes(color = site_new, linetype = type)) + 
+#   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
+#   labs(x = 'Date') + 
+#   theme_bw(base_size = 20) + 
+#   facet_wrap(~ transect)
 # sm.plot
 
 ## export facet wrap
@@ -106,7 +106,7 @@ active.time <- df %>%
 df.active <- active.time[order(active.time$sitename_new, decreasing = TRUE),]
 
 ## export active time for all sites
-jpeg(paste0(datadir, "figures/sites-active-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
+jpeg(paste0(datadir, "figures/sites-deployment-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
 par(mar=c(4,10,4,4))
 barplot(df.active$years, names.arg = df.active$sitename_new,
         horiz = T, 
@@ -114,7 +114,43 @@ barplot(df.active$years, names.arg = df.active$sitename_new,
         ylab = '',
         xlim = c(0,5),
         xlab = 'Years Active',
-        main = 'Water Level Survey Sites')
+        main = 'Hog Hammock Water Level Survey: Deployment Length')
+dev.off()
+
+## sites active time by date
+df.date <- df %>%
+  group_by(sitename_new) %>%
+  mutate(date = as.Date(date, "%Y-%m-%d")) %>%
+  arrange(date) %>%
+  mutate(start_date = first(date),
+         end_date = last(date)) %>%
+  # arrange(sitename_new) %>%
+  # mutate(sitename_new = factor(sitename_new, levels=sitename_new)) %>%
+  summarise(start_date = first(start_date), end_date = last(end_date), type = first(type))
+
+sites.timeline <- 
+  ggplot(df.date) +
+  geom_linerange(aes(x = reorder(sitename_new, desc(sitename_new)),
+                     ymax = end_date,
+                     ymin = start_date,
+                 linetype = type),
+                 show.legend = T) +
+  # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
+  #                   ymax = as.Date("2000-01-01"),
+  #                   ymin = as.Date('2010-01-01'),
+  #                   linetype = type),
+  #               size = 1,
+  #               show.legend = T) + ## trick for making horizontal legend bars
+  scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y") + 
+               # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
+  xlab('Site') + 
+  ggtitle('Hog Hammock Water Level Survey: Deployment Dates') + 
+  coord_flip() + 
+  theme_bw()
+sites.timeline
+
+jpeg(paste0(datadir, "figures/sites-deployment-dates.jpg"), width = 7, height = 5, units = 'in', res = 150)
+sites.timeline
 dev.off()
 
 
