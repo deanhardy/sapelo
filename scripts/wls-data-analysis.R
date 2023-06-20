@@ -144,7 +144,7 @@ sites.timeline <-
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y") + 
                # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
   xlab('Site') + 
-  ggtitle('Hog Hammock Water Level Survey: Deployment Dates') + 
+  ggtitle('Hog Hammock Water Level Survey: Deployment Date Range') + 
   coord_flip() + 
   theme_bw()
 sites.timeline
@@ -358,7 +358,7 @@ tx.graph <- function(df, na.rm = TRUE, ...){
       # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       # scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = paste('Date', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
+      scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
       scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0)) +
       # annotate("rect",
       #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
@@ -410,3 +410,4 @@ tx.graph <- function(df, na.rm = TRUE, ...){
 
 # run graphing function on long df
 tx.graph(df)
+ 
