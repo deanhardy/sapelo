@@ -63,23 +63,6 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 
-###############################################################
-## QA/QC for each field day to check for data alignment issues
-###############################################################
-## import field measurements data
-wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
-                        sheet = 'field measurements',
-                        skip = 6) %>%
-  mutate(date = as.Date(GMT, '%m/%d/%y', tz = 'GMT')) %>%
-  select(date, Site, Name, Serial, Activity, Category)
-
-## filter to just field outing dates with list of sites visited
-field.smry <- wls.field %>%
-  group_by(date) %>%
-  summarise(sites = list(Site))
-
-
-
 #########
 ## esda 
 #########
@@ -152,8 +135,8 @@ sites.timeline <-
   geom_linerange(aes(x = reorder(sitename_new, desc(sitename_new)),
                      ymax = end_date,
                      ymin = start_date,
-                 linetype = type,
-                 color = logger),
+                 linetype = logger,
+                 color = type),
                  show.legend = T) +
   # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
   #                   ymax = as.Date("2000-01-01"),
@@ -163,8 +146,8 @@ sites.timeline <-
   #               show.legend = T) + ## trick for making horizontal legend bars
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y") + 
                # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
-  xlab('Site') + 
-  ggtitle('Hog Hammock Water Level Survey: Deployment Date Range') + 
+  xlab('Transect-Site Name') + 
+  ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
   theme_bw()
 sites.timeline
@@ -174,10 +157,10 @@ sites.timeline
 dev.off()
 
 
-########################################################################
-# create graphing function for daily highest tides' water depth
+#################################################################################
+# DAILY HIGH TIDES create graphing function for daily highest tides' water level
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-########################################################################
+#################################################################################
 TEXT = 10 ## set font size for figures
 ht.graph <- function(df.ht, na.rm = TRUE, ...){
   
@@ -269,7 +252,7 @@ ht.graph(df)
 
 
 ##############################################################################################
-# create graphing function for 12-minute intervals over specified interval using water depth
+# 12-MIN INTERVALS create graphing function for 12-minute intervals over specified interval using water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
