@@ -24,13 +24,11 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
                    pattern= '*.csv',
                    full.names = TRUE,
                    recursive = TRUE) 
-tidal <- NULL
 
 filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
                    pattern= '*.CSV',
                    full.names = TRUE,
                    recursive = TRUE) 
-tidal.ve <- NULL
 
 ## convert salinity Excel files to csv
 sal <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
@@ -48,14 +46,17 @@ tidal.psu <- NULL
 
 ## import & tidy hobo water level data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for Hobo)
+tidal <- NULL
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
                select = c(2:5),
                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'),
                stringsAsFactors = FALSE) %>%
     slice(., 5:(n()-7)) %>% ## removes first and last ## readings
-    mutate(date_time_gmt = mdy_hms(date_time_gmt),
-           date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
+    # slice_head(n = 5) %>% ## removes first # rows
+    # slice_tail(n = 7) %>% ## removes last # rows
+    mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M:%S', tz = 'GMT'),
+           date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz[i], -25,-24),
            serial = str_sub(filz[i], -22,-19),
            water_temp_c = as.numeric(water_temp_c),
@@ -91,16 +92,20 @@ tidal.01 <- tidal %>%
 
 ## import & tidy van essen water level data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
+tidal.ve <- NULL
+try(
 for(i in 1:length(filz.ve)) {
   OUT <- fread(filz.ve[i],
                select = c(1:3),
                col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
                stringsAsFactors = FALSE) %>%
     slice(., 1:(n()-2)) %>% ## removes first and last ## readings
-    mutate(date_time_gmt = ymd_hms(date_time_gmt),
-           date = as.Date(date_time_gmt, '%y/%m/%d', tz = 'GMT'),
+    # slice_head(n = 5) %>% ## removes first # rows
+    # slice_tail(n = 6) %>% ## removes last # rows
+    mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y/%m/%d %H:%M:%S', tz = 'GMT'),
+           date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz.ve[i], -26,-25),
-           # serial = str_sub(filz.ve[i], -23,-19),
+           serial = str_sub(filz.ve[i], -23,-19),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     mutate(name = if_else(site == 'Site-07', 'Cactus Patch', 
@@ -108,16 +113,15 @@ for(i in 1:length(filz.ve)) {
                                   if_else(site == 'Site-11', 'Library',
                                           if_else(site == 'Site-13', 'Purple Ribbon',
                                                   if_else(site == 'Site-14', 'Tidal Gate',
-                                                          if_else(site == 'Site-15', 'Oakdale',
-                                                                  if_else(site == 'Site-19', 'The Trunk', site)))))))) %>%
+                                                          if_else(site == 'Site-15', 'Oakdale', site))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
+)
 
 ## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt),
-         logger = 'van essen') %>%
+  mutate(logger = 'van essen') %>%
   select(date_time_gmt, water_temp_c, water_level_C, date, site, name, sitename, logger, serial)
 
 ## merge hobo and van essan data
@@ -235,6 +239,7 @@ tidal3.2 <- tidal3.1 %>%
                                                                                                                                                     if_else(site == 'Site-14', 'T6-01', site)))))))))))))))))) %>%
   mutate(sitename_new = paste(site_new, name))
 
-
+nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
+  
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))

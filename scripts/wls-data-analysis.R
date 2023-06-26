@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2022-03-01') 
-int.date2 <- as.Date('2022-05-31') 
+int.date1 <- as.Date('2023-03-01') 
+int.date2 <- as.Date('2023-05-23') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-10-01') 
@@ -31,12 +31,15 @@ ht.date2 <- as.Date('2023-04-25')
 
 ## import cleaned water level data
 df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt),
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.POSIXct(date))
+
+nas <- df %>% filter(is.na(date_time_gmt))
+df <- df %>% filter(!is.na(date_time_gmt)) 
 
 ## filter to interval dates
 df.int <- df %>%
-  filter(date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+  filter(date >= int.date1 & date <= int.date2)
 # select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 ## import daily precipitation totals
@@ -269,15 +272,15 @@ int.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
-      geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
+      geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
+      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
       geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
       geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Level (NAVD88) & Total Daily Precipitation x10 (meters)', breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0),
+      scale_y_continuous(name = 'Water Depth (m) & Total Daily Precipitation x10 (meters)', breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0),
                          # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
                          #                   name = expression(paste('Total Daily Precipitation (mm)'))),
                          sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
