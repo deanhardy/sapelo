@@ -18,8 +18,8 @@ int.date1 <- as.Date('2023-03-01')
 int.date2 <- as.Date('2023-05-23') 
 
 # set dates for daily high tide graphs
-ht.date1 <- as.Date('2018-10-01') 
-ht.date2 <- as.Date('2023-04-25')
+ht.date1 <- as.Date('2022-07-01') 
+ht.date2 <- as.Date('2023-05-23')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
@@ -45,11 +45,13 @@ df.int <- df %>%
 ## import daily precipitation totals
 TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
   select(date_time_gmt, TP_mm) %>%
-  filter(date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2,
-         TP_mm > 0) %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'))
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = 'GMT'))
 
-## filter TP data to match water data
+ht.TP <- filter(TP, date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2,
+                  TP_mm > 0) %>%
+  mutate(date = as.Date(date_time_gmt, '%Y-%m-%d'))
+
+## filter TP data to match interval water data
 int.TP <- filter(TP, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 ## view TP data
@@ -165,7 +167,7 @@ dev.off()
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 #################################################################################
 TEXT = 10 ## set font size for figures
-ht.graph <- function(df.ht, na.rm = TRUE, ...){
+ht.graph <- function(df, na.rm = TRUE, ...){
   
   ## filter to daily high tide
   df <- df %>%
@@ -180,7 +182,7 @@ ht.graph <- function(df.ht, na.rm = TRUE, ...){
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
-    df2 <- filter(df, sitename_new == sites_list[i] & date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2)
+    df2 <- filter(df, sitename_new == sites_list[i] & date >= ht.date1 & date <= ht.date2)
     
     ## set parameters
     my.formula <- y ~ x # generic formula for use in equation
@@ -189,13 +191,13 @@ ht.graph <- function(df.ht, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_point(aes(date_time_gmt, water_level_navd88, color = logger), size = 0.5) + 
-      geom_smooth(aes(date_time_gmt, water_level_navd88), method = 'lm', formula = my.formula) +  
+      geom_point(aes(date, water_level_navd88, color = logger), size = 0.5) + 
+      geom_smooth(aes(date, water_level_navd88), method = 'lm', formula = my.formula) +  
       # geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      # geom_point(aes(date_time_gmt, TP_mm/100), data = TP, color = 'red', size = 0.5) +
+      # geom_point(aes(date_time_gmt, TP_mm/100), data = ht.TP, color = 'blue', size = 0.5) +
       # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') + 
+      scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') +
       scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
                          sec.axis = sec_axis(~., breaks = seq(0,1.8,0.1))
       ) +
@@ -219,10 +221,10 @@ ht.graph <- function(df.ht, na.rm = TRUE, ...){
             axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
             axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
             axis.line = element_line(color = 'black'),
-            axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
-            axis.title.y.right = element_text(color = 'blue'),
-            axis.line.y.right = element_line(color = "blue"), 
-            axis.ticks.y.right = element_line(color = "blue"),
+            axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'black'),
+            axis.title.y.right = element_text(color = 'black'),
+            axis.line.y.right = element_line(color = "black"), 
+            axis.ticks.y.right = element_line(color = "black"),
             panel.background = element_rect(fill = FALSE, color = 'black'),
             panel.grid = element_blank(),
             panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
