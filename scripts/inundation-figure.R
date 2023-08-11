@@ -122,7 +122,7 @@ map.ind <-
                 border.lwd = 0,
                 group = 'funky',
                 size = ts)
-# map.ind
+map.ind
 
 map.own <- 
   tm_shape(df, unit = 'mi') + 
