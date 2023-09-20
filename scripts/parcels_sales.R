@@ -81,8 +81,8 @@ dl <- ggplot(sum.yr) +
   ) + 
   annotate("rect", xmin = 2012.5, xmax = 2015.5, ymin = 0, ymax = 35,
            alpha = .1,fill = "blue") +
-  # geom_text(aes(label = 'TAX HIKE PERIOD >>>', x = 2008, y = 17.5),
-  #           size = 3, hjust = 0) +
+  geom_text(aes(label = 'TAX HIKE PERIOD', x = 2013, y = 26),
+            size = 3, hjust = 'left') +
   guides(color = guide_legend(title="Loss Category"),
          fill = guide_legend(title = element_blank()))
 dl

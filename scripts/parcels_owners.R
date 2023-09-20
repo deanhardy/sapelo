@@ -18,7 +18,12 @@ clr5 <- c('grey30', 'grey60', 'grey90', 'white', '#BA0C2F')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
-o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
+# o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
+#   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
+#   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
+#                           if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))
+
+o <- read_xlsx(file.path(datadir, 'property/owners_sapelo_2023summerRA.xlsx'), skip = 3) %>%
   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
                           if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))

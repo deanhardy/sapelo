@@ -140,14 +140,14 @@ ag <- st_read(file.path(datadir, 'spatial-data/ag_plots/'), stringsAsFactors = F
 ag_cntr <- st_centroid(ag)
   
 ## import water level data
-hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/'), stringsAsFactors = F) %>%
-  st_transform(4326) %>%
-  rename(site = Id)
-info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
-  mutate(install_date = as.Date(install.date, '%m/%d/%y'),
-         site = as.numeric(site)) %>%
-  dplyr::select(site, install_date)
-hobo <- left_join(hobo, info)
+hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/hobo_sites2.shp'), stringsAsFactors = F) %>%
+  st_transform(4326)
+#   rename(site = Id)
+# info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
+#   mutate(install_date = as.Date(install.date, '%m/%d/%y'),
+#          site = as.numeric(site)) %>%
+#   dplyr::select(site, install_date)
+# hobo <- left_join(hobo, info)
 
 ## read in zillow data
 zdata <- read.csv(file.path(datadir, 'zdata.csv'), stringsAsFactors = F)[-1]
@@ -249,8 +249,8 @@ hobo_popup <- paste0(
   "<strong>LOGGER INFO</strong>", "<br>",
   "Site #", hobo$site, "<br>",
   "Site Name: ", hobo$name, "<br>",
-  "Install Date: ", hobo$install_date, "<br>",
-  "MLLW Elevation (ft): ", round(hobo$mllw_elvft, 2))
+  "Install Date: ", hobo$date, "<br>",
+  "MLLW Elevation (ft): ", round(hobo$site_elev, 2))
 
 targetGroups <- c('Parcels')
 
