@@ -249,8 +249,8 @@ hobo_popup <- paste0(
   "<strong>LOGGER INFO</strong>", "<br>",
   "Site #", hobo$site, "<br>",
   "Site Name: ", hobo$name, "<br>",
-  "Install Date: ", hobo$date, "<br>",
-  "MLLW Elevation (ft): ", round(hobo$site_elev, 2))
+  "Install Date: ", hobo$date)
+  # "MLLW Elevation (ft): ", round(hobo$site_elev, 2))
 
 targetGroups <- c('Parcels')
 
@@ -269,35 +269,35 @@ m <- leaflet() %>%
                     group = 'Water Loggers',
                     popup = hobo_popup,
                     icon = iconblue) %>%
-  addMarkers(data = ag_cntr,
-             popup = ag_popup,
-             group = 'Agriculture',
-             icon = leafIcons) %>%
+  # addMarkers(data = ag_cntr,
+  #            popup = ag_popup,
+  #            group = 'Agriculture',
+  #            icon = leafIcons) %>%
   addMarkers(data = df2_cntrd,
              group = 'Parcels_Cntrd',
              label = df2_cntrd$parcel_id) %>%
-  addPolygons(data = ag,
-              popup = ag_popup,
-              group = 'Agriculture',
-              fillColor = '#66ff00',
-              color = 'black', 
-              fillOpacity = 0.8,
-              weight = 1) %>%
+  # addPolygons(data = ag,
+  #             popup = ag_popup,
+  #             group = 'Agriculture',
+  #             fillColor = '#66ff00',
+  #             color = 'black', 
+  #             fillOpacity = 0.8,
+  #             weight = 1) %>%
   addPolylines(data = comp,
                color = "yellow",
                group = 'Companies',
                opacity = 1,
                weight = 3) %>%
-  addPolylines(data = df3,
-               color = ~tit3(df3$status),
-               group = 'Title Search Status',
-               opacity = 1,
-               weight = 3) %>%
-  addPolylines(data = df3.hatch,
-               color = ~tit3(df3.hatch$status),
-               group = 'Title Search Status',
-               opacity = 1,
-               weight = 3) %>%
+  # addPolylines(data = df3,
+  #              color = ~tit3(df3$status),
+  #              group = 'Title Search Status',
+  #              opacity = 1,
+  #              weight = 3) %>%
+  # addPolylines(data = df3.hatch,
+  #              color = ~tit3(df3.hatch$status),
+  #              group = 'Title Search Status',
+  #              opacity = 1,
+  #              weight = 3) %>%
   addPolygons(data = df,
               popup = parcel_popup,
               # stroke = F,
@@ -306,11 +306,11 @@ m <- leaflet() %>%
               fillColor = ~pal3(df$own3cat),
               fillOpacity = 0.8,
               weight = 1) %>%
-  addPolygons(data = inund,
-              group = 'Inundation',
-              fillColor = ~pal5(inund$prb_smplfy),
-              fillOpacity = 0.8,
-              weight = 1) %>%
+  # addPolygons(data = inund,
+  #             group = 'Inundation',
+  #             fillColor = ~pal5(inund$prb_smplfy),
+  #             fillOpacity = 0.8,
+  #             weight = 1) %>%
   addPolygons(data = sp_cashsales,
               popup = sales_popup,
               color = 'black',
@@ -319,28 +319,29 @@ m <- leaflet() %>%
               fillOpacity = 0.8,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
-                   overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers', 'Inundation'),
+                   # overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers', 'Inundation'),
+                   overlayGroups = c("Parcels", "Companies", 'Latest Sales', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = pal3,
             group = 'Parcels',
             values = df$own3cat,
             title = "Owner Category") %>%
-  addLegend("bottomleft",
-            pal = tit3,
-            group = 'Title Search Status',
-            values = df3$status,
-            title = "Title Search Status") %>%
+  # addLegend("bottomleft",
+  #           pal = tit3,
+  #           group = 'Title Search Status',
+  #           values = df3$status,
+  #           title = "Title Search Status") %>%
   addLegend("bottomleft",
             pal = pal4,
             group = 'Latest Sales',
             values = sp_cashsales$year,
             title = "Latest Sale Year") %>%
-  addLegend("bottomleft",
-            pal = pal5,
-            group = 'Inundation',
-            values = inund$prb_smplfy,
-            title = "Inundation") %>%
+  # addLegend("bottomleft",
+  #           pal = pal5,
+  #           group = 'Inundation',
+  #           values = inund$prb_smplfy,
+  #           title = "Inundation") %>%
   addSearchFeatures(targetGroups = 'Parcels_Cntrd', 
                     options = searchFeaturesOptions(propertyName = "label",
                                                     zoom = 18)) %>%
