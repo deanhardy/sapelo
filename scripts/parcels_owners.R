@@ -276,9 +276,9 @@ descendantsum <- po %>%
   summarise(n(), ha = sum(gis_acres* 0.404686, na.rm = T))
 sum(descendantsum$`n()`)
 
-# heirs <- po %>%
-#   filter(own3cat == 'Descendant') %>%
-#   filter(str_detect(owner, c('EST', 'ETAL', 'C/O')))
+heirs <- po %>%
+  filter(own3cat == 'Descendant') %>%
+  filter(str_detect(owner, c('EST|ETAL|C/O')))
 
 
 #######################

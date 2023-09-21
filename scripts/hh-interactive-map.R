@@ -13,8 +13,11 @@ library(lubridate)
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
+## hobo data info
 
-# ## udpated 4/20/20
+# datasets <- readxl_example("/Users/dhardy/Library/CloudStorage/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx")
+
+# ## updated 4/20/20
 # zillow_listings <- c('0102A 0095001',
 #                      '0101A 0019003', 
 #                      '0102A 0051',
@@ -31,7 +34,16 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 df <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.geojson'), stringsAsFactors = F) %>%
   st_transform(4326) %>%
   mutate(owner = ifelse(is.na(owner), 'unknown', owner)) %>%
-  filter(gis_acres != 'NA')
+  filter(gis_acres != 'NA') %>%
+  mutate(own3cat = if_else(own3cat == 'Outsider', 'Non-traditional', 
+                           if_else(own3cat == 'Other', 'County', own3cat))) %>%
+  mutate(own3cat = fct_relevel(own3cat, c('Descendant', 'Heritage Authority', 'Non-traditional', 'County'))) %>%
+  arrange(own3cat)
+
+## likely heirs
+heirs <- df %>%
+  filter(own3cat == 'Descendant') %>%
+  filter(str_detect(owner, c('EST|ETAL|C/O')))
 
 ## import transactions data
 sales <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
@@ -141,13 +153,20 @@ ag_cntr <- st_centroid(ag)
   
 ## import water level data
 hobo <- st_read(file.path(datadir, 'spatial-data/hobo_sites/hobo_sites2.shp'), stringsAsFactors = F) %>%
-  st_transform(4326)
+  st_transform(4326) %>%
+  mutate(site = as.numeric(site)) %>%
+  dplyr::select(site)
 #   rename(site = Id)
 # info <- read.csv(file.path(datadir, 'water-level/site-elevations.csv'), stringsAsFactors = F) %>%
 #   mutate(install_date = as.Date(install.date, '%m/%d/%y'),
 #          site = as.numeric(site)) %>%
 #   dplyr::select(site, install_date)
-# hobo <- left_join(hobo, info)
+hobo.info <- read_xlsx(file.path(datadir, 'sapelo-water-level-survey.xlsx'), 
+                       sheet = 'site info') %>%
+  rename(site = SiteID) %>%
+  mutate(site = as.numeric(site))
+
+hobo2 <- left_join(hobo, hobo.info)
 
 ## read in zillow data
 zdata <- read.csv(file.path(datadir, 'zdata.csv'), stringsAsFactors = F)[-1]
@@ -176,7 +195,8 @@ forsale <- merge(df2, zdata, by = "parcel_id") %>%
 # GDALinfo(file.path(datadir, "spatial-data/sapelo_hog_hammock/sapelo_hog_hammock.tif"))
 
 ## define map variables
-clr4 <- c('black', 'grey60', 'orange', 'white')
+# clr4 <- c('black', 'grey60', 'orange', 'white')
+clr4 <- c('grey30', 'grey60', 'grey90','black')
 pal3 <- colorFactor(clr4, df$own3cat)
 pal4 <- colorFactor("RdYlBu", sp_cashsales$year)
 clr3 <- c('green', 'yellow', 'red')
@@ -247,9 +267,13 @@ ag_popup <- paste0(
 
 hobo_popup <- paste0(
   "<strong>LOGGER INFO</strong>", "<br>",
-  "Site #", hobo$site, "<br>",
-  "Site Name: ", hobo$name, "<br>",
-  "Install Date: ", hobo$date)
+  "Transect-Site#: ", hobo2$TransectSite, "<br>",
+  "Site Name: ", hobo2$SiteName, "<br>",
+  "Site Height (m NAVD88): ", hobo2$`Height(m_NAVD88)`, "<br>",
+  "Install Date: ", hobo2$Installed, "<br>",
+  "Active? ", hobo2$Active, "<br>",
+  "Days Deployed: ", hobo2$DaysDeployed
+  )
   # "MLLW Elevation (ft): ", round(hobo$site_elev, 2))
 
 targetGroups <- c('Parcels')
@@ -283,11 +307,16 @@ m <- leaflet() %>%
   #             color = 'black', 
   #             fillOpacity = 0.8,
   #             weight = 1) %>%
-  addPolylines(data = comp,
-               color = "yellow",
+  addPolygons(data = comp,
+               fillColor = "#BA0C2F",
                group = 'Companies',
-               opacity = 1,
-               weight = 3) %>%
+               fillOpacity = 1,
+               weight = 0) %>%
+  addPolygons(data = heirs,
+               fillColor = "yellow",
+               group = 'Heirs',
+               fillOpacity = 0.8,
+               weight = 1) %>%
   # addPolylines(data = df3,
   #              color = ~tit3(df3$status),
   #              group = 'Title Search Status',
@@ -304,7 +333,7 @@ m <- leaflet() %>%
               color = 'black',
               group = 'Parcels',
               fillColor = ~pal3(df$own3cat),
-              fillOpacity = 0.8,
+              fillOpacity = 1,
               weight = 1) %>%
   # addPolygons(data = inund,
   #             group = 'Inundation',
@@ -316,16 +345,17 @@ m <- leaflet() %>%
               color = 'black',
               group = 'Latest Sales',
               fillColor = ~pal4(sp_cashsales$year),
-              fillOpacity = 0.8,
+              fillOpacity = 1,
               weight = 1) %>%
   addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
                    # overlayGroups = c("Parcels", "Title Search Status", "Companies", 'Latest Sales',  'Agriculture', 'Water Loggers', 'Inundation'),
-                   overlayGroups = c("Parcels", "Companies", 'Latest Sales', 'Water Loggers'),
+                   overlayGroups = c("Parcels", "Heirs", "Companies", 'Latest Sales', 'Water Loggers'),
                    options = layersControlOptions(collapsed = FALSE)) %>%
   addLegend("bottomright",
             pal = pal3,
             group = 'Parcels',
             values = df$own3cat,
+            opacity = 1.0,
             title = "Owner Category") %>%
   # addLegend("bottomleft",
   #           pal = tit3,
@@ -350,7 +380,7 @@ m <- leaflet() %>%
   #           group = 'For Sale (updated 3/25/20)',
   #           title = "Properties For Sale") %>%
   addScaleBar("bottomright") %>%
-  hideGroup(c('Sales', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers', 'Inundation'))
+  hideGroup(c('Sales', 'Heirs', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers', 'Inundation'))
 m
 
 library(htmlwidgets)
