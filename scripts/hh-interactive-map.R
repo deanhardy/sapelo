@@ -9,6 +9,9 @@ library(leaflet)
 library(leaflet.extras)
 library(raster)
 library(lubridate)
+library(readxl)
+library(htmlwidgets)
+
 # devtools::install_github("statnmap/HatchedPolygons")
 
 ## define data directory
@@ -265,7 +268,10 @@ ag_popup <- paste0(
   "Acres: ", round(ag$acres, 2), "<br>",
   "Square Feet: ", round(ag$sqft, 0))
 
+# file.img <- 'site-pictures/site02-snagtree.JPG'
+
 hobo_popup <- paste0(
+  paste0("<img src = ", hobo2$Image, ">"), "<br>",
   "<strong>LOGGER INFO</strong>", "<br>",
   "Transect-Site#: ", hobo2$TransectSite, "<br>",
   "Site Name: ", hobo2$SiteName, "<br>",
@@ -274,7 +280,6 @@ hobo_popup <- paste0(
   "Active? ", hobo2$Active, "<br>",
   "Days Deployed: ", hobo2$DaysDeployed
   )
-  # "MLLW Elevation (ft): ", round(hobo$site_elev, 2))
 
 targetGroups <- c('Parcels')
 
@@ -383,7 +388,6 @@ m <- leaflet() %>%
   hideGroup(c('Sales', 'Heirs', 'Latest Sales', 'Parcels_Cntrd', "Title Search Status", 'Companies', 'Agriculture', 'Water Loggers', 'Inundation'))
 m
 
-library(htmlwidgets)
 ## exporting as html file for exploration
 saveWidget(m, 
            file="/Users/dhardy/Dropbox/r_data/sapelo/hh_property_data.html",
@@ -393,4 +397,44 @@ saveWidget(m,
            file="/Users/dhardy/Dropbox/Sapelo_NSF/maps-gis/interactive-maps/hh_property_data.html",
            title = "Hog Hammock Data")
 
+
+######
+## making water level map only
+######
+
+## generate interactive leaflet map
+wls <- leaflet() %>%
+  addTiles(group = 'Open Street Map') %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri World Imagery") %>%
+  setView(lng = -81.26, lat = 31.43, zoom = 14) %>%
+  addAwesomeMarkers(data = hobo,
+                    group = 'Water Loggers',
+                    popup = hobo_popup,
+                    icon = iconblue) %>%
+  addPolygons(data = inund,
+              group = 'Inundation',
+              fillColor = ~pal5(inund$prb_smplfy),
+              fillOpacity = 0.8,
+              weight = 1) %>%
+  addLayersControl(baseGroups = c("Open Street Map", "Esri World Imagery"), 
+                   overlayGroups = c('Water Loggers', 'Inundation'),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend("bottomleft",
+            pal = pal5,
+            group = 'Inundation',
+            values = inund$prb_smplfy,
+            title = "Inundation") %>%
+  addScaleBar("bottomright") %>%
+  hideGroup(c('Inundation'))
+wls
+
+
+## exporting as html file for exploration
+saveWidget(wls, 
+           file="/Users/dhardy/Dropbox/r_data/sapelo/hoghammock-water-level-survey/hh-water-level-survey.html",
+           title = "Hog Hammock Water Level Survey")
+
+saveWidget(wls, 
+           file="/Users/dhardy/Dropbox/Sapelo_NSF/maps-gis/interactive-maps/hh-water-level-survey.html",
+           title = "Hog Hammock Water Level Survey")
 
