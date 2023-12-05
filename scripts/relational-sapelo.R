@@ -75,8 +75,8 @@ r22nd_2 <- r22nd %>%
 r22 <- rbind(r22d_2, r22nd_2)
 r22_2 <- rbind(r22, sap) %>%
   mutate(ParcelPerM = as.numeric(ParcelPerM)) %>%
-  mutate(Match_addr = paste(ZIP_Code, City, State, sep = ', '),
-         MSA = replace_na(MSA, 'NA'))
+  # mutate(Match_addr = paste(ZIP_Code, City, State, sep = ', '),
+  mutate(MSA = replace_na(MSA, 'NA')) 
 
 r.all <- rbind(r22_2, r10_2, r00_2)
 
