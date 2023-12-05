@@ -6,13 +6,12 @@ rm(list=ls())
 
 library(tidyverse)
 library(sf)
-library(tmap)
 library(ggthemes)
 
 utm <- 2150 ## NAD83 17N
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/'
 
 p <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = FALSE)
 
@@ -51,6 +50,7 @@ r10d_2 <- r10d %>%
   mutate(owncat = 'descendant', Match_addr = 'NA', MSA = 'NA') %>%
   relocate(owncat, .before = Match_addr) %>%
   rename(ParcelPerM = Parcelsown,) %>%
+  mutate(Match_addr = paste(ZIP_Code, City, State, sep = ', ')) %>%
   select(owncat, Match_addr, Year, City, State, ZIP_Code, MSA, ParcelPerM, geometry)
 r10nd_2 <- r10nd %>%
   mutate(owncat = 'nondescendant') %>%
@@ -75,8 +75,10 @@ r22nd_2 <- r22nd %>%
 r22 <- rbind(r22d_2, r22nd_2)
 r22_2 <- rbind(r22, sap) %>%
   mutate(ParcelPerM = as.numeric(ParcelPerM)) %>%
-  mutate(Match_addr = replace_na(Match_addr, 'unknown'),
+  mutate(Match_addr = paste(ZIP_Code, City, State, sep = ', '),
          MSA = replace_na(MSA, 'NA'))
+
+r.all <- rbind(r22_2, r10_2, r00_2)
 
 ## maybe some help making lines between pairs of points, but not using here
 ## https://gis.stackexchange.com/questions/270725/r-sf-package-points-to-multiple-lines-with-st-cast
@@ -131,32 +133,50 @@ points_to_lines <- function(data, ids, names, order_matters = TRUE) {
   
 } # /function
 
-
-## manipulate point data into relational multilinestrings
-r00_lines <- points_to_lines(r00_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
-  filter(start == 'sapelo')
-
-r10_lines <- points_to_lines(r10_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
-  filter(start == 'sapelo')
-
-r22_lines <- points_to_lines(r22_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
-  filter(start == 'sapelo')
-
 ## map data
 usa <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE))
 
-ggplot() +
+## manipulate point data into relational multilinestrings
+
+r00_lines <- points_to_lines(r00_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
+  filter(start == 'sapelo') %>%
+  mutate(Year = 2000)
+
+r10_lines <- points_to_lines(r10_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
+  filter(start == 'sapelo') %>%
+  mutate(Year = 2010)
+
+r22_lines <- points_to_lines(r22_2, ids = 'Match_addr', names = 'owncat', order_matters = F) %>%
+ filter(start == 'sapelo') %>%
+  mutate(Year = 2022)
+
+r_lines.all <- rbind(r00_lines, r10_lines, r22_lines)
+
+YR <- c('2022', '2010', '2000')
+
+for (z in seq_along(YR)) {
+
+r.df <- filter(r.all, Year == YR[z])
+r.l <- filter(r_lines.all, Year == YR[z])
+  
+fig <- ggplot() +
   geom_sf(data = usa) +   geom_sf(color = "#2b2b2b", fill = "white", size=0.125) +
-  coord_sf(crs = st_crs("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"), datum = NA) +
+  coord_sf(crs = st_crs("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"),
+           datum = NA) +
   ggthemes::theme_map() +
-  geom_sf(data = r22_lines, color = "black") + 
+  geom_sf(data = r.l, color = "black") + 
   geom_point(
     aes(color = owncat, size = ParcelPerM, geometry = geometry),
-    data = filter(r22_2, owncat != 'NA'),
+    data = filter(r.df, owncat != 'NA'),
     stat = "sf_coordinates",
     alpha = 0.8,
   ) + 
   scale_size(range = c(1, 10), name="Parcels Per MSA") + 
   theme(legend.position = "bottom") + 
-  ggtitle(r22_2$Year)
+  ggtitle(YR[z])
 
+# save plots as .png
+ggsave(fig, file=paste(datadir,
+                        'figures/relational/', 'relational-', YR[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+
+}
