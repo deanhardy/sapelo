@@ -65,17 +65,18 @@ r22d_2 <- r22d %>%
   mutate(owncat = 'descendant', Year = 2022) %>%
   relocate(owncat, .before = Match_addr) %>%
   rename(ParcelPerM = ParcelsPer, State = RegionAbbr, ZIP_Code = Postal) %>%
+  filter(!st_is_empty(.)) %>%
   select(owncat, Match_addr, Year, City, State, ZIP_Code, MSA, ParcelPerM, geometry)
 r22nd_2 <- r22nd %>%
   mutate(owncat = 'nondescendant', Year = 2022) %>%
   relocate(owncat, .before = Match_addr) %>%
-  # replace_na(Match_addr, 'unknown') %>%
   rename(ParcelPerM = parcels_ow, ZIP_Code = zipcode, City = city, State = state) %>%
   select(owncat, Match_addr, Year, City, State, ZIP_Code, MSA, ParcelPerM, geometry)
-r22nd_3 <- r22nd_2$Match_addr %>% replace_na('unkown')
-r22 <- rbind(r22d_2, r22nd_3)
+r22 <- rbind(r22d_2, r22nd_2)
 r22_2 <- rbind(r22, sap) %>%
-  mutate(ParcelPerM = as.numeric(ParcelPerM))
+  mutate(ParcelPerM = as.numeric(ParcelPerM)) %>%
+  mutate(Match_addr = replace_na(Match_addr, 'unknown'),
+         MSA = replace_na(MSA, 'NA'))
 
 ## maybe some help making lines between pairs of points, but not using here
 ## https://gis.stackexchange.com/questions/270725/r-sf-package-points-to-multiple-lines-with-st-cast
@@ -148,14 +149,14 @@ ggplot() +
   geom_sf(data = usa) +   geom_sf(color = "#2b2b2b", fill = "white", size=0.125) +
   coord_sf(crs = st_crs("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"), datum = NA) +
   ggthemes::theme_map() +
-  geom_sf(data = r10_lines, color = "black") + 
+  geom_sf(data = r22_lines, color = "black") + 
   geom_point(
     aes(color = owncat, size = ParcelPerM, geometry = geometry),
-    data = filter(r10_2, owncat != 'NA'),
+    data = filter(r22_2, owncat != 'NA'),
     stat = "sf_coordinates",
     alpha = 0.8,
   ) + 
   scale_size(range = c(1, 10), name="Parcels Per MSA") + 
   theme(legend.position = "bottom") + 
-  ggtitle(r10_2$Year)
+  ggtitle(r22_2$Year)
 
