@@ -16,13 +16,15 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/'
 p <- st_read(file.path(datadir, 'spatial-data/parcel_data_export/parcel_data.shp'), stringsAsFactors = FALSE)
 
 ## import data
-r00d <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/Descendant2000MSA.shp'), stringsAsFactors = FALSE)
-r10d <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/descendantMSA2010.shp'), stringsAsFactors = FALSE)
-r22d <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/DescendantMSA_2022.shp'), stringsAsFactors = FALSE)
+tax.r <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/tax_records.shp'), stringsAsFactors = FALSE)
 
-r00nd <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/nondescendant2000MSA.shp'), stringsAsFactors = FALSE)
-r10nd <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/nondescendantMSA2010.shp'), stringsAsFactors = FALSE)
-r22nd <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8_21/nondescendantMSA_2022.shp'), stringsAsFactors = FALSE)
+r00d <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/Descendant2000MSA.shp'), stringsAsFactors = FALSE)
+r10d <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/descendantMSA2010.shp'), stringsAsFactors = FALSE)
+r22d <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/DescendantMSA_2022.shp'), stringsAsFactors = FALSE)
+
+r00nd <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/nondescendant2000MSA.shp'), stringsAsFactors = FALSE)
+r10nd <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/nondescendantMSA2010.shp'), stringsAsFactors = FALSE)
+r22nd <- st_read(file.path(datadir, 'sydneyRA/spatial-data/Sapeloowners/shapefiles8.21/nondescendantMSA_2022.shp'), stringsAsFactors = FALSE)
 
 ## create sf vector for sapelo point
 df <- data.frame(x = -81.26206, y = 31.42655)
