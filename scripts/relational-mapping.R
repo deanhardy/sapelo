@@ -1,5 +1,5 @@
 ###############################################################################################
-## PURPOSE: assesssing relational geographies between real property and tax addresses 
+## PURPOSE: assessing relational geographies between real property and tax addresses 
 ## BY: Dean Hardy
 ###############################################################################################
 rm(list=ls())
