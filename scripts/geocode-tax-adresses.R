@@ -14,7 +14,6 @@ utm <- 2150 ## NAD83 17N
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/'
 
-
 ## import property owner data
 o <- read.csv(file.path(datadir, 'property/owners_sapelo_SydRA.csv'), stringsAsFactors = F) %>%
   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Non-descendant', own_cat),
