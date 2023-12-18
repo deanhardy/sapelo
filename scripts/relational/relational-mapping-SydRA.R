@@ -162,7 +162,8 @@ r.df <- filter(r.all, Year == YR[z])
 r.l <- filter(r_lines.all, Year == YR[z])
   
 fig <- ggplot() +
-  geom_sf(data = usa) +   geom_sf(color = "#2b2b2b", fill = "white", size=0.125) +
+  geom_sf(data = usa) +   
+  geom_sf(color = "#2b2b2b", fill = "white", size=0.125) +
   coord_sf(crs = st_crs("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"),
            datum = NA) +
   ggthemes::theme_map() +
