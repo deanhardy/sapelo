@@ -49,11 +49,11 @@ geo.fltr.cbsa <- geo.cbsa %>%
 ## map data
 usa <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE))
 
-ggplot(filter(geo.fltr.cbsa, year == 2022)) + 
+ggplot(filter(geo.fltr.cbsa, year == 2012)) + 
   # geom_sf(aes(size = count, color = category)) + 
   geom_sf(data = usa) +   
   geom_sf(color = "#2b2b2b", fill = "white", size=0.125) +
-  geom_sf(data = cbsa) + 
+  # geom_sf(data = cbsa) + 
   geom_point(
     aes(color = category, geometry = geometry, size = count),
     stat = "sf_coordinates",
