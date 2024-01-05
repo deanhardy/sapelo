@@ -83,8 +83,39 @@ tax.sum.yr <- joined %>%
             due = sum(amount.due)+sum(prior.payment))
 
 ggplot(tax.sum.yr) +
-  geom_point(aes(year, due/1000, color = category)) + 
+  geom_point(aes(year, count, color = category)) + 
   scale_y_continuous(name = 'Amount Owed (x$1,000)', limits = c(0,600), breaks = seq(0,600,50))
+
+## sum number addresses by year
+## add r-squared value
+## https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph
+
+# lm_eqn <- function(df){
+#   m <- lm(y ~ x, df);
+#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+#                    list(a = format(unname(coef(m)[1]), digits = 2),
+#                         b = format(unname(coef(m)[2]), digits = 2),
+#                         r2 = format(summary(m)$r.squared, digits = 3)))
+#   as.character(as.expression(eq));
+# }
+
+
+## plot # tax addresses by year
+tax.sum.yr %>%
+  # mutate(year = ymd(year, truncated = 2L)) %>%
+  group_by(year, category) %>%
+  filter(year < 2023) %>%
+  ggplot(aes(year, count, color = category)) +
+  geom_point() + 
+  geom_smooth(method = lm) +
+  # geom_text(x = 25, y = 300, label = lm_eqn(.), parse = TRUE) + 
+  # geom_smooth(se = F, lty = 'dotted') + 
+  scale_y_continuous(name = "Addresses (#)",
+                     breaks = seq(0,150, 20)) + 
+  scale_x_continuous(breaks = seq(1999, 2022, 2)) + 
+  ggtitle('Number of Off Island Tax Addresses (1999 - 2022)')
+
+## plot % of tax addresses by year next???
 
 #####################
 ## geocode addresses
