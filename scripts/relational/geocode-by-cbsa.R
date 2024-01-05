@@ -149,4 +149,22 @@ ggsave(fig, file=paste(datadir,
 
 }
 
+## plot # tax addresses by year
+r.all %>%
+  st_drop_geometry() %>%
+  mutate(year = ymd(year, truncated = 2L)) %>%
+  group_by(year) %>%
+  filter(year < '2023-01-01') %>%
+  summarise(count = sum(count)) %>%
+ggplot(aes(year, count)) +
+  geom_point() + 
+  geom_smooth(method = lm) +
+  scale_y_continuous(name = "# of Tax Addresses") + 
+  scale_x_date(date_breaks = '5 years')
+
+## plot % of tax addresses by year next???
+
+## create animated gif of outputs using ImageMagick in Terminal
+## change to directory of png files
+## convert -delay 100 -loop 0 *.png animation.gif
     
