@@ -149,18 +149,37 @@ ggsave(fig, file=paste(datadir,
 
 }
 
+## add r-squared value
+## https://stackoverflow.com/questions/7549694/add-regression-line-equation-and-r2-on-graph
+
+# lm_eqn <- function(df){
+#   m <- lm(y ~ x, df);
+#   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+#                    list(a = format(unname(coef(m)[1]), digits = 2),
+#                         b = format(unname(coef(m)[2]), digits = 2),
+#                         r2 = format(summary(m)$r.squared, digits = 3)))
+#   as.character(as.expression(eq));
+# }
+
+
 ## plot # tax addresses by year
 r.all %>%
   st_drop_geometry() %>%
   mutate(year = ymd(year, truncated = 2L)) %>%
-  group_by(year) %>%
+  group_by(year, category) %>%
   filter(year < '2023-01-01') %>%
   summarise(count = sum(count)) %>%
-ggplot(aes(year, count)) +
+ggplot(aes(year, count, color = category)) +
   geom_point() + 
   geom_smooth(method = lm) +
-  scale_y_continuous(name = "# of Tax Addresses") + 
-  scale_x_date(date_breaks = '5 years')
+  # geom_text(x = 25, y = 300, label = lm_eqn(.), parse = TRUE) + 
+  # geom_smooth(se = F, lty = 'dotted') + 
+  scale_y_continuous(name = "Addresses (#)",
+                     breaks = seq(0,150, 20)) + 
+  scale_x_date(breaks = seq(from = as.Date("1999-01-01"), to = as.Date("2022-01-01"),
+                                 by = "year"),
+               date_labels = '%y') + 
+  ggtitle('Number of Off Island Tax Addresses (1999 - 2022)')
 
 ## plot % of tax addresses by year next???
 
