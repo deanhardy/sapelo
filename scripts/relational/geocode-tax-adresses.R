@@ -30,15 +30,14 @@ tax <- read.csv(paste0(datadir, 'property/taxes/tax_records_99-23.csv'), strings
   select(-c(X:X.13)) %>% 
   mutate(address = paste(Property.Address, City, State, zip)) %>%
   filter(!str_detect(Deed.Name, 'HERITAGE'), 
-         City != 'Sapelo Island',
-         City != 'Sapelo  Island',
          address != '   NA'
          ) %>%
   rename(state = State, year = Year, bill = Bill.., name = Deed.Name, parcel.id = Map.Code, due.date = Due.Date, paid.date = Add.to.Cart) %>%
   mutate(prior.payment = as.numeric(gsub("[\\$,]", "", Prior.Payment))) %>%
   mutate(amount.due = as.numeric(gsub("[\\$,]", "", Amount.Due))) %>%
   mutate(parcel.id = str_remove_all(parcel.id, pattern = ' ')) %>%
-  select(year, bill, name, parcel.id, address, state, due.date, prior.payment, amount.due, paid.date)
+  mutate(locality = if_else(str_detect(address, 'Sapelo'), 'local', 'nonlocal')) %>%
+  select(year, bill, name, parcel.id, address, state, locality, due.date, prior.payment, amount.due, paid.date)
 
 ## import owner category classifications
 ownr1 <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
@@ -63,7 +62,7 @@ ownr <- rbind(ownr1, ownr2, ownr3) %>%
                                     category))))) %>%
   filter(!category %in% c('authority', 'County')) 
 
-## join owncat info from transactions data to tax bills data using name of recor with distance of 5 (most optimal)
+## join owncat info from transactions data to tax bills data using name of record with distance of 5 (most optimal)
 ## help here maybe: https://cran.r-project.org/web/packages/fuzzyjoin/readme/README.html
 joined <- tax %>%
   group_by(year) %>%
@@ -78,13 +77,26 @@ joined <- tax %>%
 
 ## sum taxes paid/due by year
 tax.sum.yr <- joined %>%
-  group_by(year, category) %>%
+  group_by(year, category, locality) %>%
   summarise(count = n(),
             due = sum(amount.due)+sum(prior.payment))
 
-ggplot(tax.sum.yr) +
-  geom_point(aes(year, count, color = category)) + 
-  scale_y_continuous(name = 'Amount Owed (x$1,000)', limits = c(0,600), breaks = seq(0,600,50))
+## plot amount owed by locality and ownership
+fig.local <- tax.sum.yr %>%
+  filter(year < 2023, category != 'unknown') %>%
+  ggplot(., aes(year, due/count, color = category)) +
+  geom_point() + 
+  geom_smooth(method = lm) +
+  scale_y_continuous(name = 'Average Amount Owed ($)', limits = c(0,2500), breaks = seq(0,2500,200)) + 
+  scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
+  ggtitle('Hog Hammock - Taxes Owed by Locality & Ownership') + 
+  facet_wrap('locality')
+fig.local
+
+png(paste0(datadir, 'figures/relational/', 'taxes-by-locality.png'), 
+    height = 4, width = 7, units = 'in', res = 150)
+fig.local
+dev.off()
 
 ## sum number addresses by year
 ## add r-squared value
@@ -100,22 +112,31 @@ ggplot(tax.sum.yr) +
 # }
 
 
-## plot # tax addresses by year
-tax.sum.yr %>%
+## plot # tax addresses by ownership/locality
+fig <- tax.sum.yr %>%
   # mutate(year = ymd(year, truncated = 2L)) %>%
   group_by(year, category) %>%
-  filter(year < 2023) %>%
+  filter(year < 2023, category != 'unknown') %>%
+  # summarise(count = sum(count)) %>%
   ggplot(aes(year, count, color = category)) +
   geom_point() + 
   geom_smooth(method = lm) +
   # geom_text(x = 25, y = 300, label = lm_eqn(.), parse = TRUE) + 
   # geom_smooth(se = F, lty = 'dotted') + 
   scale_y_continuous(name = "Addresses (#)",
-                     breaks = seq(0,150, 20)) + 
-  scale_x_continuous(breaks = seq(1999, 2022, 2)) + 
-  ggtitle('Number of Off Island Tax Addresses (1999 - 2022)')
+                     breaks = seq(0,250, 20)) + 
+  scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
+  ggtitle('Hog Hammock - # Tax Addresses by Locality & Ownership') + 
+  facet_wrap('locality')
+fig
 
-## plot % of tax addresses by year next???
+png(paste0(datadir, 'figures/relational/', 'taxaddress-count-by-ownership.png'), 
+    height = 4, width = 7, units = 'in', res = 150)
+fig
+dev.off()
+
+ ## plot % of tax addresses by year next???
+
 
 #####################
 ## geocode addresses
