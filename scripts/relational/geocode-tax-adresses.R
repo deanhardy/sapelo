@@ -3,6 +3,7 @@
 ## BY: Dean Hardy
 ###############################################################################################
 rm(list=ls())
+## considerations: differences among heirs or corporate properties? mean distance for ownership categories?
 
 library(tidyverse)
 library(sf)
@@ -60,14 +61,16 @@ ownr <- rbind(ownr1, ownr2, ownr3) %>%
                                     if_else(category == 'Heritage Authority', 'authority',
                                             if_else(category == 'unkown', 'unknown',
                                     category))))) %>%
-  filter(!category %in% c('authority', 'County')) 
+  filter(!category %in% c('authority', 'County')) %>%
+  distinct()
 
 ## join owncat info from transactions data to tax bills data using name of record with distance of 5 (most optimal)
 ## help here maybe: https://cran.r-project.org/web/packages/fuzzyjoin/readme/README.html
 joined <- tax %>%
   group_by(year) %>%
   stringdist_inner_join(ownr, by = c(name = "owner"), max_dist = 3, ignore_case = TRUE) %>%
-  distinct()
+  mutate(year.bill = paste(year, bill)) %>%
+  distinct(year.bill, .keep_all = T)
 
 # tax2 <- tax %>%
 #   group_by(year) %>%
