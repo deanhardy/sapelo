@@ -1,5 +1,5 @@
 ###############################################################################################
-## PURPOSE: geocoding tax assessor records 
+## PURPOSE: geocoding tax assessor records & plotting info by locality and ownership
 ## BY: Dean Hardy
 ###############################################################################################
 rm(list=ls())
@@ -55,7 +55,7 @@ ownr3 <- read.csv(file.path(datadir, 'property/owners_sapelo_SydRA.csv'), string
 ## join owner classification data
 ownr <- rbind(ownr1, ownr2, ownr3) %>%
   filter(!is.na(owner) & !category %in% c('', ' ') & !owner %in%  c('unknown', 'unkown', 'u', '', ' ')) %>%
-  mutate(category = if_else(category %in% c('Non-descendant', 'l_outsider'), 'outsider', 
+  mutate(category = if_else(category %in% c('outsider', 'Non-descendant', 'l_outsider'), 'nontraditional', 
                             if_else(category %in% c('l_descendant', 'Descendant'), 'descendant',
                                     if_else(category == 'Heritage Authority', 'authority',
                                             if_else(category == 'unkown', 'unknown',
@@ -77,14 +77,15 @@ joined <- tax %>%
 
 ## sum taxes paid/due by year
 tax.sum.yr <- joined %>%
-  group_by(year, category, locality) %>%
+  rename(ownership = category) %>%
+  group_by(year, ownership, locality) %>%
   summarise(count = n(),
             due = sum(amount.due)+sum(prior.payment))
 
 ## plot amount owed by locality and ownership
 fig.local <- tax.sum.yr %>%
-  filter(year < 2023, category != 'unknown') %>%
-  ggplot(., aes(year, due/count, color = category)) +
+  filter(year < 2023, ownership != 'unknown') %>%
+  ggplot(., aes(year, due/count, color = ownership)) +
   geom_point() + 
   geom_smooth(method = lm) +
   scale_y_continuous(name = 'Average Amount Owed ($)', limits = c(0,2500), breaks = seq(0,2500,200)) + 
@@ -115,10 +116,10 @@ dev.off()
 ## plot # tax addresses by ownership/locality
 fig <- tax.sum.yr %>%
   # mutate(year = ymd(year, truncated = 2L)) %>%
-  group_by(year, category) %>%
-  filter(year < 2023, category != 'unknown') %>%
+  group_by(year, ownership) %>%
+  filter(year < 2023, ownership != 'unknown') %>%
   # summarise(count = sum(count)) %>%
-  ggplot(aes(year, count, color = category)) +
+  ggplot(aes(year, count, color = ownership)) +
   geom_point() + 
   geom_smooth(method = lm) +
   # geom_text(x = 25, y = 300, label = lm_eqn(.), parse = TRUE) + 
@@ -135,8 +136,27 @@ png(paste0(datadir, 'figures/relational/', 'taxaddress-count-by-ownership.png'),
 fig
 dev.off()
 
- ## plot % of tax addresses by year next???
+## plot % of tax addresses by year next???
+tax.prop<- tax.sum.yr %>%
+  group_by(year, ownership) %>%
+  pivot_wider(names_from = locality, values_from = c(count, due)) %>%
+  mutate(nl_cnt_prop = count_nonlocal/(count_nonlocal+count_local))
 
+fig.prop <- tax.prop %>%
+  filter(year < 2023, ownership != 'unknown') %>%
+  ggplot(aes(year, nl_cnt_prop*100, color = ownership)) +
+  geom_point() + 
+  scale_y_continuous(name = "Nonlocal Tax Addresses (%)",
+                     breaks = seq(0,100, 10),
+                     limits = c(0,100)) + 
+  scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
+  ggtitle('Hog Hammock - Percentage Nonlocal Tax Addresses by Ownership')
+fig.prop
+
+png(paste0(datadir, 'figures/relational/', 'taxaddress-percentage-by-ownership.png'), 
+    height = 4, width = 7, units = 'in', res = 150)
+fig.prop
+dev.off()
 
 #####################
 ## geocode addresses
