@@ -93,7 +93,7 @@ fig.local <- tax.sum.yr %>%
   geom_smooth(method = lm) +
   scale_y_continuous(name = 'Average Amount Owed ($)', limits = c(0,2500), breaks = seq(0,2500,200)) + 
   scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
-  ggtitle('Hog Hammock - Taxes Owed by Locality & Ownership') + 
+  ggtitle('Taxes Owed by Locality & Ownership') + 
   facet_wrap('locality')
 fig.local
 
@@ -130,7 +130,7 @@ fig <- tax.sum.yr %>%
   scale_y_continuous(name = "Addresses (#)",
                      breaks = seq(0,250, 20)) + 
   scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
-  ggtitle('Hog Hammock - # Tax Addresses by Locality & Ownership') + 
+  ggtitle('# Tax Addresses by Locality & Ownership') + 
   facet_wrap('locality')
 fig
 
@@ -153,7 +153,7 @@ fig.prop <- tax.prop %>%
                      breaks = seq(0,100, 10),
                      limits = c(0,100)) + 
   scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
-  ggtitle('Hog Hammock - Percentage Nonlocal Tax Addresses by Ownership')
+  ggtitle('Percentage Nonlocal Tax Addresses by Ownership')
 fig.prop
 
 png(paste0(datadir, 'figures/relational/', 'taxaddress-percentage-by-ownership.png'), 

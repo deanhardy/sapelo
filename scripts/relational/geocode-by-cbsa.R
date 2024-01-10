@@ -37,11 +37,13 @@ geo <- st_read(file.path(datadir, 'spatial-data/geocoded/tax_geocode.GEOJSON'), 
 int <- data.frame(st_intersects(geo, cbsa)) %>%
   rename(cbsa.id = col.id)
 
-## join cbsa info with geocoded data
+## join cbsa info with geocoded data and remove sapelo addresses
 geo.cbsa <- geo %>%
   left_join(., int, by = 'row.id') %>%
-  left_join(., cbsa.df, by = 'cbsa.id')
+  left_join(., cbsa.df, by = 'cbsa.id') %>%
+  filter(!str_detect(address, 'Sapelo'))
 
+## summarise counts by cbsa 
 geo.fltr.cbsa <- geo.cbsa %>%
   # mutate(cbsa.id = coalesce(cbsa.id, address)) %>%
   group_by(year, category, cbsa.name) %>%
@@ -54,6 +56,37 @@ sap2 <- st_as_sf(sap, coords = c('x', 'y'), crs = 4269) %>%
   mutate(year = 'NA', category = 'descendant', cbsa.name = 'sapelo', count = 1)
 
 r.all <- rbind(geo.fltr.cbsa, sap2)
+
+## average distance by ownership (nonlocal addresses only)
+geo.dist <- geo.cbsa %>%
+  st_distance(., sap2) %>%
+  as_tibble() %>%
+  rename(sap.dist = value) %>%
+  drop_units() %>%
+  mutate(sap.dist = sap.dist * 0.000621371)
+
+geo.cbsa2 <- cbind(geo.cbsa, geo.dist)
+
+mn.dist <- geo.cbsa2 %>%
+  group_by(year, category) %>%
+  summarise(mn.dist = mean(sap.dist)) %>%
+  rename(ownership = category)
+
+fig.dist <- mn.dist %>%
+  filter(year < 2023, ownership != 'unknown') %>%
+  ggplot(aes(year, mn.dist, color = ownership)) +
+  geom_point() + 
+  scale_y_continuous(name = "Nonlocal Tax Addresses (%)",
+                     breaks = seq(0,320, 20),
+                     limits = c(0,320)) + 
+  scale_x_continuous(breaks = seq(1999, 2022, 3), minor_breaks = seq(1999,2022,1)) + 
+  ggtitle('Mean Distance to Nonlocal Tax Addresses by Ownership')
+fig.dist
+
+png(paste0(datadir, 'figures/relational/', 'taxaddress-distance-by-ownership.png'), 
+    height = 4, width = 7, units = 'in', res = 150)
+fig.dist
+dev.off()
 
 ## maybe some help making lines between pairs of points, but not using here
 ## https://gis.stackexchange.com/questions/270725/r-sf-package-points-to-multiple-lines-with-st-cast
