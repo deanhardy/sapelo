@@ -8,6 +8,7 @@ library(tidyverse)
 library(sf)
 library(tidygeocoder)
 library(tidycensus)
+library(units)
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/'
