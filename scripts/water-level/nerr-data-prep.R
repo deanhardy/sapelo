@@ -18,7 +18,8 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/230622-sapmlmet/SAPMLMET.csv'),
+## run all inclusive only if necessary ie missing data
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/240129-sapmlmet/SAPMLMET.csv'),
 # nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220903-sapmlmet-allinclusive/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%

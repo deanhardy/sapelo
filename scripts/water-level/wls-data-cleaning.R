@@ -52,7 +52,7 @@ for(i in 1:length(filz)) {
                select = c(2:5),
                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'),
                stringsAsFactors = FALSE) %>%
-    slice(., 5:(n()-7)) %>% ## removes first and last ## readings
+    slice(., 5:(n()-7)) %>% ## removes first ## and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 7) %>% ## removes last # rows
     mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M:%S', tz = 'GMT'),
@@ -102,7 +102,8 @@ for(i in 1:length(filz.ve)) {
     slice(., 1:(n()-2)) %>% ## removes first and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 6) %>% ## removes last # rows
-    mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y/%m/%d %H:%M:%S', tz = 'GMT'),
+    mutate(
+      date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y/%m/%d %H:%M:%S', tz = 'GMT'),
            date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz.ve[i], -26,-25),
            serial = str_sub(filz.ve[i], -23,-19),

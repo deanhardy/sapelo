@@ -15,11 +15,11 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for interval graphs
 int.date1 <- as.Date('2023-03-01') 
-int.date2 <- as.Date('2023-05-23') 
+int.date2 <- as.Date('2023-05-31') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2022-07-01') 
-ht.date2 <- as.Date('2023-05-23')
+ht.date2 <- as.Date('2023-06-30')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
