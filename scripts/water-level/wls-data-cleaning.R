@@ -42,7 +42,6 @@ filz.psu <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
                       pattern= '*.csv',
                       full.names = TRUE,
                       recursive = TRUE) 
-tidal.psu <- NULL
 
 ## import & tidy hobo water level data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for Hobo)
@@ -110,12 +109,23 @@ for(i in 1:length(filz.ve)) {
            serial = str_sub(filz.ve[i], -23,-19),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
-    mutate(name = if_else(site == 'Site-07', 'Cactus Patch', 
-                          if_else(site == 'Site-09', 'Mr. Tracy',
-                                  if_else(site == 'Site-11', 'Library',
-                                          if_else(site == 'Site-13', 'Purple Ribbon',
-                                                  if_else(site == 'Site-14', 'Tidal Gate',
-                                                          if_else(site == 'Site-15', 'Oakdale', site))))))) %>%
+    mutate(name = if_else(site == 'Site-02', 'Snagtree',
+                          if_else(site == 'Site-03', 'St. Lukes',
+                                  if_else(site == 'Site-05', 'Graball',
+                                          if_else(site == 'Site-06', 'Dani Trap',
+                                                  if_else(site == 'Site-07', 'Cactus Patch',
+                                                          if_else(site == 'Site-09', 'Mr. Tracy',
+                                                                  if_else(site == 'Site-11', 'Library',
+                                                                          if_else(site == 'Site-12', 'Mr. Smith',
+                                                                                  if_else(site == 'Site-13', 'Purple Ribbon',
+                                                                                          if_else(site == 'Site-14', 'Tidal Gate',
+                                                                                                  if_else(site == 'Site-19', 'The Trunk',
+                                                                                                          if_else(site == 'Site-16', 'South Oakdale',
+                                                                                                                  if_else(site == 'Site-18', 'NW Corner',
+                                                                                                                          if_else(site == 'Site-20', 'Walker',
+                                                                                                                                  if_else(site == 'Site-23', 'Hillery',
+                                                                                                                                          if_else(site == 'Site-24', 'Johnson', 
+                                                                                                                                                  if_else(site == 'Site-15', 'Oakdale', site)))))))))))))))))) %>%
     mutate(sitename = paste(site, name))
   tidal.ve <- rbind(OUT, tidal.ve)
 }
@@ -131,15 +141,16 @@ tidal1 <- rbind(tidal.01, tidal.ve2)
 
 ## import & tidy van essen specific conductivity/salinity data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
+tidal.psu <- NULL
 for(i in 1:length(filz.psu)) {
   OUT <- fread(filz.psu[i],
                select = c(2:8),
-               col.names = c('date_time_est', 'pressure', 'water_temp_c', 'conductivity', 'water_level_C', 'datum_reference', 'salinity'),
+               col.names = c('date_time_vartz', 'pressure', 'water_temp_c', 'conductivity', 'water_level_C', 'datum_reference', 'salinity'),
                stringsAsFactors = FALSE) %>%
     # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
-    mutate(date_time_est = ymd_hms(date_time_est),
-           date = as.Date(date_time_est, '%y/%m/%d', tz = 'EST'),
-           site = str_sub(filz.psu[i], -26,-25),
+    mutate(date_time_vartz = ymd_hms(date_time_vartz),
+           tz = str_sub(filz.psu[i], -7, -5),
+           site = str_sub(filz.psu[i], -30, -29),
            water_temp_c = as.numeric(water_temp_c),
            water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
@@ -152,10 +163,15 @@ for(i in 1:length(filz.psu)) {
                                                                   if_else(site == 'Site-11', 'Library',
                                                                           if_else(site == 'Site-12', 'Mr. Smith',
                                                                                   if_else(site == 'Site-13', 'Purple Ribbon',
-                                                                                          if_else(site == 'Site-14', 'Tidal Gate', 
-                                                                                                  if_else(site == 'Site-15', 'Oakdale', 
-                                                                                                          if_else(site == 'Site-19', 'The Trunk', site))))))))))))) %>%   
-             mutate(sitename = paste(site, name))
+                                                                                          if_else(site == 'Site-14', 'Tidal Gate',
+                                                                                                  if_else(site == 'Site-19', 'The Trunk',
+                                                                                                          if_else(site == 'Site-16', 'South Oakdale',
+                                                                                                                  if_else(site == 'Site-18', 'NW Corner',
+                                                                                                                          if_else(site == 'Site-20', 'Walker',
+                                                                                                                                  if_else(site == 'Site-23', 'Hillery',
+                                                                                                                                          if_else(site == 'Site-24', 'Johnson', 
+                                                                                                                                                  if_else(site == 'Site-15', 'Oakdale', site)))))))))))))))))) %>%
+    mutate(sitename = paste(site, name))
   tidal.psu <- rbind(OUT, tidal.psu)
 }
 
@@ -163,19 +179,12 @@ options(scipen=999)
 
 ## clean up salinity data
 tidal.psu2 <- tidal.psu %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_est + hours(5))) %>%
+  mutate(date_time_gmt = as.POSIXct(
+    if_else(tz == 'est', date_time_vartz + hours(5),
+            if_else(tz == 'edt', date_time_vartz + hours(4), date_time_vartz)
+    ))) %>%
   select(date_time_gmt, site, sitename, salinity) %>%
   filter(salinity < 50 | is.na(salinity))
-
-## plot salinity at all sites
-## this plot still needs lots of work as does the data collection process
-# p <- ggplot(tidal.psu2, aes(date_time_gmt, salinity)) + geom_line(lwd = 0.1)
-# q <- p + facet_grid(rows = vars(site))
-
-
-# png(q, filename = paste(datadir, 'figures/', 'Salinity', '.png', sep = ''), width = 9, height = 6.5, units = 'in', res = 300)
-# q
-# dev.off()
 
 ## merge salinity data to water level data 
 tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %>%
@@ -195,8 +204,8 @@ for (i in 1:length(SN)) {
   OUT2 <- tidal1.1 %>%
     filter(name == SN[[i]]) %>%
     mutate(water_depth_m = water_level_C + el2$well_ht_m,
-           water_level_navd88 = water_level_C + el2$wellcap_navd88_m,
-           well_ht = el2$well_ht)
+           water_level_navd88 = water_level_C + el2$rtkcap_navd88_m,
+           well_ht = el2$well_ht_m)
   
   tidal2 <- rbind(OUT2, tidal2)
 }
@@ -234,8 +243,8 @@ tidal3.2 <- tidal3.1 %>%
                                                                                             if_else(site == 'Site-11', 'T3-03',
                                                                                                     if_else(site == 'Site-23', 'T3-04',
                                                                                                             if_else(site == 'Site-07', 'T4-01',
-                                                                                                                    if_else(site == 'Site-09', 'T4-02',
-                                                                                                                            if_else(site == 'Site-24', 'T4-BR-01',
+                                                                                                                    if_else(site == 'Site-09', 'T4-BR-01',
+                                                                                                                            if_else(site == 'Site-24', 'T4-02',
                                                                                                                                     if_else(site == 'Site-16', 'T5-01',
                                                                                                                                             if_else(site == 'Site-15', 'T5-02', 
                                                                                                                                                     if_else(site == 'Site-14', 'T6-01', site)))))))))))))))))) %>%
@@ -245,3 +254,14 @@ nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
   
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
+
+## plot salinity at all sites
+## this plot still needs lots of work as does the data collection process
+p <- ggplot(filter(tidal3.2, salinity > 0), aes(date_time_gmt, salinity)) + geom_point(size = 0.1)
+q <- p + facet_grid(rows = vars(site_new))
+q
+
+png(q, filename = paste(datadir, 'figures/', 'salinity', '.png', sep = ''), width = 20, height = 20, units = 'in', res = 300)
+q
+dev.off()
+ 
