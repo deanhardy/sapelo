@@ -14,12 +14,13 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 lunar <- NULL
-YR <- c("https://aa.usno.navy.mil/api/moon/phases/year?year=2002",
-        "https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
+YR <- c("https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2019",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2020",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2021",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2022")
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2022",
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2023",
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2024")
 
 for (i in 1:length(YR)) {
   

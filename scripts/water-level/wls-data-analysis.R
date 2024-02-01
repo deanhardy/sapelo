@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for interval graphs
-int.date1 <- as.Date('2023-03-01') 
-int.date2 <- as.Date('2023-05-31') 
+int.date1 <- as.Date('2022-10-01') 
+int.date2 <- as.Date('2022-12-31') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2022-07-01') 
@@ -49,7 +49,7 @@ TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
 
 ht.TP <- filter(TP, date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2,
                   TP_mm > 0) %>%
-  mutate(date = as.Date(date_time_gmt, '%Y-%m-%d'))
+  mutate(date = as.Date(date_time_gmt, '%Y-%m-%d', tz = 'GMT'))
 
 ## filter TP data to match interval water data
 int.TP <- filter(TP, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
@@ -121,7 +121,7 @@ barplot(df.active$years, names.arg = df.active$sitename_new,
         ylab = '',
         xlim = c(0,5),
         xlab = 'Years Active',
-        main = 'Hog Hammock Water Level Survey: Deployment Length')
+        main = 'Hog Hammock Water Level Survey: Active Logging Time')
 dev.off()
 
 ## sites active time by date
