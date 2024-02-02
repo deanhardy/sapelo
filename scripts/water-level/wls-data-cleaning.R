@@ -251,7 +251,7 @@ tidal3.2 <- tidal3.1 %>%
   mutate(sitename_new = paste(site_new, name))
 
 nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
-  
+
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
 

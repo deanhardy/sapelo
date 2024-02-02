@@ -18,8 +18,8 @@ int.date1 <- as.Date('2022-10-01')
 int.date2 <- as.Date('2022-12-31') 
 
 # set dates for daily high tide graphs
-ht.date1 <- as.Date('2022-07-01') 
-ht.date2 <- as.Date('2023-06-30')
+ht.date1 <- as.Date('2018-11-01') 
+ht.date2 <- as.Date('2023-12-31')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
@@ -29,14 +29,25 @@ ht.date2 <- as.Date('2023-06-30')
 ## import & tidy data
 #####################
 
+## define column classes
 ## import cleaned water level data
-df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
+df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.POSIXct(date))
 
-nas <- df %>% filter(is.na(date_time_gmt))
-df <- df %>% filter(!is.na(date_time_gmt)) 
+## check for NAs in datetime column and remove them, if necessary
+# nas <- df %>% filter(is.na(date_time_gmt))
+# nas.df2 <- df2 %>% filter(is.na(date_time_gmt))
+# df3 <- df2 %>% filter(!is.na(date_time_gmt))
 
+## check for erroneous data points and remove them from data
+err <- df %>% filter(water_level_C >= 2 | water_level_C <= -2)
+ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
+# df2 <- df %>% filter(site != 'Site-16' & !water_level_C >2 | water_level_C < -2)
+df2 <- df %>% filter(!water_level_C >= 2)
+df3 <- df2 %>% filter(!water_level_C <= -2)
+
+df <- df3
 ## filter to interval dates
 df.int <- df %>%
   filter(date >= int.date1 & date <= int.date2)
@@ -192,15 +203,15 @@ ht.graph <- function(df, na.rm = TRUE, ...){
     plot <- 
       ggplot(df2)  + 
       geom_point(aes(date, water_level_navd88, color = logger), size = 0.5) + 
-      geom_smooth(aes(date, water_level_navd88), method = 'lm', formula = my.formula) +  
+      geom_smooth(aes(date, water_level_navd88), method = 'lm', formula = my.formula) +
       # geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
       # geom_point(aes(date_time_gmt, TP_mm/100), data = ht.TP, color = 'blue', size = 0.5) +
       # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') +
-      scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,1.8,0.1), limits = c(0,1.8), expand = c(0,0),
-                         sec.axis = sec_axis(~., breaks = seq(0,1.8,0.1))
-      ) +
+      # scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') +
+      # scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,2.0,0.1), limits = c(0,2.0), expand = c(0,0),
+      #                    sec.axis = sec_axis(~., breaks = seq(0,2.0,0.1))
+      # ) +
       # annotate("rect",
       #          xmin = as.POSIXct(paste(ht.date1, '00:48:00')),
       #          xmax = as.POSIXct(paste(ht.date1, '23:48:00')),
