@@ -13,7 +13,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 ## define depth reference datum as NAVD88 or local substrate
 # level.var <- c('water_depth_m')
 
-# set dates for interval graphs
+# set dates for transect graphs
 int.date1 <- as.Date('2022-10-01') 
 int.date2 <- as.Date('2022-12-31') 
 
@@ -44,26 +44,23 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
 err <- df %>% filter(water_level_C >= 2 | water_level_C <= -2)
 ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
 # df2 <- df %>% filter(site != 'Site-16' & !water_level_C >2 | water_level_C < -2)
-df2 <- df %>% filter(!water_level_C >= 2)
-df3 <- df2 %>% filter(!water_level_C <= -2)
+df <- df %>% filter(!water_level_C >= 2)
+df <- df %>% filter(!water_level_C <= -2)
 
-df <- df3
 ## filter to interval dates
-df.int <- df %>%
-  filter(date >= int.date1 & date <= int.date2)
+# df.int <- df %>%
+#   filter(date >= int.date1 & date <= int.date2)
 # select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 ## import daily precipitation totals
 TP <- read.csv(file.path(datadir, 'nerr-data/SAPMLMET_TP.csv')) %>%
   select(date_time_gmt, TP_mm) %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = 'GMT'))
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = 'GMT'),
+         date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
 ht.TP <- filter(TP, date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2,
                   TP_mm > 0) %>%
   mutate(date = as.Date(date_time_gmt, '%Y-%m-%d', tz = 'GMT'))
-
-## filter TP data to match interval water data
-int.TP <- filter(TP, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 ## view TP data
 ggplot(TP, aes(TP_mm)) +
@@ -71,13 +68,12 @@ ggplot(TP, aes(TP_mm)) +
 
 ## import lunar data
 lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
-  filter(date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2 & phase %in% c('New Moon', 'Full Moon')) %>%
+  filter(
+    # date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2 & 
+      phase %in% c('New Moon', 'Full Moon')) %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'),
-         phase = ifelse(phase == 'New Moon', 'New', 'Full'))
-
-## filter lunar data to match water data
-int.lnr <- filter(lnr, date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
-
+         phase = ifelse(phase == 'New Moon', 'New', 'Full'),
+         date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
 #########
 ## esda 
@@ -185,7 +181,8 @@ ht.graph <- function(df, na.rm = TRUE, ...){
     group_by(sitename_new, date) %>%
     slice_max(water_level_navd88, with_ties = FALSE) %>%
     # select(date_time_gmt, water_depth_m, salinity) %>%
-    ungroup()
+    ungroup() %>%
+    arrange(date)
   
   # create list of logger sites in data to loop over 
   sites_list <- unique(df$sitename_new)
@@ -193,7 +190,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
-    df2 <- filter(df, sitename_new == sites_list[i] & date >= ht.date1 & date <= ht.date2)
+    df2 <- filter(df, sitename_new == sites_list[i] & date >= first(date) & date <= last(date))
     
     ## set parameters
     my.formula <- y ~ x # generic formula for use in equation
@@ -212,6 +209,10 @@ ht.graph <- function(df, na.rm = TRUE, ...){
       # scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,2.0,0.1), limits = c(0,2.0), expand = c(0,0),
       #                    sec.axis = sec_axis(~., breaks = seq(0,2.0,0.1))
       # ) +
+      scale_x_datetime(name = 'Month/Year', date_breaks = '3 month', date_minor_breaks = '1 month', date_labels = '%m/%y') +
+      scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,2.0,0.1), expand = c(0,0),
+                         sec.axis = sec_axis(~., breaks = seq(0,2.0,0.1))
+      ) +
       # annotate("rect",
       #          xmin = as.POSIXct(paste(ht.date1, '00:48:00')),
       #          xmax = as.POSIXct(paste(ht.date1, '23:48:00')),
@@ -247,7 +248,7 @@ ht.graph <- function(df, na.rm = TRUE, ...){
             # legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black'),
             plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " (", df2$type, ")"," - Daily High Tide Trend From ", ht.date1, ' to ', ht.date2))
+      ggtitle(paste0(sites_list[i], " (", df2$type, ")"," - Daily High Tide Trend From ", first(df2$date), ' to ', last(df2$date)))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
@@ -277,39 +278,53 @@ int.graph <- function(df, na.rm = TRUE, ...){
   # create list of logger sites in data to loop over 
   sites_list <- unique(df$sitename)
   
+  # create date filter for most recent # months of date for interval graphs
+  n <- 3 # set number of months
+  
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
-    df2 <- filter(df, sitename == sites_list[i] & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+    df2 <- df %>%
+      arrange(date) %>%
+      filter(sitename == sites_list[i]) %>%
+      filter(date >= seq(floor_date(max(date), 'month'),
+                         length.out = n + 1, by = '-1 month'))
+    
+    ## filter TP data to match interval water data
+    int.TP <- filter(TP, date >= first(df2$date) & date <= last(df2$date)) %>%
+      filter(TP_mm > 0)
+    
+    ## filter lunar data to match water data
+    int.lnr <- filter(lnr, date >= first(df2$date) & date <= last(df2$date))
     
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
       geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
       geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
-      geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
-      geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
+      geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'blue') +
+      # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Month', date_breaks = '1 month', date_labels = '%m') + 
-      scale_y_continuous(name = 'Water Depth (m) & Total Daily Precipitation x10 (meters)', breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0),
-                         # sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
-                         #                   name = expression(paste('Total Daily Precipitation (mm)'))),
-                         sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
-                                             name = expression(paste('Salinity (psu)'))),
+      scale_x_datetime(name = 'Month/Year', date_breaks = '1 month', date_labels = '%m/%y') + 
+      scale_y_continuous(name = 'Water Depth (m)', breaks = seq(-0.1,1.8,0.1), limits = c(-0.1,1.8), expand = c(0,0),
+                         sec.axis = sec_axis(~. * 100, breaks = seq(0,180, 10),
+                                           name = expression(paste('Total Daily Precipitation (mm)'))),
+                         # sec.axis = sec_axis(~. * 25, breaks = seq(0,45, 5),
+                         #                     name = expression(paste('Salinity (psu)'))),
       ) +
-      annotate("rect",
-               xmin = as.POSIXct(paste(int.date1, '00:48:00')),
-               xmax = as.POSIXct(paste(int.date1, '12:48:00')),
-               ymin = 0,
-               ymax = df2$well_ht,
-               alpha = 0.1) +
-      annotate("text",
-               x = as.POSIXct(paste(int.date1, '06:48:00')),
-               y = df2$well_ht+0.1,
-               label = 'Well Height',
-               angle = 90) +
+      # annotate("rect",
+      #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
+      #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
+      #          ymin = 0,
+      #          ymax = df2$well_ht,
+      #          alpha = 0.1) +
+      # annotate("text",
+      #          x = as.POSIXct(paste(int.date1, '06:48:00')),
+      #          y = df2$well_ht+0.1,
+      #          label = 'Well Height',
+      #          angle = 90) +
       # geom_text(aes(as.POSIXct('2018-10-13 00:48:00'), df2$well_ht, label = 'well height')) +
       # labs(fill = 'Moon Phase', caption = "Dashed line indicates mean water level.") + 
       theme(axis.title = element_text(size = TEXT),
@@ -327,13 +342,14 @@ int.graph <- function(df, na.rm = TRUE, ...){
             panel.grid = element_blank(),
             panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
             plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-            legend.position = c(0.1, 0.92),
+            legend.position = c(0.1, 0.94),
             legend.text = element_text(size = TEXT),
             legend.title = element_text(size = TEXT),
             # legend.key = element_blank(),
             legend.box.background = element_rect(color = 'black'),
             plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
+      guides(fill=guide_legend(title="Moon Phase")) + 
+      ggtitle(paste0(sites_list[i], " - 12-minute Interval From ", first(df2$date), ' to ', last(df2$date)))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
