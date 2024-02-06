@@ -40,13 +40,6 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
 # nas.df2 <- df2 %>% filter(is.na(date_time_gmt))
 # df3 <- df2 %>% filter(!is.na(date_time_gmt))
 
-## check for erroneous data points and remove them from data
-err <- df %>% filter(water_level_C >= 2 | water_level_C <= -2)
-ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
-# df2 <- df %>% filter(site != 'Site-16' & !water_level_C >2 | water_level_C < -2)
-df <- df %>% filter(!water_level_C >= 2)
-df <- df %>% filter(!water_level_C <= -2)
-
 ## filter to interval dates
 # df.int <- df %>%
 #   filter(date >= int.date1 & date <= int.date2)

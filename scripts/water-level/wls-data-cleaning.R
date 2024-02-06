@@ -222,10 +222,10 @@ tidal3.1 <- tidal3 %>%
   mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15', 'Site-18', 'Site-20', 'Site-23', 'Site-24'), 'ditch',
                        ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12', 'Site-16'), 'creek', site))) %>% ## ditches sites
   # filter(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12')) %>% ## marsh sites
-  mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site-18'), 'T1',
+  mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13'), 'T1',
                            ifelse(site %in% c('Site-02', 'Site-03', 'Site-05','Site-11', 'Site-23'), 'T3',
                                   ifelse(site %in% c('Site-07', 'Site-09', 'Site-24'), 'T4',
-                                         ifelse(site %in% c('Site-16', 'Site-15'), "T5",
+                                         ifelse(site %in% c('Site-16', 'Site-15', 'Site-18'), "T5",
                                                 ifelse(site %in% c('Site-20'), 'T2',
                                                        if_else(site %in% c('Site-14'), 'T6', site)))))))
 
@@ -235,7 +235,7 @@ tidal3.2 <- tidal3.1 %>%
                             if_else(site == 'Site-12', 'T1-02', 
                                     if_else(site == 'Site-19', 'T1-03',
                                             if_else(site == 'Site-13', 'T1-04',
-                                                    if_else(site == 'Site-18', 'T1-05',
+                                                    if_else(site == 'Site-18', 'T5-03',
                                                             if_else(site == 'Site-20', 'T2-01', 
                                                                     if_else(site == 'Site-02', 'T3-01',
                                                                             if_else(site == 'Site-03', 'T3-02',
@@ -251,6 +251,14 @@ tidal3.2 <- tidal3.1 %>%
   mutate(sitename_new = paste(site_new, name))
 
 nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
+
+## check for erroneous data points and remove them from data
+err <- tidal3.2 %>% filter(water_level_C >= 2 | water_level_C >= -2)
+err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
+
+ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
+# df <- df %>% filter(!water_level_C >= 2)
+# df <- df %>% filter(!water_level_C <= -2)
 
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
