@@ -161,6 +161,18 @@ jpeg(paste0(datadir, "figures/sites-deployment-dates.jpg"), width = 7, height = 
 sites.timeline
 dev.off()
 
+## import site characteristics/info 
+wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
+
+wls2 <- wls.info %>%
+  gather('datum', 'meters', 8:17)
+
+wls2 %>%
+  filter(datum %in% c('usgs2019', 'cgep2010', 'site_elv_m')) %>%
+ggplot(aes(transect_site, meters, color = datum, shape = type)) + 
+  geom_point() + 
+  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(-1.5, 1.5, 0.2))
+
 
 #################################################################################
 # DAILY HIGH TIDES create graphing function for daily highest tides' water level
