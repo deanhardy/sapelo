@@ -98,6 +98,20 @@ ggplot(df.avg, aes(prd, avg, group = site_new)) +
   # geom_smooth(method = lm, se = F) + 
   facet_wrap(~ transect)
 
+## monthly high water means
+df.mhhw <- df %>%
+mutate(prd = floor_date(date_time_gmt, "day")) %>%
+  group_by(transect, site_new, prd) %>%
+  summarise(max = max(water_level_navd88)) %>%
+  mutate(prd2 = floor_date(prd, "month")) %>%
+  group_by(transect, site_new, prd2) %>%
+  summarize(avg = mean(max))
+
+ggplot(df.mhhw, aes(prd2, avg, group = site_new)) + 
+  geom_line(aes(color = site_new)) + 
+  # geom_smooth(method = lm, se = F) + 
+  facet_wrap(~ transect)
+
 ## plot temperatures all time
 ggplot(df, aes(water_temp_c)) + 
   geom_histogram(bins = 25) + 
@@ -164,8 +178,9 @@ dev.off()
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
 
+## prep for plotting
 wls2 <- wls.info %>%
-  gather('source', 'meters', 8:17) %>%
+  gather('source', 'meters', 8:20) %>%
   mutate(datum = if_else(str_detect(source, 'mhhw'), 'mhhw', 
                          if_else(str_detect(source, 'mllw'), 'mllw', 
                                  if_else(str_detect(source, 'cgep|rtk|usgs'), 'navd88', 'na')))) %>%
@@ -173,17 +188,18 @@ wls2 <- wls.info %>%
                          if_else(str_detect(source, '2010'), 'CGEP', 
                                  if_else(str_detect(source, 'rtk'), 'CWBP', 'na'))))
 
+## plot site elevations using different sources and datums
 elvs <- wls2 %>%
-  filter(!source %in% c('well_ht', 'rtkcap_navd88', 'noaa2019') &
+  filter(!source %in% c('well_ht', 'rtkcap_navd88', 'noaa2019', 'rtk_cgep', 'rtk_usgs', 'usgs_cgep') &
            project != 'na') %>%
   # filter(source %in% c('usgs2019', 'cgep2010', 'rtk_site', 'mhhw2019', 'mhhw2010')) %>%
 ggplot(aes(transect_site, meters, color = project, shape = type)) + 
   geom_point() + 
-  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(-2.2, 2.6, 0.2)) + 
+  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(-2.6, 2.6, 0.2)) + 
   scale_x_discrete(name = 'Transect-Site') + 
   scale_color_manual(name='Project',
                      breaks=c('CGEP', 'USGS', 'CWBP'),
-                     values=c('CGEP'='red', 'USGS'='blue', 'CWBP'='green')) + 
+                     values=c('CGEP'='red', 'USGS'='blue', 'CWBP'='green3')) + 
   scale_shape_manual(name='Type',
                      breaks=c('creek', 'ditch'),
                      values=c('creek'= 16, 'ditch'= 17)) + 
@@ -194,6 +210,28 @@ elvs
 png(paste0(datadir, 'figures/site-elevations.png'), unit = 'in', height = 6, width = 10, res = 150)
 elvs
 dev.off()
+
+elvd <- wls2 %>%
+  filter(source %in% c('rtk_cgep', 'rtk_usgs', 'usgs_cgep')) %>%
+  # filter(source %in% c('usgs2019', 'cgep2010', 'rtk_site', 'mhhw2019', 'mhhw2010')) %>%
+  ggplot(aes(transect_site, meters, color = source, shape = type)) + 
+  geom_point() + 
+  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(-1.6, 0.4, 0.2)) + 
+  scale_x_discrete(name = 'Transect-Site') + 
+  # scale_color_manual(name='Project',
+  #                    breaks=c('CGEP', 'USGS', 'CWBP'),
+  #                    values=c('CGEP'='red', 'USGS'='blue', 'CWBP'='green3')) + 
+  scale_shape_manual(name='Type',
+                     breaks=c('creek', 'ditch'),
+                     values=c('creek'= 16, 'ditch'= 17)) + 
+  facet_wrap(~datum) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+elvd
+
+png(paste0(datadir, 'figures/site-elev_differences.png'), unit = 'in', height = 6, width = 10, res = 150)
+elvd
+dev.off()
+
 
 #################################################################################
 # DAILY HIGH TIDES create graphing function for daily highest tides' water level
