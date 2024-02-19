@@ -60,10 +60,19 @@ ml.mhhw <- ml %>%
   mutate(transect = 'Hudson Creek', site_new = 'ML', source = 'USGS') %>%
   select(transect, site_new, month, avg, source)
 
-mhhw <- rbind(df.mhhw, ml.mhhw)
+mhhw <- rbind(df.mhhw, ml.mhhw) %>%
+  mutate(date = as.Date(month))
   
-ggplot(mhhw, aes(month, avg, group = site_new)) + 
-  geom_point(aes(color = site_new))
+comps <- ggplot(mhhw, aes(date, avg, group = site_new)) + 
+  geom_point(aes(color = source)) + 
+  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(0.6, 1.6, 0.2), limits = c(0.6,1.6)) + 
+  scale_x_date(date_breaks = '4 month', date_labels = '%m/%y') +
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~ transect)
+  ggtitle('Monthly Mean High Water')
+comps 
+
+png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 6, width = 10, res = 150)
+comps
+dev.off()
 
