@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for transect graphs
-int.date1 <- as.Date('2022-10-01') 
-int.date2 <- as.Date('2022-12-31') 
+int.date1 <- as.Date('2022-11-01') 
+int.date2 <- as.Date('2022-11-30') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
@@ -458,7 +458,7 @@ tx.graph(df)
 
 
 ## explore transects 1 and 5 hydrological connections via site NW corner
-df.t <- filter(df, transect %in% c('T1', 'T5') & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+df.t <- filter(df, site_new %in% c('T1-03', 'T5-03', 'T5-02') & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 daily.mn <- df.t %>%
   mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
@@ -475,8 +475,8 @@ plot <- ggplot(df.t)  +
   # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
   # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
   # scale_fill_manual(values = c('white', 'black')) + 
-  scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0)) +
+  scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d', date_minor_breaks = '1 day') + 
+  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(-0.5,2,0.1), limits = c(-0.5,2), expand = c(0,0)) +
   # annotate("rect",
   #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
   #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
@@ -501,8 +501,9 @@ labs(color = 'Site Name') +
         axis.line.y.right = element_line(color = "blue"), 
         axis.ticks.y.right = element_line(color = "blue"),
         panel.background = element_rect(fill = FALSE, color = 'black'),
-        panel.grid = element_blank(),
+        # panel.grid = element_blank(),
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         legend.position = c(0.2, 0.9),
         legend.text = element_text(size = TEXT),
