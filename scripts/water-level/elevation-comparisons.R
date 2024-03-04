@@ -86,10 +86,10 @@ wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
 
 ## prep for plotting
 wls2 <- wls.info %>%
-  gather('source', 'meters', 8:20) %>%
+  gather('source', 'meters', 8:24) %>%
   mutate(datum = if_else(str_detect(source, 'mhhw'), 'mhhw', 
-                         if_else(str_detect(source, 'mllw'), 'mllw', 
-                                 if_else(str_detect(source, 'cgep|rtk|usgs'), 'navd88', 'na')))) %>%
+                         if_else(str_detect(source, 'mllw'), 'mllw', 'na'))) %>%
+  mutate(datum = if_else(str_detect(source, '88'), 'navd88', datum)) %>%
   mutate(project = if_else(str_detect(source, '2019'), 'USGS', 
                            if_else(str_detect(source, '2010'), 'CGEP', 
                                    if_else(str_detect(source, 'rtk'), 'CWBP', 'na'))))
@@ -100,12 +100,10 @@ names(dat.labs) <- c("mhhw", "mllw", "navd88")
 
 ## plot site elevations using different sources and datums
 elvs <- wls2 %>%
-  filter(!source %in% c('well_ht', 'rtkcap_navd88', 'noaa2019', 'rtk_cgep', 'rtk_usgs', 'usgs_cgep') &
-           project != 'na') %>%
-  # filter(source %in% c('usgs2019', 'cgep2010', 'rtk_site', 'mhhw2019', 'mhhw2010')) %>%
+  filter(source %in% c('cgep2010_88', 'usgs2019_88', 'rtk_site_88', 'mllw2010', 'mllw2019', 'mhhw2010','mhhw2019')) %>%
   ggplot(aes(transect_site, meters, color = project, shape = type)) + 
   geom_point() + 
-  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(-2.6, 2.6, 0.2)) + 
+  scale_y_continuous(name = "Elevation (m)", breaks = seq(-2.6, 2.8, 0.2)) + 
   scale_x_discrete(name = 'Transect-Site') + 
   scale_color_manual(name='Project',
                      breaks=c('CGEP', 'USGS', 'CWBP'),
@@ -122,8 +120,9 @@ png(paste0(datadir, 'figures/site-elevations.png'), unit = 'in', height = 6, wid
 elvs
 dev.off()
 
+## plot elev differences across sources (CGEP, USGS, CWBP)
 elvd <- wls2 %>%
-  filter(source %in% c('rtk_cgep', 'rtk_usgs', 'usgs_cgep')) %>%
+  filter(source %in% c('rtk_cgep_88', 'rtk_usgs_88', 'usgs_cgep_88')) %>%
   # filter(source %in% c('usgs2019', 'cgep2010', 'rtk_site', 'mhhw2019', 'mhhw2010')) %>%
   ggplot(aes(transect_site, meters, color = source, shape = type)) + 
   geom_point() + 

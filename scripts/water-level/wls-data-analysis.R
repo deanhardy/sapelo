@@ -140,7 +140,7 @@ dev.off()
 
 ## sites active time by date
 df.date <- df %>%
-  group_by(sitename_new, serial, logger) %>%
+  group_by(site_new, serial, logger) %>%
   mutate(date = as.Date(date, "%Y-%m-%d")) %>%
   arrange(date) %>%
   mutate(start_date = first(date),
@@ -151,7 +151,7 @@ df.date <- df %>%
 
 sites.timeline <- 
   ggplot(df.date) +
-  geom_linerange(aes(x = reorder(sitename_new, desc(sitename_new)),
+  geom_linerange(aes(x = reorder(site_new, desc(site_new)),
                      ymax = end_date,
                      ymin = start_date,
                  linetype = logger,
@@ -165,7 +165,8 @@ sites.timeline <-
   #               show.legend = T) + ## trick for making horizontal legend bars
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y") + 
                # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
-  xlab('Transect-Site Name') + 
+  # scale_color_manual()
+  xlab('Transect-Site') + 
   ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
   theme_bw()
