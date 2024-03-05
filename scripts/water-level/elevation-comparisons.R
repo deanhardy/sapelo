@@ -8,6 +8,7 @@ library(lubridate)
 library(readxl)
 library(dataRetrieval) ## https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html
 Sys.setenv(TZ='GMT')
+# options(scipen=999)
 
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
@@ -42,8 +43,12 @@ ml <- readNWISdv(siteNumbers = siteNo,
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
+#####################################
+## compare ML MHHW to site MHHW
+#####################################
+
 ## monthly high water means at sites
-df.mhhw <- df %>%
+mo.mhhw <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
   group_by(transect, site_new, prd) %>%
   summarise(max = max(water_level_navd88)) %>%
@@ -60,7 +65,7 @@ ml.mhhw <- ml %>%
   mutate(transect = 'Hudson Creek', site_new = 'ML', source = 'USGS') %>%
   select(transect, site_new, month, avg, source)
 
-mhhw <- rbind(df.mhhw, ml.mhhw) %>%
+mhhw <- rbind(mo.mhhw, ml.mhhw) %>%
   mutate(date = as.Date(month))
   
 comps <- mhhw %>%
@@ -81,18 +86,36 @@ png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 5, wi
 comps
 dev.off()
 
+#####################################
+## compare elevation datums/projects
+#####################################
+
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
 
+## MHHW at sites (all time)
+cwbp.mhhw <- df %>%
+  mutate(prd = floor_date(date_time_gmt, "day")) %>%
+  rename(transect_site = site_new) %>%
+  group_by(transect_site, prd) %>%
+  summarise(max = max(water_level_navd88)) %>%
+  # mutate(month = floor_date(prd, "month")) %>%
+  group_by(transect_site) %>%
+  summarize(mhhw_wls88 = mean(max)) %>%
+  select(transect_site, mhhw_wls88)
+
+wls.info2 <- merge(wls.info, cwbp.mhhw)
+
 ## prep for plotting
-wls2 <- wls.info %>%
-  gather('source', 'meters', 8:24) %>%
+wls2 <- wls.info2 %>%
+  gather('source', 'meters', 8:27) %>%
   mutate(datum = if_else(str_detect(source, 'mhhw'), 'mhhw', 
                          if_else(str_detect(source, 'mllw'), 'mllw', 'na'))) %>%
   mutate(datum = if_else(str_detect(source, '88'), 'navd88', datum)) %>%
-  mutate(project = if_else(str_detect(source, '2019'), 'USGS', 
-                           if_else(str_detect(source, '2010'), 'CGEP', 
-                                   if_else(str_detect(source, 'rtk'), 'CWBP', 'na'))))
+  mutate(project = if_else(str_detect(source, '19'), 'USGS', 
+                           if_else(str_detect(source, '10'), 'CGEP', 
+                                   if_else(str_detect(source, 'rtk|wls'), 'CWBP', 'na'))),
+         meters = signif(meters, 3))
 
 # New facet label names for datum variables
 dat.labs <- c("MHHW", "MLLW", "NAVD88")
@@ -100,17 +123,20 @@ names(dat.labs) <- c("mhhw", "mllw", "navd88")
 
 ## plot site elevations using different sources and datums
 elvs <- wls2 %>%
-  filter(source %in% c('cgep2010_88', 'usgs2019_88', 'rtk_site_88', 'mllw2010', 'mllw2019', 'mhhw2010','mhhw2019')) %>%
+  filter(source %in% c('cgep2010_88', 'usgs2019_88', 'rtk_site_88',
+                       'mllw2010', 'mllw2019', 'rtk_mllw',
+                       'mhhw2010','mhhw2019', 'rtk_mhhw')) %>%
   ggplot(aes(transect_site, meters, color = project, shape = type)) + 
   geom_point() + 
-  scale_y_continuous(name = "Elevation (m)", breaks = seq(-2.6, 2.8, 0.2)) + 
+  scale_y_continuous(name = "Elevation (m)", breaks = seq(-3.4, 2.8, 0.4)) + 
   scale_x_discrete(name = 'Transect-Site') + 
+  scale_shape_manual(name='Type',
+                     breaks=c('creek', 'ditch'),
+                     values=c('creek'= 16, 'ditch'= 17),
+                     labels = c('Creek', 'Ditch')) + 
   scale_color_manual(name='Project',
                      breaks=c('CGEP', 'USGS', 'CWBP'),
                      values=c('CGEP'='green3', 'USGS'='black', 'CWBP'='red')) + 
-  scale_shape_manual(name='Type',
-                     breaks=c('creek', 'ditch'),
-                     values=c('creek'= 16, 'ditch'= 17)) + 
   facet_wrap(~datum, labeller = labeller(datum = dat.labs)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         legend.position = 'bottom')
@@ -133,13 +159,42 @@ elvd <- wls2 %>%
   #                    values=c('CGEP'='red', 'USGS'='blue', 'CWBP'='green3')) + 
   scale_shape_manual(name='Type',
                      breaks=c('creek', 'ditch'),
-                     values=c('creek'= 16, 'ditch'= 17)) + 
-  facet_wrap(~datum) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                     values=c('creek'= 16, 'ditch'= 17),
+                     labels = c('Creek', 'Ditch')) + 
+  scale_color_manual(name='Comparison',
+                     breaks=c('rtk_cgep_88', 'rtk_usgs_88', 'usgs_cgep_88'),
+                     values=c('rtk_cgep_88'='green3', 'rtk_usgs_88'='black', 'usgs_cgep_88'='red'),
+                     labels = c('RTK - CGEP2010', 'RTK - USGS2019', "USGS2019 - CGEP2010" )) +
+  # facet_wrap(~datum) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = 'bottom')
 elvd
 
 png(paste0(datadir, 'figures/site-elev_differences.png'), unit = 'in', height = 6, width = 10, res = 150)
 elvd
+dev.off()
+
+## plot site elevations using different sources and datums
+mhhw88.comps <- wls2 %>%
+  filter(source %in% c('mhhw19_88', 'mhhw10_88', 'mhhw_wls88')) %>%
+  ggplot(aes(transect_site, meters, color = project, shape = type)) + 
+  geom_point() + 
+  scale_y_continuous(name = "MHHW Elevation (m NAVD88)", breaks = seq(-0.2, 2.6, 0.2)) + 
+  scale_x_discrete(name = 'Transect-Site') + 
+  scale_shape_manual(name='Type',
+                     breaks=c('creek', 'ditch'),
+                     values=c('creek'= 16, 'ditch'= 17),
+                     labels = c('Creek', 'Ditch')) + 
+  # scale_color_manual(name='Project',
+  #                    breaks=c('CGEP', 'USGS', 'CWBP'),
+  #                    values=c('CGEP'='green3', 'USGS'='black', 'CWBP'='red')) + 
+  # facet_wrap(~datum, labeller = labeller(datum = dat.labs)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = 'bottom')
+mhhw88.comps
+
+png(paste0(datadir, 'figures/site-mhhw88-comps.png'), unit = 'in', height = 6, width = 10, res = 150)
+mhhw88.comps
 dev.off()
 
 ##############################################################################################
