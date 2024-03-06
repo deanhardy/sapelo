@@ -93,6 +93,10 @@ dev.off()
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
 
+## want to add error bars to mhhw plot, so need to calculate SD when calculating mean
+## will use reported error for USGS and CGEP projects as well as for RTK
+## http://www.sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
+
 ## MHHW at sites (all time)
 cwbp.mhhw <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
@@ -104,11 +108,12 @@ cwbp.mhhw <- df %>%
   summarize(mhhw_wls88 = mean(max)) %>%
   select(transect_site, mhhw_wls88)
 
-wls.info2 <- merge(wls.info, cwbp.mhhw)
+wls.info2 <- merge(wls.info, cwbp.mhhw) %>%
+  mutate(mhhw_wls = mhhw_wls88 - noaa2019_88)
 
 ## prep for plotting
 wls2 <- wls.info2 %>%
-  gather('source', 'meters', 8:27) %>%
+  gather('source', 'meters', 8:24) %>%
   mutate(datum = if_else(str_detect(source, 'mhhw'), 'mhhw', 
                          if_else(str_detect(source, 'mllw'), 'mllw', 'na'))) %>%
   mutate(datum = if_else(str_detect(source, '88'), 'navd88', datum)) %>%
@@ -124,8 +129,8 @@ names(dat.labs) <- c("mhhw", "mllw", "navd88")
 ## plot site elevations using different sources and datums
 elvs <- wls2 %>%
   filter(source %in% c('cgep2010_88', 'usgs2019_88', 'rtk_site_88',
-                       'mllw2010', 'mllw2019', 'rtk_mllw',
-                       'mhhw2010','mhhw2019', 'rtk_mhhw')) %>%
+                       'mllw2010', 'mllw2019', 'mllw_rtk',
+                       'mhhw2010','mhhw2019', 'mhhw_rtk')) %>%
   ggplot(aes(transect_site, meters, color = project, shape = type)) + 
   geom_point() + 
   scale_y_continuous(name = "Elevation (m)", breaks = seq(-3.4, 2.8, 0.4)) + 
@@ -175,26 +180,29 @@ elvd
 dev.off()
 
 ## plot site elevations using different sources and datums
-mhhw88.comps <- wls2 %>%
-  filter(source %in% c('mhhw19_88', 'mhhw10_88', 'mhhw_wls88')) %>%
-  ggplot(aes(transect_site, meters, color = project, shape = type)) + 
+mhhw.comps <- wls2 %>%
+  filter(source %in% c('mhhw2019', 'mhhw2010', 'mhhw_rtk', 'mhhw_wls')) %>%
+  ggplot(aes(transect_site, meters, color = source, shape = type)) + 
   geom_point() + 
-  scale_y_continuous(name = "MHHW Elevation (m NAVD88)", breaks = seq(-0.2, 2.6, 0.2)) + 
+  scale_y_continuous(name = "Elevation (m MHHW)", breaks = seq(-3.4, 0.6, 0.4)) + 
   scale_x_discrete(name = 'Transect-Site') + 
   scale_shape_manual(name='Type',
                      breaks=c('creek', 'ditch'),
                      values=c('creek'= 16, 'ditch'= 17),
                      labels = c('Creek', 'Ditch')) + 
-  # scale_color_manual(name='Project',
-  #                    breaks=c('CGEP', 'USGS', 'CWBP'),
-  #                    values=c('CGEP'='green3', 'USGS'='black', 'CWBP'='red')) + 
-  # facet_wrap(~datum, labeller = labeller(datum = dat.labs)) + 
+  scale_color_manual(name='Data Source',
+                     breaks=c('mhhw2019', 'mhhw2010', 'mhhw_rtk', 'mhhw_wls'),
+                     values=c('mhhw2019' = 'black', 
+                              'mhhw2010' = 'green3',
+                              'mhhw_rtk' = 'red',
+                              'mhhw_wls' = 'purple'),
+                     labels = c('USGS-NOAA', 'CGEP-NOAA', 'RTK-NOAA', 'WLS-NOAA')) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         legend.position = 'bottom')
-mhhw88.comps
+mhhw.comps
 
-png(paste0(datadir, 'figures/site-mhhw88-comps.png'), unit = 'in', height = 6, width = 10, res = 150)
-mhhw88.comps
+png(paste0(datadir, 'figures/site-mhhw-comps.png'), unit = 'in', height = 6, width = 10, res = 150)
+mhhw.comps
 dev.off()
 
 ##############################################################################################
