@@ -105,16 +105,17 @@ cwbp.mhhw <- df %>%
   summarise(max_wl = max(water_level_navd88)) %>%
   # mutate(month = floor_date(prd, "month")) %>%
   group_by(transect_site) %>%
-  summarize(mhhw_wls88 = mean(max_wl), sd_wls = sd(max_wl)) %>%
-  select(transect_site, mhhw_wls88, sd_wls)
+  summarize(mhhw_wls88 = mean(max_wl), sd_ft = sd(max_wl)) %>%
+  select(transect_site, mhhw_wls88, sd_ft)
 
+## merge MMHW from sites to calculate mhhw for wls using noaa
 wls.info2 <- merge(wls.info, cwbp.mhhw) %>%
   mutate(mhhw_wls = mhhw_wls88 - noaa2019_88) %>%
-  relocate(sd_wls, .after = last_col())
+  relocate(sd_ft, .after = last_col())
 
 ## prep for plotting
 wls2 <- wls.info2 %>%
-  gather('source', 'meters', 8:25) %>%
+  gather('source', 'meters', 8:24) %>%
   mutate(datum = if_else(str_detect(source, 'mhhw'), 'mhhw', 
                          if_else(str_detect(source, 'mllw'), 'mllw', 'na'))) %>%
   mutate(datum = if_else(str_detect(source, '88'), 'navd88', datum)) %>%
@@ -122,7 +123,12 @@ wls2 <- wls.info2 %>%
                            if_else(str_detect(source, '10'), 'CGEP', 
                                    if_else(str_detect(source, 'rtk|wls'), 'CWBP', 'na'))),
          meters = signif(meters, 3),
-         feet = meters * 3.28084)
+         feet = meters * 3.28084) %>%
+  select(transect_site, type, source, meters, datum, project, feet, sd_ft) %>%
+  mutate(sd_ft = if_else(source == 'mhhw_wls88', sd_ft, 0))
+
+## tidy cwbp.mhhw to rbind to wls2
+
 
 # New facet label names for datum variables
 dat.labs <- c("MHHW", "MLLW", "NAVD88")
@@ -183,7 +189,7 @@ png(paste0(datadir, 'figures/site-elev_differences.png'), unit = 'in', height = 
 elvd
 dev.off()
 
-## plot site elevations using different sources and datums
+## plot site mhhw elevations using different sources and datums
 mhhw.comps <- wls2 %>%
   filter(source %in% c('mhhw_wls88', 'noaa2019_88')) %>%
   ggplot(aes(transect_site, feet, color = source, shape = type)) + 
@@ -209,13 +215,28 @@ mhhw.comps
 dev.off()
 
 p <- wls2 %>%
-  filter(source %in% c('mhhw_wls88', 'noaa2019_88', 'sd_wls')) %>%
-  pivot_wider(names_from = source, values_from = c(feet, meters, datum)) %>%
-  ggplot(aes(transect_site, feet_mhhw_wls88, fill = project, shape = type)) + 
-  # geom_dotplot(binaxis='y', stackdir='center') + 
-  geom_point() +
-  geom_pointrange(aes(ymin = feet_mhhw_wls88 - feet_sd_wls, ymax = feet_mhhw_wls88 + feet_sd_wls))
+  filter(source %in% c('mhhw_wls88', 'noaa2019_88')) %>%
+  # pivot_wider(names_from = source, values_from = c(feet, meters, datum)) %>%
+  ggplot(aes(transect_site, feet, shape = type)) + 
+  geom_pointrange(aes(ymin = feet - sd_ft, ymax = feet + sd_ft, color = project)) + 
+  scale_y_continuous(name = "MHHW Elevation (ft NAVD88)", breaks = seq(-1, 4, 1)) + 
+  scale_x_discrete(name = 'Transect-Site') + 
+  scale_shape_manual(name='Type',
+                     breaks=c('creek', 'ditch'),
+                     values=c('creek'= 16, 'ditch'= 17),
+                     labels = c('Creek', 'Ditch')) + 
+  # scale_color_manual(name='Data Source',
+  #                    breaks=c('noaa2019_88', 'mhhw_wls88'),
+  #                    values=c('noaa2019_88' = 'black',
+  #                             'mhhw_wls88' = 'red'),
+  #                    labels = c('NOAA 2019', 'CWPB')) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.position = 'bottom')
 p
+
+png(paste0(datadir, 'figures/water-mhhw-comps.png'), unit = 'in', height = 6, width = 10, res = 150)
+p
+dev.off()
 
 ##############################################################################################
 # TRENDS in water level over study period
