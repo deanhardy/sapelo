@@ -154,8 +154,8 @@ sites.timeline <-
   geom_linerange(aes(x = reorder(site_new, desc(site_new)),
                      ymax = end_date,
                      ymin = start_date,
-                 linetype = logger,
-                 color = type),
+                 linetype = type,
+                 color = logger),
                  show.legend = T) +
   # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
   #                   ymax = as.Date("2000-01-01"),
@@ -167,12 +167,22 @@ sites.timeline <-
                # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
   # scale_color_manual()
   xlab('Transect-Site') + 
-  ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
+  scale_color_manual(name='Logger Type',
+                     breaks=c('hobo', 'van essen'),
+                     values=c('hobo' = 'black',
+                              'van essen' = 'red'),
+                     labels = c('Hobo', 'Van Essen')) +
+  scale_linetype_manual(name='Site Type',
+                        breaks=c('creek', 'ditch'),
+                        values=c('creek' = 'solid',
+                              'ditch' = 'dashed'),
+                     labels = c('Creek', 'Ditch')) +
+  # ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
-  theme_bw()
+  theme(legend.position = 'bottom')
 sites.timeline
 
-jpeg(paste0(datadir, "figures/sites-deployment-dates.jpg"), width = 7, height = 5, units = 'in', res = 150)
+tiff(paste0(datadir, "figures/sites-deployment-dates.tiff"), width = 6.5, height = 5, units = 'in', res = 300)
 sites.timeline
 dev.off()
 
