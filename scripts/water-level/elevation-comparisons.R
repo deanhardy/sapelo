@@ -39,7 +39,7 @@ ml <- readNWISdv(siteNumbers = siteNo,
   rename(water_level_navd88 = X_00065_00021,
          quality = X_00065_00021_cd,
          date = Date) %>%
-  mutate(type = 'high', water_level_navd88 = water_level_navd88 * 0.3048)
+  mutate(type = 'high', water_level_navd88 = water_level_navd88)
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
@@ -51,7 +51,7 @@ ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 mo.mhhw <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
   group_by(transect, site_new, prd) %>%
-  summarise(max = max(water_level_navd88)) %>%
+  summarise(max = max(water_level_navd88 / 0.3048)) %>%
   mutate(month = floor_date(prd, "month")) %>%
   group_by(transect, site_new, month) %>%
   summarize(avg = mean(max)) %>%
@@ -72,17 +72,21 @@ comps <- mhhw %>%
   # filter(transect %in% c('Hudson Creek', 'T1')) %>%
   ggplot(aes(date, avg, group = site_new)) + 
   geom_point(aes(color = source)) + 
-  scale_y_continuous(name = "Elevation (m NAVD88)", breaks = seq(0.6, 1.6, 0.2), limits = c(0.6,1.6)) + 
-  scale_x_date(name = 'Mo/Yr', date_breaks = '4 month', date_labels = '%m/%y') +
+  scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(-1, 5, 1), limits = c(-1, 5)) + 
+  scale_x_date(name = 'Year', 
+               date_breaks = '1 year', date_labels = '%Y', 
+               date_minor_breaks = '3 months',
+               limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
+               expand = c(0,0)) +
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
-  ggtitle('Monthly Mean Higher High Water') + 
+  # ggtitle('Monthly Mean Higher High Water') + 
   scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Sites', 'Meridian Landing')) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
         legend.position = 'bottom')
 comps 
 
-png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 5, width = 6.5, res = 150)
+tiff(paste0(datadir, 'figures/mhhw-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
 comps
 dev.off()
 
