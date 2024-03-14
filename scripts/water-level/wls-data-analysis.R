@@ -290,7 +290,8 @@ ht.graph(df)
 
 
 ##############################################################################################
-# 12-MIN INTERVALS create graphing function for 12-minute intervals over specified interval using water depth
+# 12-MIN INTERVALS create graphing function for 12-minute intervals over specified interval 
+## using water depth
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
@@ -468,17 +469,21 @@ tx.graph <- function(df, na.rm = TRUE, ...){
 tx.graph(df)
 
 
+#######################
 ## explore transects 1 and 5 hydrological connections via site NW corner
+#######################
 df.t <- filter(df, site_new %in% c('T1-03', 'T5-03', 'T5-02') & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 daily.mn <- df.t %>%
   mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
-  group_by(transect, sitename_new, date) %>%
+  group_by(transect, site_new, date) %>%
   summarize(mean = mean(water_level_navd88))
 
+TEXT = 10 ## set font size for figures
+
 plot <- ggplot(df.t)  + 
-  geom_line(aes(date_time_gmt, water_level_navd88, color = sitename_new)) + 
-  geom_line(aes(date, mean, color = sitename_new), 
+  geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) + 
+  geom_line(aes(date, mean, color = site_new), 
             data = filter(daily.mn)) +
   # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
   # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
@@ -487,7 +492,7 @@ plot <- ggplot(df.t)  +
   # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
   # scale_fill_manual(values = c('white', 'black')) + 
   scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d', date_minor_breaks = '1 day') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(-0.5,2,0.1), limits = c(-0.5,2), expand = c(0,0)) +
+  scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(-0.5,2,0.2), limits = c(-0.5,2), expand = c(0,0)) +
   # annotate("rect",
   #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
   #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
@@ -499,7 +504,7 @@ plot <- ggplot(df.t)  +
   #          y = df2$well_ht+0.1,
   #          label = 'Well Height',
   #          angle = 90) +
-labs(color = 'Site Name') + 
+labs(color = 'Transect-Site') + 
   theme(axis.title = element_text(size = TEXT),
         axis.text = element_text(color = "black", size = TEXT),
         axis.ticks.length = unit(-0.2, 'cm'),
@@ -513,14 +518,20 @@ labs(color = 'Site Name') +
         axis.ticks.y.right = element_line(color = "blue"),
         panel.background = element_rect(fill = FALSE, color = 'black'),
         # panel.grid = element_blank(),
-        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dashed"),
         panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
-        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-        legend.position = c(0.2, 0.9),
+        panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dashed"),
+        panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        # plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+        # legend.position = c(0.15, 0.85),
+        legend.position = 'bottom',
         legend.text = element_text(size = TEXT),
         legend.title = element_text(size = TEXT),
-        legend.box.background = element_rect(color = 'black'),
+        # legend.box.background = element_rect(color = 'black'),
         plot.title = element_text(size = TEXT, face = "bold"))
   # ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
 plot
- 
+
+tiff(paste0(datadir, 'figures/t5-03-connectivity.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+plot
+dev.off()

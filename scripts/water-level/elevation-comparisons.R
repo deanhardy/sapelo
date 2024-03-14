@@ -162,7 +162,7 @@ elvs <- wls2 %>%
         legend.position = 'bottom')
 elvs
 
-tiff(paste0(datadir, 'figures/site-elevations.tiff'), unit = 'in', height = 6, width = 10, res = 300)
+tiff(paste0(datadir, 'figures/site-elevations.tiff'), unit = 'in', height = 6, width = 6.5, res = 300)
 elvs
 dev.off()
 
@@ -240,7 +240,7 @@ p <- wls2 %>%
         legend.position = 'bottom')
 p
 
-png(paste0(datadir, 'figures/site-mhhw-comps.png'), unit = 'in', height = 6, width = 10, res = 150)
+tiff(paste0(datadir, 'figures/site-mhhw-comps.tiff'), unit = 'in', height = 6, width = 6.5, res = 300)
 p
 dev.off()
 
@@ -249,23 +249,23 @@ dev.off()
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 
-trends.graph <- function(df.mhhw, na.rm = TRUE, ...){
+trends.graph <- function(mo.mhhw, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
-  trans_list <- unique(df.mhhw$transect)
+  trans_list <- unique(mo.mhhw$transect)
   
   ## set parameters
-  TEXT = 15 ## set font size for figures
+  TEXT = 12 ## set font size for figures
   my.formula <- y ~ x # generic formula for use in equation
 
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(trans_list)) {
     
-  t.mhhw <- df.mhhw %>%
+  t.mhhw <- mo.mhhw %>%
     filter(transect == trans_list[i])
 
 plot <-  ggplot(t.mhhw) + 
-  geom_point(aes(month, avg, color = site_new), size = 0.5) +
+  geom_point(aes(month, avg, color = site_new), size = 1) +
   geom_smooth(aes(month, avg, color = site_new), method = 'lm', formula = my.formula, se = F) +
   # geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
   # geom_point(aes(date_time_gmt, TP_mm/100), data = ht.TP, color = 'blue', size = 0.5) +
@@ -276,7 +276,9 @@ plot <-  ggplot(t.mhhw) +
   #                    sec.axis = sec_axis(~., breaks = seq(0,2.0,0.1))
   # ) +
   scale_x_datetime(name = 'Month/Year', date_breaks = '6 month', date_minor_breaks = '3 month', date_labels = '%m/%y') +
-  scale_y_continuous(name = 'Monhtly MHHW (m NAVD88)', breaks = seq(0,1.5,0.1), limits = c(0,1.5), expand = c(0,0)
+  scale_y_continuous(name = 'Monhtly MHHW (ft NAVD88)', breaks = seq(-1,5,0.5), 
+                     minor_breaks = seq(-1,5,0.5),
+                     limits = c(-1,5), expand = c(0,0)
                      # sec.axis = sec_axis(~., breaks = seq(0,1.5,0.1))
   ) +
 scale_color_viridis_d(name = 'Site', option = 'turbo') +
@@ -296,6 +298,7 @@ theme(axis.title = element_text(size = TEXT),
       panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
       panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
       panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+      panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
       plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
       # legend.position = c(0.1, 0.92),
       legend.text = element_text(size = TEXT),
@@ -313,4 +316,4 @@ theme(axis.title = element_text(size = TEXT),
   }
 }
 
-trends.graph(df.mhhw)
+trends.graph(mo.mhhw)
