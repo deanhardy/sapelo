@@ -203,9 +203,9 @@ for (i in 1:length(SN)) {
   
   OUT2 <- tidal1.1 %>%
     filter(name == SN[[i]]) %>%
-    mutate(water_depth_m = water_level_C + el2$well_ht_m,
-           water_level_navd88 = water_level_C + el2$rtkcap_navd88_m,
-           well_ht = el2$well_ht_m)
+    mutate(water_depth_m = water_level_C + el2$well_ht,
+           water_level_navd88 = water_level_C + el2$rtkcap_navd88,
+           well_ht = el2$well_ht)
   
   tidal2 <- rbind(OUT2, tidal2)
 }
@@ -262,14 +262,4 @@ ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()
 
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
-
-## plot salinity at all sites
-## this plot still needs lots of work as does the data collection process
-p <- ggplot(filter(tidal3.2, salinity > 0), aes(date_time_gmt, salinity)) + geom_point(size = 0.1)
-q <- p + facet_grid(rows = vars(site_new))
-q
-
-png(q, filename = paste(datadir, 'figures/', 'salinity', '.png', sep = ''), width = 20, height = 20, units = 'in', res = 300)
-q
-dev.off()
  
