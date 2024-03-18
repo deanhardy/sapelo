@@ -253,7 +253,7 @@ tidal3.2 <- tidal3.1 %>%
 nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
 
 ## check for erroneous data points and remove them from data
-err <- tidal3.2 %>% filter(water_level_C >= 2 | water_level_C >= -2)
+err <- tidal3.2 %>% filter(water_level_C >= 2 | water_level_C <= -2)
 err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
 
 ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  

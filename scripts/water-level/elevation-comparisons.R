@@ -72,6 +72,7 @@ comps <- mhhw %>%
   # filter(transect %in% c('Hudson Creek', 'T1')) %>%
   ggplot(aes(date, avg, group = site_new)) + 
   geom_point(aes(color = source)) + 
+  geom_hline(aes(yintercept = 3.3038058), linetype = 'dashed') + 
   scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(-1, 5, 1), limits = c(-1, 5)) + 
   scale_x_date(name = 'Year', 
                date_breaks = '1 year', date_labels = '%Y', 
@@ -317,3 +318,5 @@ theme(axis.title = element_text(size = TEXT),
 }
 
 trends.graph(mo.mhhw)
+
+
