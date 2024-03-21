@@ -225,25 +225,30 @@ p <- wls2 %>%
   filter(source %in% c('mhhw_wls88', 'noaa2019_88')) %>%
   # pivot_wider(names_from = source, values_from = c(feet, meters, datum)) %>%
   ggplot(aes(transect_site, feet, shape = type)) + 
-  geom_pointrange(aes(ymin = feet - (se_ft), ymax = feet + (se_ft), color = project)) + 
-  scale_y_continuous(name = "MHHW Elevation (ft NAVD88)", breaks = seq(-1, 4, 1)) + 
+  geom_pointrange(aes(ymin = feet - (sd_ft), ymax = feet + (sd_ft), color = project)) + 
+  scale_y_continuous(name = "MHHW Elevation (ft NAVD88)", breaks = seq(0, 4, 0.5), limits = c(0,4)) + 
   scale_x_discrete(name = 'Transect-Site') + 
   scale_shape_manual(name='Type',
                      breaks=c('creek', 'ditch'),
                      values=c('creek'= 16, 'ditch'= 17),
                      labels = c('Creek', 'Ditch')) + 
-  # scale_color_manual(name='Data Source',
-  #                    breaks=c('noaa2019_88', 'mhhw_wls88'),
-  #                    values=c('noaa2019_88' = 'black',
-  #                             'mhhw_wls88' = 'red'),
-  #                    labels = c('NOAA 2019', 'CWPB')) +
+  scale_color_manual(name='Data Source',
+                     breaks=c('USGS', 'CWBP'),
+                     values=c('USGS' = 'black',
+                              'CWBP' = 'red'),
+                     labels = c('NOAA 2019', 'CWBP')) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         legend.position = 'bottom')
 p
 
-tiff(paste0(datadir, 'figures/site-mhhw-comps.tiff'), unit = 'in', height = 6, width = 6.5, res = 300)
+tiff(paste0(datadir, 'figures/site-mhhw-comps.tiff'), unit = 'in', height = 4, width = 6.5, res = 300)
 p
 dev.off()
+
+wls2 %>%
+  filter(source == 'mhhw_wls88' & transect_site == 'T1_01') %>%
+  # group_by(transect_site) %>%
+  t.test(.$meters, mu = 0.969)
 
 ##############################################################################################
 # TRENDS in water level over study period
