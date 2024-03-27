@@ -70,6 +70,7 @@ mhhw <- rbind(mo.mhhw, ml.mhhw) %>%
 ## calc monthly MHHW avg for cwbp sites
 cwbp.avg <- mhhw %>%
   filter(avg > 2 & transect != 'Hudson Creek') %>%
+  group_by(month) %>%
   summarise(avg = mean(avg), se = se(avg))
   
   
