@@ -59,7 +59,8 @@ for(i in 1:length(filz)) {
            site = str_sub(filz[i], -25,-24),
            serial = str_sub(filz[i], -22,-19),
            water_temp_c = as.numeric(water_temp_c),
-           water_level_C = as.numeric(water_level_C)) %>%
+           water_level_C = as.numeric(water_level_C),
+           temp_max = max(water_temp_c)) %>%
     mutate(site = paste('Site', site, sep = '-')) %>%
     # mutate_if(name = case_when(site == wls.info$site ~ wls.info$name, TRUE ~ 'Fail')) %>%
     mutate(name = if_else(site == 'Site-02', 'Snagtree',
@@ -83,6 +84,8 @@ for(i in 1:length(filz)) {
     select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
 }
+
+boxplot(temp_max ~ site, data = tidal)
 
 ## select relevant hobo data columns
 tidal.01 <- tidal %>%
@@ -262,4 +265,15 @@ ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()
 
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
- 
+
+#################################
+## tidy data for SINERR report
+#################################
+sinerr <- tidal3.2 %>%
+  filter(date >= '2022-01-01' & date <= '2022-12-31') %>%
+  mutate(water_level_mhhw = if_else(site_new == "T5-01", water_level_navd88 - 1.021, water_level_navd88 - 0.969),
+         water_level_mllw = water_level_mhhw + 2.264) %>%
+  rename(transect_site = site_new, water_level_cap = water_level_C, water_depth = water_depth_m) %>%
+  select(date, transect_site, type, logger, serial, well_ht, water_level_cap, water_depth, water_level_navd88, water_level_mhhw, water_level_mllw, salinity)
+
+write.csv(sinerr, paste(datadir, 'cwbp_wls_data_2022.csv'))

@@ -67,22 +67,32 @@ ml.mhhw <- ml %>%
 
 mhhw <- rbind(mo.mhhw, ml.mhhw) %>%
   mutate(date = as.Date(month))
+## calc monthly MHHW avg for cwbp sites
+cwbp.avg <- mhhw %>%
+  filter(avg > 2 & transect != 'Hudson Creek') %>%
+  summarise(avg = mean(avg), se = se(avg))
+  
   
 comps <- mhhw %>%
-  # filter(transect %in% c('Hudson Creek', 'T1')) %>%
+  # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
+  filter(avg > 2) %>%
   ggplot(aes(date, avg, group = site_new)) + 
   geom_point(aes(color = source)) + 
-  geom_hline(aes(yintercept = 3.3038058), linetype = 'dashed') + 
-  scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(-1, 5, 1), limits = c(-1, 5)) + 
+  geom_hline(aes(yintercept = mean(avg), linetype = 'Community CWBP'), color = 'red') + ## measured MHHW at CWBP sites
+  geom_hline(aes(yintercept = 3.1791339, linetype = 'Community NOAA'), color = 'red') +  ## NOAA MHHW for Community
+  geom_hline(aes(yintercept = 3.3038058, linetype = 'ML NOAA'), color = 'black') + ## NOAA MHHW for ML
+  scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(0, 5, 1), limits = c(0, 5)) + 
   scale_x_date(name = 'Year', 
                date_breaks = '1 year', date_labels = '%Y', 
                date_minor_breaks = '3 months',
                limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
                expand = c(0,0)) +
+  scale_linetype_manual(name = "MHHW Source", values = c(3, 2, 2), 
+                        guide = guide_legend(override.aes = list(color = c("red", "red", 'black')))) + 
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
   # ggtitle('Monthly Mean Higher High Water') + 
-  scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Sites', 'Meridian Landing')) + 
+  scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Sites', 'Meridian Landing')) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
         legend.position = 'bottom')
 comps 
