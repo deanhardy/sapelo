@@ -47,40 +47,48 @@ ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 ## compare ML MHHW to site MHHW
 #####################################
 
-## monthly high water means at sites
-mo.mhhw <- df %>%
+## CWBP monthly MHHW at sites
+mo.mhhw.cwbp <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
   group_by(transect, site_new, prd) %>%
   summarise(max = max(water_level_navd88 / 0.3048)) %>%
   mutate(month = floor_date(prd, "month")) %>%
-  group_by(transect, site_new, month) %>%
-  summarize(avg = mean(max)) %>%
+  group_by(site_new, month) %>%
+  summarize(avg = mean(max), count = n(), sd = sd(max)) %>%
+  mutate(se = sd/sqrt(count)) %>% 
   mutate(source = 'CWBP')
 
-## monthly high water means at ML
-ml.mhhw <- ml %>%
+## monthly MHHW at ML
+mo.mhhw.ml <- ml %>%
   mutate(month = floor_date(date, "month")) %>%
   group_by(month) %>%
-  summarize(avg = mean(water_level_navd88)) %>%
-  mutate(transect = 'Hudson Creek', site_new = 'ML', source = 'USGS') %>%
-  select(transect, site_new, month, avg, source)
+  summarize(avg = mean(water_level_navd88), sd = sd(water_level_navd88), count = n()) %>%
+  mutate(se = sd/sqrt(count)) %>% 
+  mutate(
+    # transect = 'Hudson Creek', 
+         site_new = 'ML', source = 'USGS') %>%
+  select(site_new, month, avg, count, sd, se, source)
 
-mhhw <- rbind(mo.mhhw, ml.mhhw) %>%
+## merge ML and CWBP data
+mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
   mutate(date = as.Date(month))
+
 ## calc monthly MHHW avg for cwbp sites
-cwbp.avg <- mhhw %>%
-  filter(avg > 2 & transect != 'Hudson Creek') %>%
-  group_by(month) %>%
-  summarise(avg = mean(avg), se = se(avg))
+# cwbp.avg <- mo.mhhw %>%
+#   filter(avg > 2) %>%
+#   group_by(month) %>%
+#   summarise(avg = mean(avg), se = se(avg))
   
-  
-comps <- mhhw %>%
+t.var <- 'T3-02'
+comps <- mo.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
-  filter(avg > 2) %>%
-  ggplot(aes(date, avg, group = site_new)) + 
-  geom_point(aes(color = source)) + 
-  geom_hline(aes(yintercept = mean(avg), linetype = 'Community CWBP'), color = 'red') + ## measured MHHW at CWBP sites
+  filter(avg > 2 & site_new %in% c('T1-02', 'ML')) %>%
+  ggplot(aes(date, avg)) + 
+  # geom_point(aes(color = source)) + 
+  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = source)) + 
+  geom_hline(aes(yintercept = mean(avg), linetype = 'Community CWBP'), color = 'red', data = filter(mo.mhhw, site_new == t.var)) + ## measured MHHW at CWBP sites
   geom_hline(aes(yintercept = 3.1791339, linetype = 'Community NOAA'), color = 'red') +  ## NOAA MHHW for Community
+  geom_hline(aes(yintercept = mean(avg), linetype = 'ML USGS'), color = 'black', data = filter(mo.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
   geom_hline(aes(yintercept = 3.3038058, linetype = 'ML NOAA'), color = 'black') + ## NOAA MHHW for ML
   scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(0, 5, 1), limits = c(0, 5)) + 
   scale_x_date(name = 'Year', 
@@ -88,12 +96,12 @@ comps <- mhhw %>%
                date_minor_breaks = '3 months',
                limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
                expand = c(0,0)) +
-  scale_linetype_manual(name = "MHHW Source", values = c(3, 2, 2), 
-                        guide = guide_legend(override.aes = list(color = c("red", "red", 'black')))) + 
+  scale_linetype_manual(name = "MHHW Source", values = c(2,3,3,2), 
+                        guide = guide_legend(override.aes = list(color = c("red", "red", 'black', 'black')))) + 
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
   # ggtitle('Monthly Mean Higher High Water') + 
-  scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Sites', 'Meridian Landing')) +
+  scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Site', 'ML')) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
         legend.position = 'bottom')
 comps 
