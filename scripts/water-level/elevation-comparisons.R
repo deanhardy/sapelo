@@ -79,10 +79,10 @@ mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
 #   group_by(month) %>%
 #   summarise(avg = mean(avg), se = se(avg))
   
-t.var <- 'T3-02'
+t.var <- 'T1-02'
 comps <- mo.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
-  filter(avg > 2 & site_new %in% c('T1-02', 'ML')) %>%
+  filter(avg > 2 & site_new %in% c(t.var, 'ML')) %>%
   ggplot(aes(date, avg)) + 
   # geom_point(aes(color = source)) + 
   geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = source)) + 
@@ -90,23 +90,31 @@ comps <- mo.mhhw %>%
   geom_hline(aes(yintercept = 3.1791339, linetype = 'Community NOAA'), color = 'red') +  ## NOAA MHHW for Community
   geom_hline(aes(yintercept = mean(avg), linetype = 'ML USGS'), color = 'black', data = filter(mo.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
   geom_hline(aes(yintercept = 3.3038058, linetype = 'ML NOAA'), color = 'black') + ## NOAA MHHW for ML
-  scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(0, 5, 1), limits = c(0, 5)) + 
+  scale_y_continuous(name = "Water Level (ft NAVD88)", breaks = seq(0, 5, 1), limits = c(0, 5)) + 
   scale_x_date(name = 'Year', 
                date_breaks = '1 year', date_labels = '%Y', 
                date_minor_breaks = '3 months',
                limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
                expand = c(0,0)) +
-  scale_linetype_manual(name = "MHHW Source", values = c(2,3,3,2), 
+  scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c('Community CWBP', 'ML USGS')) +
+  scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2), 
                         guide = guide_legend(override.aes = list(color = c("red", "red", 'black', 'black')))) + 
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
   # ggtitle('Monthly Mean Higher High Water') + 
-  scale_color_manual(name = 'Source', values = c('red', 'black'), labels = c('CWBP Site', 'ML')) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-        legend.position = 'bottom')
+        legend.position = 'bottom',
+        legend.box = 'vertical',
+        legend.margin=margin())
+  # guides(fill=guide_legend(nrow=2,byrow=TRUE))
 comps 
 
 tiff(paste0(datadir, 'figures/mhhw-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+comps
+dev.off()
+
+
+png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 5, width = 6.5, res = 150)
 comps
 dev.off()
 
