@@ -14,12 +14,12 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for transect graphs
-int.date1 <- as.Date('2022-11-01') 
-int.date2 <- as.Date('2022-11-30') 
+int.date1 <- as.Date('2023-12-01') 
+int.date2 <- as.Date('2024-02-25') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
-ht.date2 <- as.Date('2023-12-31')
+ht.date2 <- as.Date('2024-02-25')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 

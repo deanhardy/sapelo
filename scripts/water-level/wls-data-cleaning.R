@@ -269,11 +269,11 @@ write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
 #################################
 ## tidy data for SINERR report
 #################################
-sinerr <- tidal3.2 %>%
-  filter(date >= '2022-01-01' & date <= '2022-12-31') %>%
-  mutate(water_level_mhhw = if_else(site_new == "T5-01", water_level_navd88 - 1.021, water_level_navd88 - 0.969),
-         water_level_mllw = water_level_mhhw + 2.264) %>%
-  rename(transect_site = site_new, water_level_cap = water_level_C, water_depth = water_depth_m) %>%
-  select(date, transect_site, type, logger, serial, well_ht, water_level_cap, water_depth, water_level_navd88, water_level_mhhw, water_level_mllw, salinity)
-
-write.csv(sinerr, paste(datadir, 'cwbp_wls_data_2022.csv'))
+# sinerr <- tidal3.2 %>%
+#   filter(date >= '2022-01-01' & date <= '2023-06-30') %>%
+#   mutate(water_level_mhhw = if_else(site_new == "T5-01", water_level_navd88 - 1.021, water_level_navd88 - 0.969),
+#          water_level_mllw = water_level_mhhw + 2.264) %>%
+#   rename(transect_site = site_new, water_level_cap = water_level_C, water_depth = water_depth_m) %>%
+#   select(date, transect_site, type, logger, serial, well_ht, water_level_cap, water_depth, water_level_navd88, water_level_mhhw, water_level_mllw, salinity)
+# 
+# write.csv(sinerr, paste(datadir, 'cwbp_wls_data_20220701-20230630.csv'))

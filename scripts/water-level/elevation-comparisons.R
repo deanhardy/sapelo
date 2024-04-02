@@ -53,7 +53,7 @@ mo.mhhw.cwbp <- df %>%
   group_by(transect, site_new, prd) %>%
   summarise(max = max(water_level_navd88 / 0.3048)) %>%
   mutate(month = floor_date(prd, "month")) %>%
-  group_by(site_new, month) %>%
+  group_by(transect, site_new, month) %>%
   summarize(avg = mean(max), count = n(), sd = sd(max)) %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(source = 'CWBP')
@@ -65,10 +65,12 @@ mo.mhhw.ml <- ml %>%
   summarize(avg = mean(water_level_navd88), sd = sd(water_level_navd88), count = n()) %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(
-    # transect = 'Hudson Creek', 
+    transect = 'Hudson Creek',
          site_new = 'ML', source = 'USGS') %>%
-  select(site_new, month, avg, count, sd, se, source)
+  select(transect, site_new, month, avg, count, sd, se, source)
 
+mo.mhhw.cwbp2 <- mo.mhhw.cwbp %>% ungroup() %>% select(!transect) ## drop transect for joining
+  
 ## merge ML and CWBP data
 mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
   mutate(date = as.Date(month))
@@ -272,10 +274,10 @@ tiff(paste0(datadir, 'figures/site-mhhw-comps.tiff'), unit = 'in', height = 4, w
 p
 dev.off()
 
-wls2 %>%
-  filter(source == 'mhhw_wls88' & transect_site == 'T1_01') %>%
-  # group_by(transect_site) %>%
-  t.test(.$meters, mu = 0.969)
+# wls2 %>%
+#   filter(source == 'mhhw_wls88' & transect_site == 'T1_01') %>%
+#   # group_by(transect_site) %>%
+#   t.test(.$meters, mu = 0.969)
 
 ##############################################################################################
 # TRENDS in water level over study period
