@@ -51,7 +51,7 @@ for(i in 1:length(filz)) {
                select = c(2:5),
                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'),
                stringsAsFactors = FALSE) %>%
-    slice(., 5:(n()-7)) %>% ## removes first ## and last ## readings
+    slice(., 1:(n()-1)) %>% ## removes first ## and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 7) %>% ## removes last # rows
     mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M:%S', tz = 'GMT'),
@@ -262,6 +262,8 @@ err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
 ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
 # df <- df %>% filter(!water_level_C >= 2)
 # df <- df %>% filter(!water_level_C <= -2)
+
+temp <- tidal3.2 %>% filter(site == 'Site-06' & date == '2019-05-22')
 
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))

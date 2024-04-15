@@ -17,8 +17,11 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
                         sheet = 'field measurements',
                         skip = 6) %>%
-  mutate(date = as.Date(GMT, '%m/%d/%y', tz = 'GMT')) %>%
-  select(date, Site, Name, Serial, Activity, Category)
+  mutate(date = as.Date(GMT, '%m/%d/%y', tz = 'GMT'),
+         Site = paste0('Site-', if_else(str_length(Site) == 1, paste0(0,Site), Site)),
+         Name = str_to_title(Name),
+         sitename = paste(Site, Name)) %>%
+  select(date, GMT, Site, Name, sitename, Serial, Activity, Category)
 
 ## filter to just field outing dates with list of sites visited
 field.smry <- wls.field %>%
@@ -27,7 +30,7 @@ field.smry <- wls.field %>%
 
 ## import cleaned water level data
 df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt),
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.Date(date))
 
 ## testing filter methods
@@ -41,7 +44,8 @@ df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(date
 # dates_list <- as_tbl_time(field.smry, index = date)
 # df.test <- df.tbbl %>% filter_time(dates_list[10,]-1 ~ dates_list[10]+1)
 
-
+temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
+  
 ##############################################################################################
 # create graphing function for 12-minute intervals over specified interval using water depth
 # filtered to field day site visits for data downloads plus/minus one day
@@ -50,20 +54,29 @@ df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(date
 TEXT = 15 ## set font size for figures
 qa.graph <- function(df, na.rm = TRUE, ...){
   
-  # create list of date and logger sites in data to loop over 
+  # create list logger sites in data to loop over 
   sites_list <- unique(df$sitename)
-  dates_list <- unique(field.smry$date)
-  
-  # create for loop to produce ggplot2 graphs 
-  for (z in seq_along(dates_list)) {
+
+    # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
+    
+  # create list of date and logger sites in data to loop over 
+  dates_list <- wls.field %>% 
+    filter(sitename == sites_list[i]) %>%
+    pull(date)
+    
+  for (z in seq_along(dates_list)) {
 
      df2 <- filter(df, sitename == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+  
+  # create download datetime for vertiical line
+  dl <- filter(wls.field, sitename == sites_list[i] & date == dates_list[z])
     
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
       geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
+      geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
       scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
       scale_y_continuous(name = 'Water Level (m NAVD88)', 
