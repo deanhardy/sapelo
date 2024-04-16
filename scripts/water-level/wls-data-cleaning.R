@@ -25,6 +25,9 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
                    full.names = TRUE,
                    recursive = TRUE) 
 
+## test file
+# filz <- "/Users/dhardy/Dropbox/r_data/sapelo/water-level//new-logger-data/hobo/site06_1316_190522-191022.csv"
+
 filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
                    pattern= '*.CSV',
                    full.names = TRUE,
@@ -42,6 +45,8 @@ filz.psu <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
                       pattern= '*.csv',
                       full.names = TRUE,
                       recursive = TRUE) 
+## read test file
+# tf <- read.csv(paste0(datadir, 'new-logger-data/hobo/site06_1316_190313-190522.csv'), skip = 1)
 
 ## import & tidy hobo water level data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for Hobo)
@@ -51,10 +56,26 @@ for(i in 1:length(filz)) {
                select = c(2:5),
                col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'),
                stringsAsFactors = FALSE) %>%
+    # rename_at(vars(matches("F")), ~ seq_along(.) %>% as.character())
+ 
+             # colnames(OUT) <- ifelse(str_detect(colnames(OUT),'F')==TRUE, OUT[,3]-32, OUT[.3])
+    # 
+    # id_vec <- colnames(OUT) %>% str_detect("F") %>% OUT[,3]-32*5/9
+    # 
+    # colnames(OUT) = ifelse(colnames(OUT) %>% str_detect("F") == TRUE, id_vec, colnames(OUT))
+    # 
+    # OUT2 <- OUT %<% mutate(ifelse(id_vec == TRUE, ))
+    # setNames(c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C'))
+  
+    # colnames(OUT) <- c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C')
+
     slice(., 1:(n()-1)) %>% ## removes first ## and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 7) %>% ## removes last # rows
-    mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M:%S', tz = 'GMT'),
+    mutate(date_time_gmt = if_else(
+      str_detect(date_time_gmt, c('AM|PM')), 
+      as.POSIXct(date_time_gmt, format = '%m/%d/%y %I:%M:%S %p', tz = 'GMT'),
+      as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M:%S', tz = 'GMT')),
            date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'),
            site = str_sub(filz[i], -25,-24),
            serial = str_sub(filz[i], -22,-19),
@@ -84,6 +105,9 @@ for(i in 1:length(filz)) {
     select(!(abs_pres_psi))
   tidal <- rbind(OUT, tidal)
 }
+
+## test file for AM/PM and temp F/C
+temp <- tidal %>% filter(site == 'Site-06' & date == '2019-05-22')
 
 boxplot(temp_max ~ site, data = tidal)
 
@@ -263,7 +287,7 @@ ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()
 # df <- df %>% filter(!water_level_C >= 2)
 # df <- df %>% filter(!water_level_C <= -2)
 
-temp <- tidal3.2 %>% filter(site == 'Site-06' & date == '2019-05-22')
+temp2 <- tidal3.2 %>% filter(site == 'Site-06' & date == '2019-05-22')
 
 ## export merged and cleaned data
 write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
