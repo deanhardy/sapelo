@@ -54,75 +54,6 @@ df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(date
 
 temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
 
-##############################################################################################
-# create graphing function for 12-minute intervals over specified interval using water depth
-# filtered to field day site visits for data downloads plus/minus one day
-# https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-##############################################################################################
-TEXT = 15 ## set font size for figures
-qc <- NULL
-qc.graph <- function(df, na.rm = TRUE, ...){
-  
-  # create list logger sites in data to loop over 
-  sites_list <- unique(df$sitename)
-
-    # create for loop to produce ggplot2 graphs 
-  for (i in seq_along(sites_list)) {
-    
-  # create list of date and logger sites in data to loop over 
-  dates_list <- wls.field %>% 
-    filter(sitename == sites_list[i]) %>%
-    pull(date)
-    
-  for (z in seq_along(dates_list)) {
-
-     df2 <- filter(df, sitename == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
-  
-  # create download datetime for vertical line
-  dl <- filter(wls.field, sitename == sites_list[i] & date == dates_list[z])
-    
-    # create plot for each site in df 
-    plot <- 
-      ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
-      geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
-      scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
-      scale_y_continuous(name = 'Water Level (m NAVD88)', 
-                         breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0)) +
-      theme(axis.title = element_text(size = TEXT),
-            axis.text = element_text(color = "black", size = TEXT),
-            axis.ticks.length = unit(-0.2, 'cm'),
-            axis.ticks = element_line(color = 'black'),
-            axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-            axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-            axis.line = element_line(color = 'black'),
-            axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
-            axis.title.y.right = element_text(color = 'blue'),
-            axis.line.y.right = element_line(color = "blue"), 
-            axis.ticks.y.right = element_line(color = "blue"),
-            panel.background = element_rect(fill = FALSE, color = 'black'),
-            panel.grid = element_blank(),
-            panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
-            plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-            legend.position = c(0.1, 0.92),
-            legend.text = element_text(size = TEXT),
-            legend.title = element_text(size = TEXT),
-            # legend.key = element_blank(),
-            legend.box.background = element_rect(color = 'black'),
-            plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(sites_list[i], " Field Date: ", dates_list[z]))
-    
-    # save plots as .png
-    ggsave(plot, file=paste(datadir,
-                            'figures/qaqc/', 'QC', sites_list[i], ' ',dates_list[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
-   } 
-  }
-}
-
-# run graphing function on long df
-qc.graph(df)
-
 
 
 ##############################################################################################
@@ -140,7 +71,8 @@ qc.graph(df)
 # 
 # dl <- filter(wls.field, sitename == sites_list & GMT == gmt_list[12])
 # OUT <- filter(df, sitename == sites_list & between(df$date_time_gmt, gmt_list[z] - 720, dl$GMT + 720))
-
+temp <- df %>% filter(site_new == 'T1-03', date =='2022-06-14')
+  
 qc <- NULL
 
 # qc.df <- function(df, na.rm = TRUE, ...){
@@ -153,14 +85,11 @@ qc <- NULL
     
     # create list of date and logger sites in data to loop over 
     gmt_list <- wls.field %>% 
-      # filter(sitename == 'Site-06 Dani Trap') %>%
-      filter(sitename == sites_list[i]) %>%
+      filter(sitename == 'Site-11 Library') %>%
+      #filter(sitename == sites_list[i]) %>%
       pull(GMT)
     
     for (z in seq_along(gmt_list)) {
-      
-      # create download datetime for vertical line
-      dl <- filter(wls.field, sitename == sites_list[i] & GMT == gmt_list[z])
       
       # create QC dataframe first measurement post download minus last measurement pre-download
       # also percent difference column
@@ -192,3 +121,73 @@ qc.diff <- qc %>%
   pivot_wider(names_from = field, values_from = water_level_C) %>%
   ungroup() %>%
   mutate(water_diff = postvisit - previsit)
+
+
+##############################################################################################
+# create graphing function for 12-minute intervals over specified interval using water depth
+# filtered to field day site visits for data downloads plus/minus one day
+# https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
+##############################################################################################
+TEXT = 15 ## set font size for figures
+qc <- NULL
+qc.graph <- function(df, na.rm = TRUE, ...){
+  
+  # create list logger sites in data to loop over 
+  sites_list <- unique(df$sitename)
+  
+  # create for loop to produce ggplot2 graphs 
+  for (i in seq_along(sites_list)) {
+    
+    # create list of date and logger sites in data to loop over 
+    dates_list <- wls.field %>% 
+      filter(sitename == sites_list[i]) %>%
+      pull(date)
+    
+    for (z in seq_along(dates_list)) {
+      
+      df2 <- filter(df, sitename == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+      
+      # create download datetime for vertical line
+      dl <- filter(wls.field, sitename == sites_list[i] & date == dates_list[z])
+      
+      # create plot for each site in df 
+      plot <- 
+        ggplot(df2)  + 
+        geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
+        geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
+        scale_fill_manual(values = c('white', 'black')) + 
+        scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
+        scale_y_continuous(name = 'Water Level (m NAVD88)', 
+                           breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0)) +
+        theme(axis.title = element_text(size = TEXT),
+              axis.text = element_text(color = "black", size = TEXT),
+              axis.ticks.length = unit(-0.2, 'cm'),
+              axis.ticks = element_line(color = 'black'),
+              axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+              axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+              axis.line = element_line(color = 'black'),
+              axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+              axis.title.y.right = element_text(color = 'blue'),
+              axis.line.y.right = element_line(color = "blue"), 
+              axis.ticks.y.right = element_line(color = "blue"),
+              panel.background = element_rect(fill = FALSE, color = 'black'),
+              panel.grid = element_blank(),
+              panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+              plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+              legend.position = c(0.1, 0.92),
+              legend.text = element_text(size = TEXT),
+              legend.title = element_text(size = TEXT),
+              # legend.key = element_blank(),
+              legend.box.background = element_rect(color = 'black'),
+              plot.title = element_text(size = TEXT, face = "bold")) + 
+        ggtitle(paste0(sites_list[i], " Field Date: ", dates_list[z]))
+      
+      # save plots as .png
+      ggsave(plot, file=paste(datadir,
+                              'figures/qaqc/', 'QC', sites_list[i], ' ',dates_list[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+    } 
+  }
+}
+
+# run graphing function on long df
+qc.graph(df)
