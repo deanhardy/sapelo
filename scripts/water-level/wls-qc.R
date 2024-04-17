@@ -1,5 +1,5 @@
 ##########################################################################
-## QA/QC for each WLS field day visits to check for data alignment issues
+## QC for each WLS field day visits to check for data alignment issues
 ##########################################################################
 rm(list=ls())
 
@@ -17,11 +17,19 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
                         sheet = 'field measurements',
                         skip = 6) %>%
-  mutate(date = as.Date(GMT, '%m/%d/%y', tz = 'GMT'),
+  mutate(GMT = as.POSIXct(GMT, '%m/%d/%y %H:$M:%S', tz = 'GMT'),
+         date = as.Date(GMT, '%m/%d/%y', tz = 'GMT'),
          Site = paste0('Site-', if_else(str_length(Site) == 1, paste0(0,Site), Site)),
          Name = str_to_title(Name),
          sitename = paste(Site, Name)) %>%
+  filter(!grepl('X0976', Serial)) %>%
   select(date, GMT, Site, Name, sitename, Serial, Activity, Category)
+
+## for use in qc.df creation
+wls.field2 <- wls.field %>%
+  rename(date_time_gmt = GMT, site = Site, activity = Activity) %>%
+  select(site, date_time_gmt, activity)
+  
 
 ## filter to just field outing dates with list of sites visited
 field.smry <- wls.field %>%
@@ -45,14 +53,15 @@ df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(date
 # df.test <- df.tbbl %>% filter_time(dates_list[10,]-1 ~ dates_list[10]+1)
 
 temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
-  
+
 ##############################################################################################
 # create graphing function for 12-minute intervals over specified interval using water depth
 # filtered to field day site visits for data downloads plus/minus one day
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
-qa.graph <- function(df, na.rm = TRUE, ...){
+qc <- NULL
+qc.graph <- function(df, na.rm = TRUE, ...){
   
   # create list logger sites in data to loop over 
   sites_list <- unique(df$sitename)
@@ -69,7 +78,7 @@ qa.graph <- function(df, na.rm = TRUE, ...){
 
      df2 <- filter(df, sitename == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
   
-  # create download datetime for vertiical line
+  # create download datetime for vertical line
   dl <- filter(wls.field, sitename == sites_list[i] & date == dates_list[z])
     
     # create plot for each site in df 
@@ -106,10 +115,80 @@ qa.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                            'figures/qaqc/', 'QAQC', sites_list[i], ' ',dates_list[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                            'figures/qaqc/', 'QC', sites_list[i], ' ',dates_list[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
    } 
   }
 }
 
 # run graphing function on long df
-qa.graph(df)
+qc.graph(df)
+
+
+
+##############################################################################################
+# create function for QC of field site visit days re: data alignment
+# filtered to field day site visits for data downloads plus/minus one measurement
+# https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
+##############################################################################################
+
+### TESTING
+
+# sites_list <- unique(df$sitename)[17]
+# gmt_list <- wls.field %>% 
+#   filter(sitename == sites_list) %>%
+#   pull(GMT)
+# 
+# dl <- filter(wls.field, sitename == sites_list & GMT == gmt_list[12])
+# OUT <- filter(df, sitename == sites_list & between(df$date_time_gmt, gmt_list[z] - 720, dl$GMT + 720))
+
+qc <- NULL
+
+# qc.df <- function(df, na.rm = TRUE, ...){
+  
+  # create list logger sites in data to loop over 
+  sites_list <- unique(df$sitename)
+  
+  # create for loop to produce df 
+  for (i in seq_along(sites_list)) {
+    
+    # create list of date and logger sites in data to loop over 
+    gmt_list <- wls.field %>% 
+      # filter(sitename == 'Site-06 Dani Trap') %>%
+      filter(sitename == sites_list[i]) %>%
+      pull(GMT)
+    
+    for (z in seq_along(gmt_list)) {
+      
+      # create download datetime for vertical line
+      dl <- filter(wls.field, sitename == sites_list[i] & GMT == gmt_list[z])
+      
+      # create QC dataframe first measurement post download minus last measurement pre-download
+      # also percent difference column
+      # OUT <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z] + 720)) %>%
+      #   select(site_new, sitename_new, date_time_gmt, water_level_C, type, logger, serial)
+      OUTpre <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z]-1)) %>%
+        mutate(field = 'previsit')
+      OUTpost <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z]+1, gmt_list[z] + 720)) %>%
+                          mutate(field = 'postvisit')
+      OUT <- rbind(OUTpre, OUTpost) %>%
+        select(site, site_new, sitename_new, date, date_time_gmt, water_level_C, type, logger, serial, field)
+      # OUT <- df %>% 
+      #   filter(sitename == sites_list[i]) %>%
+      #   mutate(
+      #         # visit = gmt_list[z],
+      #          previsit = if_else(between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z]),
+      #                             df$date_time_gmt, 'NA'),
+      #          # postvisit = if_else(between(df$date_time_gmt, gmt_list[z], gmt_list[z] + 720),
+      #          #                     df$date_time_gmt, 'NA')
+      #          )
+      qc <- rbind(OUT, qc)
+      
+    }
+  }
+
+qc.diff <- qc %>%
+  group_by(site_new, date) %>%
+  select(!date_time_gmt) %>%
+  pivot_wider(names_from = field, values_from = water_level_C) %>%
+  ungroup() %>%
+  mutate(water_diff = postvisit - previsit)
