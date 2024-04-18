@@ -118,9 +118,16 @@ qc <- NULL
 qc.diff <- qc %>%
   group_by(site_new, date) %>%
   select(!date_time_gmt) %>%
-  pivot_wider(names_from = field, values_from = water_level_C) %>%
+  pivot_wider(names_from = field, values_from = water_level_C, values_fn = list) %>%
   ungroup() %>%
-  mutate(water_diff = postvisit - previsit)
+  hoist(previsit, first_visit = list(2L)) %>%
+  hoist(postvisit, last_visit = list(1L)) %>%
+  select(!c(postvisit, first_visit)) %>%
+  rename(postvisit = last_visit) %>%
+  mutate(previsit = as.numeric(unlist(previsit))) %>%
+  ungroup() %>%
+  mutate(water_diff = postvisit - previsit,
+         diff_pct = round(water_diff / abs(previsit)*100, 1))
 
 
 ##############################################################################################
