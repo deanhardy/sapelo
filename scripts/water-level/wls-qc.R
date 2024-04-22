@@ -132,8 +132,8 @@ qc.diff_post <- qc %>%
          diff_post = round(pre_post / abs(postvisit)*100, 1))
 
 qc.diff_post <- 
-  ggplot(qc.diff) + 
-  geom_point(aes(date, pre_post*100, color = cut(diff_post, c(-100, -10, 10, 100)))) + 
+  ggplot(qc.diff_post) + 
+  geom_point(aes(date, pre_post*100, color = cut(diff_post, c(-100, -10, 10, 100)), shape = logger)) + 
   scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(-10, 10), breaks = seq(-10,10, 2)) + 
   scale_color_manual(name = 'Percent Difference',
                      values = c("(-100,-10]" = "red",
