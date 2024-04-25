@@ -131,21 +131,22 @@ qc.diff_post <- qc %>%
          diff_pre = round(post_pre / abs(previsit)*100, 1),
          diff_post = round(pre_post / abs(postvisit)*100, 1))
 
-qc.diff_post <- 
+qc.diff_post.fig<- 
   ggplot(qc.diff_post) + 
-  geom_point(aes(date, pre_post*100, color = cut(diff_post, c(-100, -10, 10, 100)), shape = logger)) + 
-  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(-10, 10), breaks = seq(-10,10, 2)) + 
+  geom_point(aes(date, pre_post*100, color = cut(diff_post, c(-Inf, -10, 10, Inf)), shape = logger)) + 
+  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(-10, 10), breaks = seq(-10,10,2)) + 
   scale_color_manual(name = 'Percent Difference',
-                     values = c("(-100,-10]" = "red",
-                                "(-10,10]" = "black",
-                                "(10, 100]" = "red"),
+                     values = c('red', 'black', 'blue'),
+                     # values = c("(-100,-10]" = "red",
+                     #            "(-10,10]" = "black",
+                     #            "(10, 100]" = "red"),
                      labels = c("<-10%", "-10%>x<10%",  ">10%")) + 
   ggtitle('Quality Control: Pre - Post Water Level Difference') + 
   facet_wrap('site_new')
-qc.diff_post
+qc.diff_post.fig
 
 tiff(paste0(datadir, "figures/qaqc/qc_pre_post.tiff"), width = 12, height = 8, units = 'in', res = 300)
-qc.diff_post
+qc.diff_post.fig
 dev.off()
 
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
