@@ -13,6 +13,16 @@ Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
+## import new names for sites
+names.new <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
+                        sheet = 'names_new') %>%
+  mutate(Site = paste0('Site-', if_else(str_length(Site) == 1, paste0(0,Site), Site)),
+         sitename = paste(Site, Name),
+         sitename_new = paste(Site_New, Name),
+         transect = Transect,
+         site_new = Site_New) %>%
+  select(sitename, transect, site_new, sitename_new)
+
 ## import field measurements data
 wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
                         sheet = 'field measurements',
@@ -24,6 +34,8 @@ wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/dat
          sitename = paste(Site, Name)) %>%
   filter(!grepl('X0976', Serial)) %>%
   select(date, GMT, Site, Name, sitename, Serial, Activity, Category)
+
+wls.field <- left_join(wls.field, names.new, by = 'sitename')
 
 ## for use in qc.df creation
 wls.field2 <- wls.field %>%
@@ -157,6 +169,12 @@ png(paste0(datadir, "figures/qaqc/qc_abs_diff.png"), width = 12, height = 8, uni
 qc.diff_post.fig
 dev.off()
 
+## summary table of QC
+tbl <- qc.diff_post %>%
+  group_by(logger_material, accuracy_x2) %>%
+  summarise(count = n())
+
+
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
 ## types of errrors in measurement. 
 
@@ -166,26 +184,25 @@ dev.off()
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
-qc <- NULL
 qc.graph <- function(df, na.rm = TRUE, ...){
   
   # create list logger sites in data to loop over 
-  sites_list <- unique(df$sitename)
+  sites_list <- unique(df$sitename_new)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
     # create list of date and logger sites in data to loop over 
     dates_list <- wls.field %>% 
-      filter(sitename == sites_list[i]) %>%
+      filter(sitename_new == sites_list[i]) %>%
       pull(date)
     
     for (z in seq_along(dates_list)) {
       
-      df2 <- filter(df, sitename == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+      df2 <- filter(df, sitename_new == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
       
       # create download datetime for vertical line
-      dl <- filter(wls.field, sitename == sites_list[i] & date == dates_list[z])
+      dl <- filter(wls.field, sitename_new == sites_list[i] & date == dates_list[z])
       
       # create plot for each site in df 
       plot <- 
