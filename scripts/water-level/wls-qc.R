@@ -153,7 +153,7 @@ qc.diff_post.fig<-
   facet_wrap('site_new')
 qc.diff_post.fig
 
-tiff(paste0(datadir, "figures/qaqc/qc_abs_diff.tiff"), width = 12, height = 8, units = 'in', res = 300)
+png(paste0(datadir, "figures/qaqc/qc_abs_diff.png"), width = 12, height = 8, units = 'in', res = 150)
 qc.diff_post.fig
 dev.off()
 
