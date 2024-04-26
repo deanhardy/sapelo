@@ -126,7 +126,7 @@ for(i in 1:length(filz.ve)) {
                select = c(1:3),
                col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
                stringsAsFactors = FALSE) %>%
-    slice(., 1:(n()-2)) %>% ## removes first and last ## readings
+    slice(., 1:(n()-1)) %>% ## removes first and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 6) %>% ## removes last # rows
     mutate(

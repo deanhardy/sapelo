@@ -131,17 +131,25 @@ qc.diff_post <- qc %>%
          abs_diff = abs(postvisit - previsit),
          post_pre_prc = round(post_pre / abs(previsit)*100, 1),
          pre_post_prc = round(pre_post / abs(postvisit)*100, 1),
-         shell = if_else(str_starts(serial, '2|9'), 'titanium',
-                         if_else(str_starts(serial, '1'), 'polypropylene', 'ceramic')))
+         logger_material = if_else(str_starts(serial, '2|9'), 'hobo_titanium',
+                         if_else(str_starts(serial, '1'), 'hobo_poly', 've_ceramic')),
+         accuracy_x2 = if_else(logger_material == 'hobo_titanium' & abs_diff > 0.003*2, 'outside',
+                               if_else(logger_material == 'hobo_poly' & abs_diff > 0.01*2, 'outside',
+                                       if_else(logger_material == 've_ceramic' & abs_diff > 0.005*2, 'outside', 'inside'))))
 
 qc.diff_post.fig<- 
   ggplot(qc.diff_post) + 
-  geom_point(aes(date, abs_diff*100, color = cut(abs_diff*100, c(0, 2, Inf)), shape = logger)) + 
+  geom_point(aes(date, abs_diff*100, shape = logger_material, color = accuracy_x2)) + 
   scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(0,8), breaks = seq(0,8,2)) + 
-  scale_color_manual(name = 'Difference (cm)',
+  scale_color_manual(name = 'Accuracy (x2)',
                      values = c('black', 'red'),
-                     labels = c("0-2",">2")) + 
-  ggtitle('Quality Control: Absolute Difference in Water Level Pre & Post Visit') + 
+                     labels = c("Within Range","Outside Range")) +
+  scale_shape_manual(name = 'Logger',
+                     values = c(15, 16, 17),
+                     labels = c('Hobo Polypropylene',
+                                'Hobo Titanium',
+                                'Van Essen Ceramic')) + 
+  ggtitle('Quality Control: Absolute Difference in Water Level Pre & Post Data Download') + 
   facet_wrap('site_new')
 qc.diff_post.fig
 
