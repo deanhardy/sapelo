@@ -128,24 +128,24 @@ qc.diff_post <- qc %>%
   ungroup() %>%
   mutate(post_pre = postvisit - previsit,
          pre_post = previsit - postvisit,
-         diff_pre = round(post_pre / abs(previsit)*100, 1),
-         diff_post = round(pre_post / abs(postvisit)*100, 1))
+         abs_diff = abs(postvisit - previsit),
+         post_pre_prc = round(post_pre / abs(previsit)*100, 1),
+         pre_post_prc = round(pre_post / abs(postvisit)*100, 1),
+         shell = if_else(str_starts(serial, '2|9'), 'titanium',
+                         if_else(str_starts(serial, '1'), 'polypropylene', 'ceramic')))
 
 qc.diff_post.fig<- 
   ggplot(qc.diff_post) + 
-  geom_point(aes(date, pre_post*100, color = cut(diff_post, c(-Inf, -10, 10, Inf)), shape = logger)) + 
-  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(-10, 10), breaks = seq(-10,10,2)) + 
-  scale_color_manual(name = 'Percent Difference',
-                     values = c('red', 'black', 'blue'),
-                     # values = c("(-100,-10]" = "red",
-                     #            "(-10,10]" = "black",
-                     #            "(10, 100]" = "red"),
-                     labels = c("<-10%", "-10%>x<10%",  ">10%")) + 
-  ggtitle('Quality Control: Pre - Post Water Level Difference') + 
+  geom_point(aes(date, abs_diff*100, color = cut(abs_diff*100, c(0, 2, Inf)), shape = logger)) + 
+  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(0,8), breaks = seq(0,8,2)) + 
+  scale_color_manual(name = 'Difference (cm)',
+                     values = c('black', 'red'),
+                     labels = c("0-2",">2")) + 
+  ggtitle('Quality Control: Absolute Difference in Water Level Pre & Post Visit') + 
   facet_wrap('site_new')
 qc.diff_post.fig
 
-tiff(paste0(datadir, "figures/qaqc/qc_pre_post.tiff"), width = 12, height = 8, units = 'in', res = 300)
+tiff(paste0(datadir, "figures/qaqc/qc_abs_diff.tiff"), width = 12, height = 8, units = 'in', res = 300)
 qc.diff_post.fig
 dev.off()
 
