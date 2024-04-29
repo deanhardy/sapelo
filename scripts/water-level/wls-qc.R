@@ -74,21 +74,8 @@ temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 
-### TESTING
-
-# sites_list <- unique(df$sitename)[17]
-# gmt_list <- wls.field %>% 
-#   filter(sitename == sites_list) %>%
-#   pull(GMT)
-# 
-# dl <- filter(wls.field, sitename == sites_list & GMT == gmt_list[12])
-# OUT <- filter(df, sitename == sites_list & between(df$date_time_gmt, gmt_list[z] - 720, dl$GMT + 720))
-temp <- df %>% filter(site_new == 'T1-03', date =='2022-06-14')
-  
 qc <- NULL
 
-# qc.df <- function(df, na.rm = TRUE, ...){
-  
   # create list logger sites in data to loop over 
   sites_list <- unique(df$sitename)
   
@@ -97,8 +84,8 @@ qc <- NULL
     
     # create list of date and logger sites in data to loop over 
     gmt_list <- wls.field %>% 
-      filter(sitename == 'Site-11 Library') %>%
-      #filter(sitename == sites_list[i]) %>%
+      # filter(sitename == 'Site-11 Library') %>%
+      filter(sitename == sites_list[i]) %>%
       pull(GMT)
     
     for (z in seq_along(gmt_list)) {
@@ -174,7 +161,9 @@ tbl <- qc.diff_post %>%
   group_by(logger_material, accuracy_x2) %>%
   summarise(count = n())
 
-
+out.range <-qc.diff_post %>%
+  filter(accuracy_x2 == 'outside' | is.na(accuracy_x2))
+  
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
 ## types of errrors in measurement. 
 
@@ -187,13 +176,13 @@ TEXT = 15 ## set font size for figures
 qc.graph <- function(df, na.rm = TRUE, ...){
   
   # create list logger sites in data to loop over 
-  sites_list <- unique(df$sitename_new)
+  sites_list <- unique(out.range$sitename_new)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
     # create list of date and logger sites in data to loop over 
-    dates_list <- wls.field %>% 
+    dates_list <- out.range %>% 
       filter(sitename_new == sites_list[i]) %>%
       pull(date)
     
@@ -226,7 +215,7 @@ qc.graph <- function(df, na.rm = TRUE, ...){
               axis.ticks.y.right = element_line(color = "blue"),
               panel.background = element_rect(fill = FALSE, color = 'black'),
               panel.grid = element_blank(),
-              panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+              panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
               plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
               legend.position = c(0.1, 0.92),
               legend.text = element_text(size = TEXT),
