@@ -36,6 +36,8 @@ wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/dat
   select(date, GMT, Site, Name, sitename, Serial, Activity, Category)
 
 wls.field <- left_join(wls.field, names.new, by = 'sitename')
+wls.field <- wls.field %>%
+  mutate(site_date = paste(site_new, date))
 
 ## for use in qc.df creation
 wls.field2 <- wls.field %>%
@@ -51,7 +53,8 @@ field.smry <- wls.field %>%
 ## import cleaned water level data
 df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
-         date = as.Date(date))
+         date = as.Date(date)) %>%
+  mutate(site_date = paste(site_new, date))
 
 ## testing filter methods
 sites_list <- unique(df$sitename)
@@ -134,7 +137,9 @@ qc.diff_post <- qc %>%
                          if_else(str_starts(serial, '1'), 'hobo_poly', 've_ceramic')),
          accuracy_x2 = if_else(logger_material == 'hobo_titanium' & abs_diff > 0.003*2, 'outside',
                                if_else(logger_material == 'hobo_poly' & abs_diff > 0.01*2, 'outside',
-                                       if_else(logger_material == 've_ceramic' & abs_diff > 0.005*2, 'outside', 'inside'))))
+                                       if_else(logger_material == 've_ceramic' & abs_diff > 0.005*2, 'outside', 'inside'))),
+         accuracy = if_else(str_starts(serial, '2|9'), '0.003',
+                              if_else(str_starts(serial, '1'), '0.010', '0.005')),)
 
 qc.diff_post.fig<- 
   ggplot(qc.diff_post) + 
@@ -162,7 +167,8 @@ tbl <- qc.diff_post %>%
   summarise(count = n())
 
 out.range <-qc.diff_post %>%
-  filter(accuracy_x2 == 'outside' | is.na(accuracy_x2))
+  filter(accuracy_x2 == 'outside' | is.na(accuracy_x2)) %>%
+  mutate(site_date = paste(site_new, date))
   
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
 ## types of errrors in measurement. 
@@ -176,26 +182,30 @@ TEXT = 15 ## set font size for figures
 qc.graph <- function(df, na.rm = TRUE, ...){
   
   # create list logger sites in data to loop over 
-  sites_list <- unique(out.range$sitename_new)
+  # sites_list <- unique(out.range$sitename_new)
+  sites_dates <- unique((out.range$site_date))
   
   # create for loop to produce ggplot2 graphs 
-  for (i in seq_along(sites_list)) {
+  for (i in seq_along(sites_dates)) {
     
     # create list of date and logger sites in data to loop over 
     dates_list <- out.range %>% 
-      filter(sitename_new == sites_list[i]) %>%
+      filter(site_date == sites_dates[i]) %>%
       pull(date)
+    
     
     for (z in seq_along(dates_list)) {
       
-      df2 <- filter(df, sitename_new == sites_list[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+      df2 <- filter(df, site_date == sites_dates[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+      
+      df3 <- left_join(df2, out.range, by = 'site_date')
       
       # create download datetime for vertical line
-      dl <- filter(wls.field, sitename_new == sites_list[i] & date == dates_list[z])
+      dl <- filter(wls.field, site_date == sites_dates[i] & date == dates_list[z])
       
       # create plot for each site in df 
       plot <- 
-        ggplot(df2)  + 
+        ggplot(df3)  + 
         geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
         geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
         scale_fill_manual(values = c('white', 'black')) + 
@@ -223,11 +233,11 @@ qc.graph <- function(df, na.rm = TRUE, ...){
               # legend.key = element_blank(),
               legend.box.background = element_rect(color = 'black'),
               plot.title = element_text(size = TEXT, face = "bold")) + 
-        ggtitle(paste0(sites_list[i], " Field Date: ", dates_list[z]))
+        ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
       
       # save plots as .png
       ggsave(plot, file=paste(datadir,
-                              'figures/qaqc/', 'QC', sites_list[i], ' ',dates_list[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                              'figures/qaqc/', 'QC-', sites_dates[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     } 
   }
 }
