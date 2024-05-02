@@ -28,7 +28,7 @@ geo.CNTY <- NULL
 for (i in 1:length(ST)) {
 
 OUT <- get_acs(geography = 'county',
-                      variables = c("B01003_001"), ## total population for BG
+                      variables = c(cnty_tot_pop = "B01003_001"), ## total population for BG
                       state = ST[[i]],
                       year = 2020,
                       geometry = T) %>%
@@ -69,7 +69,7 @@ geo.BG <- NULL
 for (i in 1:length(COUNTY)) {
   
   OUT <- get_acs(geography = 'cbg',
-                 variables = c("B01003_001"), ## total population for CBG
+                 variables = c(bg_tot_pop = "B01003_001"), ## total population for CBG
                  state = substr(COUNTY[[i]], start = 1, stop = 2),
                  county = substr(COUNTY[[i]], start = 3, stop = 5),
                  year = 2020,
