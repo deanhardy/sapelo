@@ -28,7 +28,7 @@ o <- read.csv(file.path(datadir, 'property/owners_sapelo_SydRA.csv'), stringsAsF
 tax <- read.csv(paste0(datadir, 'property/taxes/tax_records_99-23.csv'), stringsAsFactors = F) %>%
   mutate(ZIP.Code = as.character(ZIP.Code),
          zip = if_else(str_length(ZIP.Code) == 4, paste0("0", ZIP.Code), ZIP.Code)) %>%
-  select(-c(X:X.13)) %>% 
+  # select(-c(X:X.13)) %>% 
   mutate(address = paste(Property.Address, City, State, zip)) %>%
   filter(!str_detect(Deed.Name, 'HERITAGE'), 
          address != '   NA'

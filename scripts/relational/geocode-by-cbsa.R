@@ -87,7 +87,7 @@ fig.dist <- mn.dist %>%
 fig.dist
 
 png(paste0(datadir, 'figures/relational/', 'taxaddress-distance-by-ownership.png'), 
-    height = 4, width = 7, units = 'in', res = 150)
+    height = 6, width = 10.5, units = 'in', res = 300)
 fig.dist
 dev.off()
 
@@ -179,17 +179,22 @@ fig <- ggplot() +
            datum = NA) +
   scale_size(breaks = c(10,20,30,40,50), limits = c(0,50), name="Parcels Per CBSA") + 
   scale_color_discrete(name = 'Ownership', labels = c('Descendant', 'Nontraditional')) +
-  theme(legend.position = c(0.01,0.01)) + 
+  theme(legend.position = c(0,0)) + 
   ggtitle(paste0('Year ', YR[z], '; ', sum(r.df$count),  ' Tax Addresses')) + 
+  theme(legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(size = 20, face = "bold"))
   guides(color = guide_legend(order=1),
          size = guide_legend(order=2))
 
 # legend help
 # http://www.sthda.com/english/wiki/ggplot2-legend-easy-steps-to-change-the-position-and-the-appearance-of-a-graph-legend-in-r-software
 
+# ggsave <- function(..., bg = 'white')
+    
 # save plots as .png
-ggsave(fig, file=paste(datadir,
-                       'figures/relational/', 'relational-', YR[z], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+ggsave(fig, file=paste(datadir, 'figures/relational/maps/', 'relational-', YR[z], ".png", sep=''), 
+       width = 1800, height = 1200, units = 'px', scale=2, bg = 'white')
 
 }
 
