@@ -1,5 +1,5 @@
 ###############################################################################################
-## PURPOSE: geolocating points inside MSAs and Block Groups 
+## PURPOSE: geolocating points inside CBSAs
 ## BY: Dean Hardy
 ###############################################################################################
 rm(list=ls())
