@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for transect graphs
-int.date1 <- as.Date('2023-12-01') 
-int.date2 <- as.Date('2024-02-25') 
+int.date1 <- as.Date('2022-10-01') 
+int.date2 <- as.Date('2022-12-31') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
@@ -564,19 +564,19 @@ tx.graph(df)
 #####################################################################
 ## explore transects 1 and 5 hydrological connections via site NW corner
 #####################################################################
-df.t <- filter(df, site_new %in% c('T1-04', 'T5-03', 'T5-02') & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+df.t <- filter(df, site_new %in% c('T5-03', 'T3-03', 'T4-02') & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 daily.mn <- df.t %>%
   mutate(date = floor_date(date_time_gmt, unit = 'day')) %>%
   group_by(transect, site_new, date) %>%
   summarize(mean = mean(water_level_navd88))
 
-TEXT = 12 ## set font size for figures
+TEXT = 8 ## set font size for figures
 
 plot <- ggplot(df.t)  + 
-  geom_line(aes(date_time_gmt, water_level_navd88 * 3.28084, color = site_new)) + 
+  geom_line(aes(date_time_gmt, water_level_navd88 * 3.28084, color = site_new), linewidth = 0.2) + 
   geom_line(aes(date, mean * 3.28084, color = site_new), 
-            data = filter(daily.mn)) +
+            data = filter(daily.mn), linewidth = 0.2) +
   # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
   # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
   # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
@@ -624,7 +624,7 @@ labs(color = 'Transect-Site') +
   # ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
 plot
 
-tiff(paste0(datadir, 'figures/t5-03-connectivity.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+tiff(paste0(datadir, 'figures/comparison-ditch-inland.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
 plot
 dev.off()
 
