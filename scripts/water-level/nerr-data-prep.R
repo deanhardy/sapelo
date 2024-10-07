@@ -19,7 +19,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import NERR Wx data for Sapelo @ Marsh Landing
 ## run all inclusive only if necessary ie missing data
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/240402-sapmlmet/SAPMLMET.csv'),
+nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/241007-sapmlmet/SAPMLMET.csv'),
 # nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220903-sapmlmet-allinclusive/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
