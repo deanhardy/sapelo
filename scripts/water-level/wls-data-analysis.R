@@ -19,7 +19,7 @@ int.date2 <- as.Date('2022-11-21')
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
-ht.date2 <- as.Date('2024-02-25')
+ht.date2 <- as.Date('2024-08-25')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
@@ -168,8 +168,8 @@ sites.timeline <-
   geom_linerange(aes(x = reorder(site_new, desc(site_new)),
                      ymax = end_date,
                      ymin = start_date,
-                 linetype = type,
-                 color = logger),
+                 linetype = logger,
+                 color = type),
                  show.legend = T) +
   # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
   #                   ymax = as.Date("2000-01-01"),
@@ -177,19 +177,20 @@ sites.timeline <-
   #                   linetype = type),
   #               size = 1,
   #               show.legend = T) + ## trick for making horizontal legend bars
-  scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y") + 
-               # limits = c(first(df.date$start_date), last(df.date$end_date))) + 
+  scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y", 
+               limits = c(as.Date('2018-10-01'), as.Date('2024-09-30')), 
+               expand = c(0,0)) +
   # scale_color_manual()
   xlab('Transect-Site') + 
-  scale_color_manual(name='Logger Type',
+  scale_linetype_manual(name='Logger Type',
                      breaks=c('hobo', 'van essen'),
-                     values=c('hobo' = 'black',
-                              'van essen' = 'red'),
+                     values=c('hobo' = 'solid',
+                              'van essen' = 'dashed'),
                      labels = c('Hobo', 'Van Essen')) +
-  scale_linetype_manual(name='Site Type',
+  scale_color_manual(name='Site Type',
                         breaks=c('creek', 'ditch'),
-                        values=c('creek' = 'solid',
-                              'ditch' = 'dashed'),
+                        values=c('creek' = 'red',
+                              'ditch' = 'black'),
                      labels = c('Creek', 'Ditch')) +
   # ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
