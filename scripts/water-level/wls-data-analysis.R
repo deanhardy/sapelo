@@ -14,8 +14,8 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 # set dates for transect graphs
-int.date1 <- as.Date('2022-10-31') 
-int.date2 <- as.Date('2022-11-21') 
+int.date1 <- as.Date('2022-07-01') 
+int.date2 <- as.Date('2023-06-30') 
 
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
@@ -485,6 +485,7 @@ tx.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
   transect_list <- unique(df$transect)
+  transect_list <- 'T3'
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(transect_list)) {
@@ -499,8 +500,8 @@ tx.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_level_navd88*3.28084, color = site_new)) + 
-      geom_line(aes(date, mean*3.28084, color = site_new), 
+      geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) + 
+      geom_line(aes(date, mean, color = site_new), 
                 data = filter(daily.mn)) +
       # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
       # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
@@ -508,8 +509,8 @@ tx.graph <- function(df, na.rm = TRUE, ...){
       # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
       # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
       # scale_fill_manual(values = c('white', 'black')) + 
-      scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
-      scale_y_continuous(name = 'Water Level (ft NAVD88)', breaks = seq(0,6.5,0.5), limits = c(0,6.5), expand = c(0,0)) +
+      scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 month', date_labels = '%m/%d') + 
+      scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0,2,0.1), limits = c(0,2), expand = c(0,0)) +
       # annotate("rect",
       #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
       #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
@@ -521,7 +522,7 @@ tx.graph <- function(df, na.rm = TRUE, ...){
       #          y = df2$well_ht+0.1,
       #          label = 'Well Height',
       #          angle = 90) +
-    labs(color = 'Site Name') + 
+    labs(color = 'Site') + 
     theme(axis.title = element_text(size = TEXT),
           axis.text = element_text(color = "black", size = TEXT),
           axis.ticks.length = unit(-0.2, 'cm'),
@@ -535,14 +536,15 @@ tx.graph <- function(df, na.rm = TRUE, ...){
           axis.ticks.y.right = element_line(color = "blue"),
           panel.background = element_rect(fill = FALSE, color = 'black'),
           panel.grid = element_blank(),
+          panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
           panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
           plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
           legend.position = 'bottom',
           legend.text = element_text(size = TEXT),
           legend.title = element_text(size = TEXT),
           legend.box.background = element_rect(color = 'black'),
-          plot.title = element_text(size = TEXT, face = "bold")) + 
-      ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
+          plot.title = element_text(size = TEXT, face = "bold"))
+      # ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
@@ -560,6 +562,64 @@ tx.graph <- function(df, na.rm = TRUE, ...){
 
 # run graphing function on long df
 tx.graph(df)
+
+
+
+
+##
+## working on facet wrap for T1 and T3 during flood event
+# tf_facet <- 
+#   ggplot(df2)  + 
+#   geom_line(aes(date_time_gmt, water_level_navd88*3.28084, color = site_new)) + 
+#   geom_line(aes(date, mean*3.28084, color = site_new), 
+#             data = filter(daily.mn)) +
+#   # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
+#   # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
+#   # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
+#   # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
+#   # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
+#   # scale_fill_manual(values = c('white', 'black')) + 
+#   scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
+#   scale_y_continuous(name = 'Water Level (ft NAVD88)', breaks = seq(0,6.5,0.5), limits = c(0,6.5), expand = c(0,0)) +
+#   # annotate("rect",
+#   #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
+#   #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
+#   #          ymin = 0,
+#   #          ymax = df2$well_ht,
+#   #          alpha = 0.1) +
+#   # annotate("text",
+#   #          x = as.POSIXct(paste(int.date1, '06:48:00')),
+#   #          y = df2$well_ht+0.1,
+#   #          label = 'Well Height',
+#   #          angle = 90) +
+#   labs(color = 'Site Name') + 
+#   theme(axis.title = element_text(size = TEXT),
+#         axis.text = element_text(color = "black", size = TEXT),
+#         axis.ticks.length = unit(-0.2, 'cm'),
+#         axis.ticks = element_line(color = 'black'),
+#         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+#         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+#         axis.line = element_line(color = 'black'),
+#         axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+#         axis.title.y.right = element_text(color = 'blue'),
+#         axis.line.y.right = element_line(color = "blue"), 
+#         axis.ticks.y.right = element_line(color = "blue"),
+#         panel.background = element_rect(fill = FALSE, color = 'black'),
+#         panel.grid = element_blank(),
+#         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+#         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+#         legend.position = 'bottom',
+#         legend.text = element_text(size = TEXT),
+#         legend.title = element_text(size = TEXT),
+#         legend.box.background = element_rect(color = 'black'),
+#         plot.title = element_text(size = TEXT, face = "bold")) + 
+#   ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2)) + 
+#   facet_wrap(~ transect)
+# tf_facet
+# 
+# tiff(paste0(datadir, 'figures/transect1_3_flood_faceted.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+# tf_facet
+# dev.off()
 
 
 #####################################################################
