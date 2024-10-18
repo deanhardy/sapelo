@@ -39,7 +39,7 @@ ml <- readNWISdv(siteNumbers = siteNo,
   rename(water_level_navd88 = X_00065_00021,
          quality = X_00065_00021_cd,
          date = Date) %>%
-  mutate(type = 'high', water_level_navd88 = water_level_navd88)
+  mutate(type = 'high', water_level_navd88 = water_level_navd88 * 0.3048)
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
@@ -51,7 +51,7 @@ ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 mo.mhhw.cwbp <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
   group_by(transect, site_new, prd) %>%
-  summarise(max = max(water_level_navd88 / 0.3048)) %>%
+  summarise(max = max(water_level_navd88)) %>%
   mutate(month = floor_date(prd, "month")) %>%
   group_by(transect, site_new, month) %>%
   summarize(avg = mean(max), count = n(), sd = sd(max)) %>%
@@ -80,34 +80,53 @@ mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
 #   filter(avg > 2) %>%
 #   group_by(month) %>%
 #   summarise(avg = mean(avg), se = se(avg))
-  
+
 t.var <- 'T1-02'
+TEXT = 10
 comps <- mo.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
-  filter(avg > 2 & site_new %in% c(t.var, 'ML')) %>%
+  filter(avg > 0 & site_new %in% c(t.var, 'ML')) %>%
   ggplot(aes(date, avg)) + 
   # geom_point(aes(color = source)) + 
   geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = source)) + 
-  geom_hline(aes(yintercept = mean(avg), linetype = 'Community CWBP'), color = 'red', data = filter(mo.mhhw, site_new == t.var)) + ## measured MHHW at CWBP sites
-  geom_hline(aes(yintercept = 3.1791339, linetype = 'Community NOAA'), color = 'red') +  ## NOAA MHHW for Community
-  geom_hline(aes(yintercept = mean(avg), linetype = 'ML USGS'), color = 'black', data = filter(mo.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
-  geom_hline(aes(yintercept = 3.3038058, linetype = 'ML NOAA'), color = 'black') + ## NOAA MHHW for ML
-  scale_y_continuous(name = "Water Level (ft NAVD88)", breaks = seq(0, 5, 1), limits = c(0, 5)) + 
+  geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(mo.mhhw, site_new == t.var)) + ## measured MHHW at CWBP sites
+  geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
+  geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(mo.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
+  geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
+  scale_y_continuous(name = "Water Level (m NAVD88)", breaks = seq(0.5, 1.5, 0.1), limits = c(0.5, 1.5)) + 
   scale_x_date(name = 'Year', 
                date_breaks = '1 year', date_labels = '%Y', 
                date_minor_breaks = '3 months',
                limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
                expand = c(0,0)) +
-  scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c('Community CWBP', 'ML USGS')) +
-  scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2), 
-                        guide = guide_legend(override.aes = list(color = c("red", "red", 'black', 'black')))) + 
+  scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c(t.var, 'ML USGS')) +
+  # scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2), 
+  #                       guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) + 
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
   # ggtitle('Monthly Mean Higher High Water') + 
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+  theme(axis.title = element_text(size = TEXT),
+        axis.text = element_text(color = "black", size = TEXT),
+        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks = element_line(color = 'black'),
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+        axis.line = element_line(color = 'black'),
+        axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+        axis.title.y.right = element_text(color = 'blue'),
+        axis.line.y.right = element_line(color = "blue"), 
+        axis.ticks.y.right = element_line(color = "blue"),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
+        panel.grid = element_blank(),
+        panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         legend.position = 'bottom',
-        legend.box = 'vertical',
-        legend.margin=margin())
+        legend.text = element_text(size = TEXT),
+        legend.title = element_text(size = TEXT),
+        legend.box.background = element_rect(color = 'black'),
+        plot.title = element_text(size = TEXT, face = "bold"))
   # guides(fill=guide_legend(nrow=2,byrow=TRUE))
 comps 
 
@@ -119,6 +138,20 @@ dev.off()
 png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 5, width = 6.5, res = 150)
 comps
 dev.off()
+
+## calculate MHHW difference b/t community measured and NOAA modeled estimate 
+comm_noaa <- mo.mhhw %>%
+  filter(site_new == t.var) %>%
+  summarise(mean(avg))
+comm_noaa = pull(comm_noaa[1,3])
+comm_noaa - (3.1791339 * 0.3048)
+
+## calculate MHHW difference b/t ML USGS measured and NOAA modeled estimate 
+ml_noaa <- mo.mhhw %>%
+  filter(site_new == 'ML') %>%
+  summarise(mean(avg))
+ml_noaa = pull(ml_noaa[1,3])
+ml_noaa - (3.1791339 * 0.3048)
 
 #####################################
 ## compare elevation datums/projects
