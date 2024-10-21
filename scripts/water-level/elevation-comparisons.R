@@ -35,7 +35,8 @@ ml <- readNWISdv(siteNumbers = siteNo,
                  parameterCd = pCode,
                  startDate = start.date,
                  endDate = end.date,
-                 statCd = statCode) %>%
+                 statCd = statCode
+                 ) %>%
   rename(water_level_navd88 = X_00065_00021,
          quality = X_00065_00021_cd,
          date = Date) %>%
