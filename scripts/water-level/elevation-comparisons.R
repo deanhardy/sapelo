@@ -230,6 +230,32 @@ tiff(paste0(datadir, 'figures/site-elevations.tiff'), unit = 'in', height = 6, w
 elvs
 dev.off()
 
+## plot site elevations using different sources and datums
+elvs88 <- wls2 %>%
+  filter(source %in% c('cgep2010_88', 'usgs2019_88', 'rtk_site_88')) %>%
+  ggplot(aes(transect_site, feet, color = project, shape = type)) + 
+  geom_point(size = 4) + 
+  # scale_y_continuous(name = "Elevation (m)", breaks = seq(-3.4, 2.8, 0.4)) + 
+  scale_y_continuous(name = "Elevation (ft NAVD88)", breaks = seq(-8, 6, 2), limits = c(-8,6)) + 
+  scale_x_discrete(name = 'Transect-Site') + 
+  scale_shape_manual(name='Type',
+                     breaks=c('creek', 'ditch'),
+                     values=c('creek'= 16, 'ditch'= 17),
+                     labels = c('Creek', 'Ditch')) + 
+  scale_color_manual(name='Project',
+                     breaks=c('CGEP', 'USGS', 'CWBP'),
+                     values=c('CGEP'='green3', 'USGS'='black', 'CWBP'='red')) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        legend.position = 'right',
+        text = element_text(size = 24),
+        panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
+        panel.grid = element_line(color = 'grey90'))
+elvs88
+
+png(paste0(datadir, 'figures/site-elevations-navd88_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
+elvs88
+dev.off()
+
 ## plot elev differences across sources (CGEP, USGS, CWBP)
 elvd <- wls2 %>%
   filter(source %in% c('rtk_cgep_88', 'rtk_usgs_88', 'usgs_cgep_88')) %>%

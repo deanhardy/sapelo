@@ -194,10 +194,14 @@ sites.timeline <-
                      labels = c('Creek', 'Ditch')) +
   # ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
-  theme(legend.position = 'bottom')
+  theme_bw(base_size = 24)
 sites.timeline
 
 tiff(paste0(datadir, "figures/sites-deployment-dates.tiff"), width = 6.5, height = 5, units = 'in', res = 300)
+sites.timeline
+dev.off()
+
+png(paste0(datadir, "figures/sites-deployment-dates_slide.png"), bg = 'white', width = 13.33, height = 6.5, units = 'in', res = 150)
 sites.timeline
 dev.off()
 
