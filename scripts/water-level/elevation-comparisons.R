@@ -82,8 +82,32 @@ mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
 #   group_by(month) %>%
 #   summarise(avg = mean(avg), se = se(avg))
 
+## plot monthly mhhw trends by transect
+tt_facet <- ggplot(filter(mo.mhhw.cwbp, transect %in% c('T1','T2','T3','T4')), aes(month, avg*3.28084, group = site_new)) + 
+  geom_point(aes(color = site_new 
+                 # ,shape = type
+  ), size = 0.5) + 
+  geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +
+  scale_y_continuous(name = 'Monthly MHHW (ft NAVD88)', 
+                     breaks = seq(2,4,0.5), limits = c(2,4)) + 
+  scale_x_datetime(name = 'Date') + 
+  scale_color_discrete(name = 'Site') + 
+  scale_shape_discrete(name = 'Type') + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+        legend.position = 'right',
+        text = element_text(size = 24),
+        panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
+        panel.grid = element_line(color = 'grey90')) +
+  facet_wrap(~ transect)
+tt_facet
+
+png(paste0(datadir, 'figures/transect_mhhw_trends_faceted_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
+tt_facet
+dev.off()
+
+## monthly mhhw comparisons
 t.var <- 'T1-02'
-TEXT = 10
+TEXT = 24
 comps <- mo.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
   filter(avg > 0 & site_new %in% c(t.var, 'ML')) %>%
@@ -101,8 +125,8 @@ comps <- mo.mhhw %>%
                limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
                expand = c(0,0)) +
   scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c(t.var, 'ML USGS')) +
-  # scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2), 
-  #                       guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) + 
+  scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2),
+                        guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) +
   # geom_smooth(method = lm, se = F) + 
   # facet_wrap(~site_new) + 
   # ggtitle('Monthly Mean Higher High Water') + 
@@ -135,8 +159,7 @@ tiff(paste0(datadir, 'figures/mhhw-comparisons.tiff'), unit = 'in', height = 5, 
 comps
 dev.off()
 
-
-png(paste0(datadir, 'figures/mhhw-comparisons.png'), unit = 'in', height = 5, width = 6.5, res = 150)
+png(paste0(datadir, 'figures/mhhw-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
 comps
 dev.off()
 
@@ -314,7 +337,7 @@ p <- wls2 %>%
   filter(source %in% c('mhhw_wls88', 'noaa2019_88')) %>%
   # pivot_wider(names_from = source, values_from = c(feet, meters, datum)) %>%
   ggplot(aes(transect_site, feet, shape = type)) + 
-  geom_pointrange(aes(ymin = feet - (sd_ft), ymax = feet + (sd_ft), color = project)) + 
+  geom_pointrange(aes(ymin = feet - (se), ymax = feet + (se), color = project), size = 1) + 
   scale_y_continuous(name = "MHHW Elevation (ft NAVD88)", breaks = seq(0, 4, 0.5), limits = c(0,4)) + 
   scale_x_discrete(name = 'Transect-Site') + 
   scale_shape_manual(name='Type',
@@ -326,11 +349,18 @@ p <- wls2 %>%
                      values=c('USGS' = 'black',
                               'CWBP' = 'red'),
                      labels = c('NOAA 2019', 'CWBP')) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        legend.position = 'bottom')
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
+      legend.position = 'right',
+      text = element_text(size = 24),
+      panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
+      panel.grid = element_line(color = 'grey90'))
 p
 
 tiff(paste0(datadir, 'figures/site-mhhw-comps.tiff'), unit = 'in', height = 4, width = 6.5, res = 300)
+p
+dev.off()
+
+png(paste0(datadir, 'figures/site-mhhw-comps_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
 p
 dev.off()
 

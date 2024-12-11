@@ -93,6 +93,7 @@ df.avg <- df %>%
   group_by(transect, site_new, type, prd) %>%
   summarize(avg = mean(water_level_navd88))
 
+## plot mean monthly water levels
 tt_facet <- ggplot(df.avg, aes(prd, avg*3.28084, group = site_new)) + 
   geom_point(aes(color = site_new 
                  # ,shape = type
