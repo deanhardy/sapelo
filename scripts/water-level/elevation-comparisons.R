@@ -83,10 +83,10 @@ mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
 #   summarise(avg = mean(avg), se = se(avg))
 
 ## plot monthly mhhw trends by transect
-tt_facet <- ggplot(filter(mo.mhhw.cwbp, transect %in% c('T1','T2','T3','T4')), aes(month, avg*3.28084, group = site_new)) + 
+tt_facet <- ggplot(filter(mo.mhhw.cwbp, site_new %in% c('T1-02','T2-01','T3-03','T4-01')), aes(month, avg*3.28084, group = site_new)) + 
   geom_point(aes(color = site_new 
                  # ,shape = type
-  ), size = 0.5) + 
+  ), size = 1) + 
   geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +
   scale_y_continuous(name = 'Monthly MHHW (ft NAVD88)', 
                      breaks = seq(2,4,0.5), limits = c(2,4)) + 
@@ -94,11 +94,11 @@ tt_facet <- ggplot(filter(mo.mhhw.cwbp, transect %in% c('T1','T2','T3','T4')), a
   scale_color_discrete(name = 'Site') + 
   scale_shape_discrete(name = 'Type') + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1),
-        legend.position = 'right',
+        legend.position = 'none',
         text = element_text(size = 24),
         panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
         panel.grid = element_line(color = 'grey90')) +
-  facet_wrap(~ transect)
+  facet_wrap(~ site_new)
 tt_facet
 
 png(paste0(datadir, 'figures/transect_mhhw_trends_faceted_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
