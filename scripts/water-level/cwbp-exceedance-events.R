@@ -31,7 +31,7 @@ df.mhhw <- df %>%
 ## count number of events above flood stage
 ############################################
 df4 <- df.mhhw %>%
-  filter(mhhw_max_ft > (9.7-0.58) & site_new == 'T1-02') %>% ## flood stage = 10.2 feet
+  filter(mhhw_max_ft > (10.2-0.58) & site_new == 'T4-01') %>% ## flood stage = 10.2 feet
   mutate(x = floor_date(prd, "year")) %>%
   mutate(x = year(x)) %>%
   group_by(x) %>%
@@ -58,12 +58,12 @@ ext <- ggplot(df4, aes(x, y, label = y)) +
   labs(x = 'Year', y = 'Action Stage Events (#)')
 ext
 
-tiff(file.path(datadir, 'figures/cwbp_t1-02action_stage.tiff'), res = 300, unit = 'in',
-     width = 6.5, height = 4, compression = 'lzw')
-ext
-dev.off()
-
-png(file.path(datadir, 'figures/meridian_landing_action_stage_slide.png'), res = 150, unit = 'in',
-    width = 13.33, height = 7)
-ext
-dev.off()
+# tiff(file.path(datadir, 'figures/cwbp_t1-02action_stage.tiff'), res = 300, unit = 'in',
+#      width = 6.5, height = 4, compression = 'lzw')
+# ext
+# dev.off()
+# 
+# png(file.path(datadir, 'figures/meridian_landing_action_stage_slide.png'), res = 150, unit = 'in',
+#     width = 13.33, height = 7)
+# ext
+# dev.off()
