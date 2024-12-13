@@ -31,7 +31,7 @@ df.mhhw <- df %>%
 ## count number of events above flood stage
 ############################################
 df4 <- df.mhhw %>%
-  filter(mhhw_max_ft > (10.2-0.58) & site_new == 'T1-02') %>% ## flood stage = 10.2 feet
+  filter(mhhw_max_ft > (9.7-0.58) & site_new == 'T1-02') %>% ## flood stage = 10.2 feet
   mutate(x = floor_date(prd, "year")) %>%
   mutate(x = year(x)) %>%
   group_by(x) %>%
