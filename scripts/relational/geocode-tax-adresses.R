@@ -40,6 +40,12 @@ tax <- read.csv(paste0(datadir, 'property/taxes/tax_records_99-23.csv'), strings
   mutate(locality = if_else(str_detect(address, 'Sapelo'), 'local', 'nonlocal')) %>%
   select(year, bill, name, parcel.id, address, state, locality, due.date, prior.payment, amount.due, paid.date)
 
+## filter individual parcels and plot
+ggplot(filter(tax, parcel.id == '0101A0084'), aes(year, prior.payment)) + 
+  geom_point() 
+
+temp <- filter(tax, parcel.id == '0101A0099')
+
 ## import owner category classifications
 ownr1 <- read.csv(file.path(datadir, "property/transactions_sapelo_primary.csv"), stringsAsFactors = F) %>%
   select(grantee, grantee_category) %>%
