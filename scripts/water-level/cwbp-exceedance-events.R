@@ -90,7 +90,7 @@ ext <- ggplot(df4, aes(x, y, label = y)) +
         text = element_text(size = 24),
         panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
         panel.grid = element_line(color = 'grey90')) +  
-  labs(x = 'Year', y = '# Events > 9 ft') + 
+  labs(x = 'Year', y = '# Events > 9.2 ft') + 
   facet_wrap('site')
 ext
 
@@ -99,7 +99,7 @@ ext
 # ext
 # dev.off()
 # 
-png(file.path(datadir, 'figures/cwbp_gt9ft_slide.png'), res = 150, unit = 'in',
+png(file.path(datadir, 'figures/cwbp_gt9.2ft_slide.png'), res = 150, unit = 'in',
     width = 13.33, height = 6.5)
 ext
 dev.off()
