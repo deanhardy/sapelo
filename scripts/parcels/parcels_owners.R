@@ -18,25 +18,25 @@ clr5 <- c('grey30', 'grey60', 'grey90', 'white', '#BA0C2F')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import property owner data
-# o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
-#   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
-#   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
-#                           if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))
-
-o <- read_xlsx(file.path(datadir, 'property/owners_sapelo_2023summerRA.xlsx'), skip = 3) %>%
+o <- read.csv(file.path(datadir, 'property/owners_sapelo_primary.csv'), stringsAsFactors = F) %>%
   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
                           if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))
 
-# p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
-#   st_transform(utm) %>%
-#   rename(parcel_id = PARCEL_ID)
-# p$parcel_id <- str_squish(p$parcel_id)
+# o <- read_xlsx(file.path(datadir, 'property/owners_sapelo_2023summerRA.xlsx'), skip = 3) %>%
+#   mutate(own3cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC', 'Non-descendant'), 'Outsider', own_cat)) %>%
+#   mutate(own4cat = ifelse(own_cat %in% c('LLC', 'LLP', 'INC'), 'Company',
+#                           if_else(own_cat == 'Non-descendant', 'Outsider', own_cat)))
 
-p <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8.21/parcels_2023.shp'), stringsAsFactors = F) %>%
+p <- st_read(file.path(datadir, 'spatial-data/parcels/'), stringsAsFactors = F) %>%
   st_transform(utm) %>%
   rename(parcel_id = PARCEL_ID)
 p$parcel_id <- str_squish(p$parcel_id)
+
+# p <- st_read(file.path(datadir, 'spatial-data/sydneyRA/shapefiles8.21/parcels_2023.shp'), stringsAsFactors = F) %>%
+#   st_transform(utm) %>%
+#   rename(parcel_id = PARCEL_ID)
+# p$parcel_id <- str_squish(p$parcel_id)
 
 ## temporary fix to parcel spatial data 
 p <- p %>%
