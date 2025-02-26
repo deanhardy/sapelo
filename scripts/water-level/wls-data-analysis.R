@@ -148,7 +148,7 @@ barplot(df.active$years, names.arg = df.active$sitename_new,
         horiz = T, 
         las = 1,
         ylab = '',
-        xlim = c(0,5),
+        xlim = c(0,7),
         xlab = 'Years Active',
         main = 'Hog Hammock Water Level Survey: Active Logging Time')
 dev.off()
@@ -179,7 +179,7 @@ sites.timeline <-
   #               size = 1,
   #               show.legend = T) + ## trick for making horizontal legend bars
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y", 
-               limits = c(as.Date('2018-10-01'), as.Date('2024-09-30')), 
+               limits = c(as.Date('2018-10-01'), as.Date('2025-02-15')), 
                expand = c(0,0)) +
   # scale_color_manual()
   xlab('Transect-Site') + 
