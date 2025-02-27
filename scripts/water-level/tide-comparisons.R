@@ -58,14 +58,14 @@ ml <- readNWISuv(siteNumbers = siteNo,
 df2 <- rbind(df, ml)
 
 ## set dates and sites
-df3 <- filter(df2, site_new %in% TR3 & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+df3 <- filter(df2, site_new %in% TR1 & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
 
 TEXT = 8
 plot <- 
   ggplot(df3)  + 
   geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) +
   scale_x_datetime(name = 'Date', date_breaks = '12 hours', date_minor_breaks = '1 hour', date_labels = '%m/%d/%y %H:%M') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', minor_breaks = seq(-1.5,2,0.1), breaks = seq(-1.5,2,0.5), limits = c(-1.6,2), expand = c(0,0)) +
+  scale_y_continuous(name = 'Water Level (m NAVD88)', minor_breaks = seq(-1.5,2,0.1), breaks = seq(-1.5,2,0.5), limits = c(-1.5,2), expand = c(0,0)) +
   labs(color='Site') +
   theme(axis.title = element_text(size = TEXT),
         axis.text = element_text(color = "black", size = TEXT),
@@ -76,10 +76,10 @@ plot <-
         axis.line = element_line(color = 'black'),
         panel.background = element_rect(fill = FALSE, color = 'black'),
         panel.grid = element_blank(),
-        panel.grid.major.x = element_line('grey30', size = 0.5, linetype = "dotted"),
-        panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
-        panel.grid.major.y = element_line('grey30', size = 0.5, linetype = "dotted"),
-        panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.major.x = element_line('grey30', size = 0.5, linetype = "solid"),
+        panel.grid.minor.x = element_line('grey95', size = 0.5, linetype = "solid"),
+        panel.grid.major.y = element_line('grey30', size = 0.5, linetype = "solid"),
+        panel.grid.minor.y = element_line('grey95', size = 0.5, linetype = "solid"),
         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         # legend.position = c(0.1, 0.94),
         legend.text = element_text(size = TEXT),
@@ -89,6 +89,6 @@ plot <-
         plot.title = element_text(size = TEXT, face = "bold"))
 plot
 
-tiff(paste0(datadir, 'figures/tide-comps-T3-ML-2024.tiff'), unit = 'in', height = 4, width = 6.5, res = 300)
+tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2024.tiff'), unit = 'in', height = 7, width = 10, res = 300)
 plot
 dev.off()
