@@ -89,6 +89,6 @@ plot <-
         plot.title = element_text(size = TEXT, face = "bold"))
 plot
 
-tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2024.tiff'), unit = 'in', height = 7, width = 10, res = 300)
+tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2024.tiff'), unit = 'in', height = 7, width = 10, res = 150)
 plot
 dev.off()
