@@ -18,7 +18,7 @@ int.date1 <- as.Date('2022-11-08')
 int.date2 <- as.Date('2022-11-12')
 
 # define transects
-TR1 <- c('ML', 'T1-01', 'T1-02', 'T1-03', 'T1-04', 'T1-05', 'T5-02')
+TR1 <- c('ML', 'T1-01', 'T1-02', 'T1-03', 'T1-04', 'T1-05', 'T5-01', 'T5-02')
 TR3 <- c('ML', 'T3-01', 'T3-02', 'T3-03','T3-04', 'T2-01')
 TR4 <- c('ML', 'T4-01', 'T4-02', 'T4-BR-01')
 
@@ -89,6 +89,6 @@ plot <-
         plot.title = element_text(size = TEXT, face = "bold"))
 plot
 
-tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2022.tiff'), unit = 'in', height = 7, width = 10, res = 150)
+tiff(paste0(datadir, 'figures/tide-comps-T1-T5-ML-2022.tiff'), unit = 'in', height = 7, width = 10, res = 150)
 plot
 dev.off()
