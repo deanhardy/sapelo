@@ -14,11 +14,11 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for transect graphs
-int.date1 <- as.Date('2024-11-14') 
-int.date2 <- as.Date('2024-11-17')
+int.date1 <- as.Date('2022-11-08') 
+int.date2 <- as.Date('2022-11-12')
 
 # define transects
-TR1 <- c('ML', 'T1-01', 'T1-02', 'T1-03', 'T1-04', 'T1-05')
+TR1 <- c('ML', 'T1-01', 'T1-02', 'T1-03', 'T1-04', 'T1-05', 'T5-02')
 TR3 <- c('ML', 'T3-01', 'T3-02', 'T3-03','T3-04', 'T2-01')
 TR4 <- c('ML', 'T4-01', 'T4-02', 'T4-BR-01')
 
@@ -65,7 +65,7 @@ plot <-
   ggplot(df3)  + 
   geom_line(aes(date_time_gmt, water_level_navd88, color = site_new)) +
   scale_x_datetime(name = 'Date', date_breaks = '12 hours', date_minor_breaks = '1 hour', date_labels = '%m/%d/%y %H:%M') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', minor_breaks = seq(-1.5,2,0.1), breaks = seq(-1.5,2,0.5), limits = c(-1.5,2), expand = c(0,0)) +
+  scale_y_continuous(name = 'Water Level (m NAVD88)', minor_breaks = seq(-1.5,2,5.1), breaks = seq(-1.5,2.5,0.5), limits = c(-1.5,2.5), expand = c(0,0)) +
   labs(color='Site') +
   theme(axis.title = element_text(size = TEXT),
         axis.text = element_text(color = "black", size = TEXT),
@@ -89,6 +89,6 @@ plot <-
         plot.title = element_text(size = TEXT, face = "bold"))
 plot
 
-tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2024.tiff'), unit = 'in', height = 7, width = 10, res = 150)
+tiff(paste0(datadir, 'figures/tide-comps-T1-ML-2022.tiff'), unit = 'in', height = 7, width = 10, res = 150)
 plot
 dev.off()
