@@ -14,8 +14,10 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 # set dates for transect graphs
-int.date1 <- as.Date('2022-11-08') 
-int.date2 <- as.Date('2022-11-12')
+# peak tide @FP in 2022 on 11-11
+# peak tides @FP in 2024 on 11-14 & 11-16 
+int.date1 <- as.Date('2024-11-13') 
+int.date2 <- as.Date('2024-11-17')
 
 # define transects
 TR1 <- c('ML', 'T1-01', 'T1-02', 'T1-03', 'T1-04', 'T1-05', 'T5-01', 'T5-02')
@@ -58,7 +60,8 @@ ml <- readNWISuv(siteNumbers = siteNo,
 df2 <- rbind(df, ml)
 
 ## set dates and sites
-df3 <- filter(df2, site_new %in% TR1 & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+df3 <- filter(df2, site_new %in% TR4 & date_time_gmt >= int.date1 & date_time_gmt <= int.date2)
+
 
 TEXT = 8
 plot <- 
@@ -89,6 +92,6 @@ plot <-
         plot.title = element_text(size = TEXT, face = "bold"))
 plot
 
-tiff(paste0(datadir, 'figures/tide-comps-T1-T5-ML-2022.tiff'), unit = 'in', height = 7, width = 10, res = 150)
+tiff(paste0(datadir, 'figures/peak-tides-2024-T4.tiff'), unit = 'in', height = 7, width = 10, res = 150)
 plot
 dev.off()
