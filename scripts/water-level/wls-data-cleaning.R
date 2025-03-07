@@ -4,6 +4,7 @@ library(tidyverse)
 library(lubridate)
 library(data.table)
 library("rio")
+library(readxl)
 Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
@@ -20,6 +21,24 @@ burn = 0
 
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
+
+## import field measurement data
+wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
+                      sheet = 'field_measurements',
+                      skip = 6) %>%
+  # mutate(launch_time = as.POSIXct(launch_time, format = '%m/%d/%Y %H:%M:%OS'))
+  select(-c(launch_time)) %>%
+  mutate(dist_A_mm = as.integer(dist_A_mm),
+         dist_B_mm = as.integer(dist_B_mm),
+         dist_C_mm = as.integer(dist_C_mm))
+  
+## assess measurement averages
+msmt.avgs <- wls.msmt %>%
+  group_by(site_new, serial) %>%
+  summarise(mean_A_mm = round(mean(dist_A_mm, na.rm = T),0),
+            mean_B_mm = round(mean(dist_B_mm, na.rm = T),0),
+            mean_c_mm = round(mean(dist_C_mm, na.rm = T),0),
+            num = n())
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
