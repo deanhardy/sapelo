@@ -32,13 +32,22 @@ wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/
          dist_B_mm = as.integer(dist_B_mm),
          dist_C_mm = as.integer(dist_C_mm))
   
-## assess measurement averages
-msmt.avgs <- wls.msmt %>%
+## assess field measurement averages
+msmt.A.avgs <- wls.msmt %>%
   group_by(site_new, serial) %>%
-  summarise(mean_A_mm = round(mean(dist_A_mm, na.rm = T),0),
-            mean_B_mm = round(mean(dist_B_mm, na.rm = T),0),
-            mean_c_mm = round(mean(dist_C_mm, na.rm = T),0),
-            num = n())
+  summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
+            lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
+            lgr_length_n = n()) %>%
+  drop_na() %>%
+  filter(serial != 'X0976')
+
+msmt.B.avgs <- wls.msmt %>%
+  group_by(site_new) %>%
+  summarise(
+            well_ht_avg = round(mean(dist_B_mm/1000, na.rm = T),3),
+            well_ht_sd = round(sd(dist_B_mm/1000, na.rm = T),3),
+            well_ht_n = n()) %>%
+  drop_na()
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
@@ -241,7 +250,7 @@ tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('sitename', 'date_time_gmt')) %
 ## attach name to elevation data
 SN <- wls.info$name
 
-## adding references for water level from well cap to substrate (depth) and NAVD88
+## adding references for water 'level' in NAVD88
 tidal2 <- NULL
 
 for (i in 1:length(SN)) {
@@ -251,9 +260,9 @@ for (i in 1:length(SN)) {
   
   OUT2 <- tidal1.1 %>%
     filter(name == SN[[i]]) %>%
-    mutate(water_depth_m = water_level_C + el2$well_ht,
-           water_level_navd88 = water_level_C + el2$rtkcap_navd88,
-           well_ht = el2$well_ht)
+    mutate(water_level_navd88 = water_level_C + el2$rtkcap_navd88,
+           screen_bottom_navd88 = round(el2$rtkcap_navd88 - 0.6096,3), # screens are ~ top 2' of wells
+           wellcap_navd88 = el2$rtkcap_navd88)  
   
   tidal2 <- rbind(OUT2, tidal2)
 }
@@ -277,7 +286,7 @@ tidal3.1 <- tidal3 %>%
                                                 ifelse(site %in% c('Site-20'), 'T2',
                                                        if_else(site %in% c('Site-14'), 'T6', site)))))))
 
-## working on renaming sites to be more logical related to transects; site-05 is a branch of T3
+## renaming sites to be more logical related to transects; site-05 is a branch of T3
 tidal3.2 <- tidal3.1 %>%
   mutate(site_new = if_else(site == 'Site-06', 'T1-01',
                             if_else(site == 'Site-12', 'T1-02', 
@@ -304,14 +313,59 @@ nas <- tidal3.2 %>% filter(is.na(date_time_gmt))
 err <- tidal3.2 %>% filter(water_level_C >= 2 | water_level_C <= -2)
 err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
 
-ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
-# df <- df %>% filter(!water_level_C >= 2)
-# df <- df %>% filter(!water_level_C <= -2)
+## adding average well heights as measured to date
+tidal3.21 <- left_join(tidal3.2, msmt.B.avgs)
 
-temp2 <- tidal3.2 %>% filter(site == 'Site-06' & date == '2019-05-22')
+## clarifying water level in reference to well cap
+tidal3.22 <- tidal3.21 %>%
+  rename(water_level_wellcap = water_level_C)
+
+## adding average logger lengths as measured to date
+## also adding water depth relative to substrate and logger as well as logger level relative to NAVD88
+tidal3.23 <- left_join(tidal3.22, msmt.A.avgs, by = join_by(site_new == site_new, serial == serial)) %>%
+  mutate(wtr2sbst_depth = well_ht_avg + water_level_wellcap, 
+         wtr2lgr_depth = lgr_length_avg + water_level_wellcap,
+         lgr_level_navd88 = wellcap_navd88 - lgr_length_avg)
+
+ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
+
+temp2 <- tidal3.23 %>% filter(site == 'Site-06' & date == '2019-05-22')
 
 ## export merged and cleaned data
-write.csv(tidal3.2, paste(datadir, 'wls_data.csv'))
+tidal3.24 <- tidal3.23 %>%
+  rename(transect_site = site_new) %>%
+  select(date, transect_site, type, logger, serial, 
+         well_ht_avg, well_ht_sd, well_ht_n, wellcap_navd88,
+         lgr_length_avg, lgr_length_sd, lgr_length_n,
+         wtr2sbst_depth, wtr2lgr_depth,
+         water_level_wellcap, water_level_navd88,
+         water_level_navd88, lgr_level_navd88,
+         screen_bottom_navd88, salinity, water_temp_c)
+
+write.csv(tidal3.24, paste(datadir, 'wls_data.csv'))
+
+## create metadata file
+
+metadata <- data.frame(variable=names(tidal3.24),
+                                description=c('YYYY-MM-DD','Site Location', 'Site Type',
+                                              'Logger Brand', 'Logger Serial #', 
+                                              'Average height of well', 'Std Deviation of well',
+                                              'Count of well height measurements',
+                                              'Wellcap level relative to NAVD88', 
+                                              'Average length of logger line', 'Std Deviation of logger line length',
+                                              'Count of logger length measurements',
+                                              'Depth of water above substrate/ground',
+                                              'Depth of water above logger',
+                                              'Water level relative to wellcap',
+                                              'Water level relative to NAVD88',
+                                              'Logger level relative to NAVD88',
+                                              'Bottom of well screen relative to NAVD88',
+                                              'Salinity in PPT',
+                                              'Water temperaute in degrees centigrade'
+                                              ))
+write.csv(metadata, paste(datadir, 'metadata_wls_data.csv'))
+
+
 
 #################################
 ## tidy data for SINERR report
