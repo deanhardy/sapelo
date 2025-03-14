@@ -361,8 +361,8 @@ metadata <- data.frame(variable=names(tidal3.24),
                                               'Water level relative to NAVD88',
                                               'Logger level relative to NAVD88',
                                               'Bottom of well screen relative to NAVD88 (well screen is approximately two feet below bottom of the wellcap. This measuremnt does not take into account the wellcap height itself, which would raise these measurements by about 8-10cm',
-                                              'Salinity in PPT',
-                                              'Water temperaute in degrees centigrade'
+                                              'Salinity in parts per thousand',
+                                              'Water temperaute in degrees Celsius'
                                               ))
 write.csv(metadata, paste(datadir, 'metadata_wls_data.csv'))
 
