@@ -333,8 +333,9 @@ temp2 <- tidal3.23 %>% filter(site == 'Site-06' & date == '2019-05-22')
 
 ## export merged and cleaned data
 tidal3.24 <- tidal3.23 %>%
-  rename(transect_site = site_new) %>%
-  select(date, transect_site, type, logger, serial, 
+  select(!site) %>%
+  rename(site = site_new) %>%
+  select(date_time_gmt, date, transect, site, name, type, logger, serial, 
          well_ht_avg, well_ht_sd, well_ht_n, wellcap_navd88,
          lgr_length_avg, lgr_length_sd, lgr_length_n,
          wtr2sbst_depth, wtr2lgr_depth,
@@ -347,7 +348,8 @@ write.csv(tidal3.24, paste(datadir, 'wls_data.csv'))
 ## create metadata file
 
 metadata <- data.frame(variable=names(tidal3.24),
-                                description=c('YYYY-MM-DD','Site Location', 'Site Type',
+                                description=c('YYYY-MM-DD HH:MM:SS GMT', 'YYYY-MM-DD',
+                                              'Transect number', 'Site number', 'Name of site', 'Ditch or Marsh Site Type',
                                               'Logger Brand', 'Logger Serial #', 
                                               'Average height of well', 'Std Deviation of well',
                                               'Count of well height measurements',

@@ -20,7 +20,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
+  mutate(date = as.POSIXct(date, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.POSIXct(date)) %>%
   arrange(date_time_gmt)
 
@@ -51,14 +51,28 @@ ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 ## CWBP monthly MHHW at sites
 mo.mhhw.cwbp <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
-  group_by(transect, site_new, prd) %>%
+  group_by(transect, site, prd) %>%
   summarise(max = max(water_level_navd88)) %>%
   mutate(month = floor_date(prd, "month")) %>%
-  group_by(transect, site_new, month) %>%
+  group_by(transect, site, month) %>%
   summarize(avg = mean(max), count = n(), sd = sd(max)) %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(source = 'CWBP')
 
+## ensemble average of monthly mean sites across study period years
+## different lengths of time for each site, need sd included
+ea.mhhw.cwbp <- df %>%
+  mutate(prd = floor_date(date_time_gmt, "day")) %>%
+  group_by(transect, site, prd) %>%
+  summarise(max = max(water_level_navd88)) %>%
+  # mutate(month = floor_date(prd, "month")) %>%
+  mutate(month = month(prd)) %>%
+  mutate(year = year(prd)) %>%
+  group_by(transect, site, month) %>%
+  summarize(avg = mean(max), count = n(), sd = sd(max)) %>%
+  mutate(se = sd/sqrt(count)) %>% 
+  mutate(source = 'CWBP')
+  
 ## monthly MHHW at ML
 mo.mhhw.ml <- ml %>%
   mutate(month = floor_date(date, "month")) %>%
@@ -67,14 +81,29 @@ mo.mhhw.ml <- ml %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(
     transect = 'Hudson Creek',
-         site_new = 'ML', source = 'USGS') %>%
-  select(transect, site_new, month, avg, count, sd, se, source)
+         site = 'ML', source = 'USGS') %>%
+  select(transect, site, month, avg, count, sd, se, source)
 
-mo.mhhw.cwbp2 <- mo.mhhw.cwbp %>% ungroup() %>% select(!transect) ## drop transect for joining
+## monthly MHHW at ML
+ea.mhhw.ml <- ml %>%
+  mutate(month = month(date)) %>%
+  group_by(month) %>%
+  summarize(avg = mean(water_level_navd88), sd = sd(water_level_navd88), count = n()) %>%
+  mutate(se = sd/sqrt(count)) %>% 
+  mutate(
+    transect = 'Hudson Creek',
+    site = 'ML', source = 'USGS') %>%
+  select(transect, site, month, avg, count, sd, se, source)
+
+mo.mhhw.cwbp2 <- mo.mhhw.cwbp %>% ungroup() %>% select(!transect)
+## %>% select(!transect) ## drop transect for joining
   
 ## merge ML and CWBP data
 mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
   mutate(date = as.Date(month))
+
+## merge ML and CWBP ensemble data
+ea.mhhw <- rbind(ea.mhhw.cwbp, ea.mhhw.ml)
 
 ## calc monthly MHHW avg for cwbp sites
 # cwbp.avg <- mo.mhhw %>%
@@ -83,8 +112,8 @@ mo.mhhw <- rbind(mo.mhhw.cwbp, mo.mhhw.ml) %>%
 #   summarise(avg = mean(avg), se = se(avg))
 
 ## plot monthly mhhw trends by transect
-tt_facet <- ggplot(filter(mo.mhhw.cwbp, site_new %in% c('T1-02','T2-01','T3-03','T4-01')), aes(month, avg*3.28084, group = site_new)) + 
-  geom_point(aes(color = site_new 
+tt_facet <- ggplot(filter(mo.mhhw.cwbp, site %in% c('T1-02','T2-01','T3-03','T4-01')), aes(month, avg*3.28084, group = site)) + 
+  geom_point(aes(color = site 
                  # ,shape = type
   ), size = 1) + 
   geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +
@@ -98,7 +127,7 @@ tt_facet <- ggplot(filter(mo.mhhw.cwbp, site_new %in% c('T1-02','T2-01','T3-03',
         text = element_text(size = 24),
         panel.background = element_rect(color = 'grey10', fill = 'white', linewidth = 0.5),
         panel.grid = element_line(color = 'grey90')) +
-  facet_wrap(~ site_new)
+  facet_wrap(~ site)
 tt_facet
 
 png(paste0(datadir, 'figures/transect_mhhw_trends_faceted_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
@@ -110,11 +139,11 @@ t.var <- 'T1-02'
 TEXT = 24
 comps <- mo.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
-  filter(avg > 0 & site_new %in% c(t.var, 'ML')) %>%
+  filter(avg > 0 & site %in% c(t.var, 'ML')) %>%
   ggplot(aes(date, avg)) + 
   # geom_point(aes(color = source)) + 
   geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = source)) + 
-  geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(mo.mhhw, site_new == t.var)) + ## measured MHHW at CWBP sites
+  geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(mo.mhhw, site == t.var)) + ## measured MHHW at CWBP sites
   geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
   geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(mo.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
   geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
@@ -163,6 +192,66 @@ png(paste0(datadir, 'figures/mhhw-comparisons_slide.png'), unit = 'in', height =
 comps
 dev.off()
 
+## monthly mhhw comparisons
+t.var <- 'T4'
+TEXT = 24
+ea_comps <- ea.mhhw %>%
+  # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
+  filter(avg > 0 & transect %in% c(t.var, 'Hudson Creek')) %>%
+  ggplot(aes(month, avg)) + 
+  # geom_point(aes(color = source)) + 
+  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site)) + 
+  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(ea.mhhw, site == t.var)) + ## measured MHHW at CWBP sites
+  # geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
+  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(ea.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
+  # geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
+  scale_y_continuous(name = "Water Level (m NAVD88)", breaks = seq(0.9, 1.4, 0.1), minor_breaks = seq(0.9,1.4,0.01), limits = c(0.9, 1.4)) + 
+  scale_x_continuous(name = "Month", breaks = seq(1,12,1), limits = c(1,12)) +
+  # scale_x_date(name = 'Year', 
+  #              date_breaks = '1 year', date_labels = '%Y', 
+  #              date_minor_breaks = '3 months',
+  #              limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
+  #              expand = c(0,0)) +
+  # scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c(t.var, 'ML USGS')) +
+  # scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2),
+  #                       guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) +
+  # geom_smooth(method = lm, se = F) + 
+  # facet_wrap(~site_new) + 
+  # ggtitle('Monthly Mean Higher High Water') + 
+  theme(axis.title = element_text(size = TEXT),
+        axis.text = element_text(color = "black", size = TEXT),
+        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks = element_line(color = 'black'),
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+        axis.line = element_line(color = 'black'),
+        axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+        axis.title.y.right = element_text(color = 'blue'),
+        axis.line.y.right = element_line(color = "blue"), 
+        axis.ticks.y.right = element_line(color = "blue"),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
+        panel.grid = element_blank(),
+        panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        # panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
+        panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+        legend.position = 'bottom',
+        legend.text = element_text(size = TEXT),
+        legend.title = element_text(size = TEXT),
+        legend.box.background = element_rect(color = 'black'),
+        plot.title = element_text(size = TEXT, face = "bold"))
+# guides(fill=guide_legend(nrow=2,byrow=TRUE))
+ea_comps 
+
+tiff(paste0(datadir, 'figures/mhhw-ensemble-t4-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+ea_comps
+dev.off()
+
+png(paste0(datadir, 'figures/mhhw-ensemble-t4-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
+ea_comps
+dev.off()
+
 ## calculate MHHW difference b/t community measured and NOAA modeled estimate 
 comm_noaa <- mo.mhhw %>%
   filter(site_new == t.var) %>%
@@ -191,7 +280,7 @@ wls.info <- read.csv(file.path(datadir, 'wls-info.csv'))
 ## MHHW at sites (all time)
 cwbp.mhhw <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
-  rename(transect_site = site_new) %>%
+  rename(transect_site = site) %>%
   group_by(transect_site, prd) %>%
   summarise(max_wl = max(water_level_navd88)) %>%
   # mutate(month = floor_date(prd, "month")) %>%
