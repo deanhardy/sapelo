@@ -6,6 +6,7 @@ rm(list=ls())
 library(tidyverse)
 library(lubridate)
 library(readxl)
+library(colorspace)
 library(dataRetrieval) ## https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html
 Sys.setenv(TZ='GMT')
 # options(scipen=999)
@@ -194,25 +195,27 @@ dev.off()
 
 ## monthly mhhw comparisons
 t.var <- 'T4'
-TEXT = 24
+TEXT = 10
 ea_comps <- ea.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
-  filter(avg > 0 & transect %in% c(t.var, 'Hudson Creek')) %>%
+  filter(avg > 0 & transect %in% c(t.var, 'Hudson Creek')
+        #  & site != 'T3-BR-01'
+         ) %>%
   ggplot(aes(month, avg)) + 
   # geom_point(aes(color = source)) + 
-  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site)) + 
+  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site), size = 0.25, position = position_dodge(width = 0.25)) + 
   # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(ea.mhhw, site == t.var)) + ## measured MHHW at CWBP sites
   # geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
   # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(ea.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
   # geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
-  scale_y_continuous(name = "Water Level (m NAVD88)", breaks = seq(0.9, 1.4, 0.1), minor_breaks = seq(0.9,1.4,0.01), limits = c(0.9, 1.4)) + 
-  scale_x_continuous(name = "Month", breaks = seq(1,12,1), limits = c(1,12)) +
+  scale_y_continuous(name = "Monthly MHHW Level (m NAVD88)", breaks = seq(0.9, 1.4, 0.1), minor_breaks = seq(0.9,1.4,0.01), limits = c(0.8, 1.4)) + 
+  scale_x_continuous(name = "Month", breaks = seq(1,12,1), limits = c(0.5,12.5)) +
   # scale_x_date(name = 'Year', 
   #              date_breaks = '1 year', date_labels = '%Y', 
   #              date_minor_breaks = '3 months',
   #              limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
   #              expand = c(0,0)) +
-  # scale_color_manual(name = 'Monthly MHHW: ', values = c('red', 'black'), labels = c(t.var, 'ML USGS')) +
+  scale_color_manual(name = 'Site: ', values = sequential_hcl(4)) +
   # scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2),
   #                       guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) +
   # geom_smooth(method = lm, se = F) + 
@@ -234,7 +237,7 @@ ea_comps <- ea.mhhw %>%
         panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
         panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
         # panel.grid.minor.x = element_line('grey', size = 0.5, linetype = "dotted"),
-        panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
+        # panel.grid.minor.y = element_line('grey', size = 0.5, linetype = "dotted"),
         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         legend.position = 'bottom',
         legend.text = element_text(size = TEXT),
@@ -244,13 +247,13 @@ ea_comps <- ea.mhhw %>%
 # guides(fill=guide_legend(nrow=2,byrow=TRUE))
 ea_comps 
 
-tiff(paste0(datadir, 'figures/mhhw-ensemble-t4-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+tiff(paste0(datadir, 'figures/mhhw-ensemble-t 4-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
 ea_comps
 dev.off()
 
-png(paste0(datadir, 'figures/mhhw-ensemble-t4-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
-ea_comps
-dev.off()
+# png(paste0(datadir, 'figures/mhhw-ensemble-t3-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
+# ea_comps
+# dev.off()
 
 ## calculate MHHW difference b/t community measured and NOAA modeled estimate 
 comm_noaa <- mo.mhhw %>%
