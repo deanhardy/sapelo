@@ -26,17 +26,20 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   arrange(date_time_gmt)
 
 # Hudson River, Meridian, GA
+# some answers about pcode and statcd here: https://github.com/DOI-USGS/dataRetrieval/issues/438
 siteNo <- "022035975"
-pCode <- "00065" ## gage height data
-statCode <- "00021" ## tidal high-high values
+# pCode <- "00065" ## gage height data
+# statCode <- "00021" ## tidal high-high values
+pCode <- "00003" ## sampling depth feet
+statCode <- "00003" ## mean values
 start.date <- first(df$date) ## earliest available date
 end.date <- last(df$date)
 
-ml <- readNWISdv(siteNumbers = siteNo,
+ml <- readNWISuv(siteNumbers = siteNo,
                  parameterCd = pCode,
                  startDate = start.date,
-                 endDate = end.date,
-                 statCd = statCode
+                 endDate = end.date
+                 # statCd = statCode
                  ) %>%
   rename(water_level_navd88 = X_00065_00021,
          quality = X_00065_00021_cd,
