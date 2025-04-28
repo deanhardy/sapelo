@@ -28,23 +28,24 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
 # Hudson River, Meridian, GA
 # some answers about pcode and statcd here: https://github.com/DOI-USGS/dataRetrieval/issues/438
 siteNo <- "022035975"
-# pCode <- "00065" ## gage height data
-# statCode <- "00021" ## tidal high-high values
-pCode <- "00003" ## sampling depth feet
+pCode <- "00065" ## gage height data
+statCode <- "00024" ## tidal high-high values
+# pCode <- "00003" ## sampling depth feet
 statCode <- "00003" ## mean values
 start.date <- first(df$date) ## earliest available date
-end.date <- last(df$date)
+end.date <- date(last(first(df$date) + duration(0.5, units = "year")))
 
-ml <- readNWISuv(siteNumbers = siteNo,
+ml <- readNWISdv(siteNumbers = siteNo,
                  parameterCd = pCode,
                  startDate = start.date,
-                 endDate = end.date
-                 # statCd = statCode
-                 ) %>%
-  rename(water_level_navd88 = X_00065_00021,
-         quality = X_00065_00021_cd,
-         date = Date) %>%
-  mutate(type = 'high', water_level_navd88 = water_level_navd88 * 0.3048)
+                 endDate = end.date,
+                 statCd = statCode
+                 ) 
+# %>%
+#   rename(water_level_navd88 = X_00065_00003,
+#          quality = X_00065_00021_cd,
+#          date = Date) %>%
+#   mutate(type = 'high', water_level_navd88 = water_level_navd88 * 0.3048)
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
@@ -63,7 +64,7 @@ mo.mhhw.cwbp <- df %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(source = 'CWBP')
 
-## ensemble average of monthly mean sites across study period years
+## ensemble average of monthly mhhw at sites across study period years
 ## different lengths of time for each site, need sd included
 ea.mhhw.cwbp <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
@@ -77,6 +78,20 @@ ea.mhhw.cwbp <- df %>%
   mutate(se = sd/sqrt(count)) %>% 
   mutate(source = 'CWBP')
   
+## ensemble average of monthly mean water levels sites across study period years
+## different lengths of time for each site, need sd included
+ea.mn.cwbp <- df %>%
+  mutate(prd = floor_date(date_time_gmt, "day")) %>%
+  group_by(transect, site, prd) %>%
+  summarise(mwl = mean(water_level_navd88)) %>%
+  # mutate(month = floor_date(prd, "month")) %>%
+  mutate(month = month(prd)) %>%
+  mutate(year = year(prd)) %>%
+  group_by(transect, site, month) %>%
+  summarize(avg = mean(mwl), count = n(), sd = sd(mwl)) %>%
+  mutate(se = sd/sqrt(count)) %>% 
+  mutate(source = 'CWBP')
+
 ## monthly MHHW at ML
 mo.mhhw.ml <- ml %>%
   mutate(month = floor_date(date, "month")) %>%
