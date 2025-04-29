@@ -68,6 +68,18 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
          phase = ifelse(phase == 'New Moon', 'New', 'Full'),
          date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
+library(zoo)
+#########################
+## filtered water depth 
+#########################
+df.ma4 <- df %>%
+  group_by(site) %>%
+  mutate(ma4 = rollmean(wtr2sbst_depth, k=5, fill=NA, align = 'right')) %>%
+  ungroup()
+
+ggplot(filter(df.ma4, site == 'T1-05')) + 
+         geom_line(aes(date_time_gmt, ma4))
+
 #########
 ## esda 
 #########
@@ -90,12 +102,12 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 ## averages by unit time
 df.avg <- df %>%
   mutate(prd = floor_date(date_time_gmt, "month")) %>%
-  group_by(transect, site_new, type, prd) %>%
+  group_by(transect, site, type, prd) %>%
   summarize(avg = mean(water_level_navd88))
 
 ## plot mean monthly water levels
-tt_facet <- ggplot(df.avg, aes(prd, avg*3.28084, group = site_new)) + 
-  geom_point(aes(color = site_new 
+tt_facet <- ggplot(df.avg, aes(prd, avg*3.28084, group = site)) + 
+  geom_point(aes(color = site 
                  # ,shape = type
                  ), size = 0.5) + 
   geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +

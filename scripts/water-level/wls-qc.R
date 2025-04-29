@@ -25,15 +25,15 @@ names.new <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/dat
 
 ## import field measurements data
 wls.field <- read_excel('/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx', 
-                        sheet = 'field measurements',
+                        sheet = 'field_measurements',
                         skip = 6) %>%
-  mutate(GMT = as.POSIXct(GMT, '%m/%d/%y %H:$M:%S', tz = 'GMT'),
+  mutate(GMT = as.POSIXct(gmt, '%m/%d/%y %H:$M:%S', tz = 'GMT'),
          date = as.Date(GMT, '%m/%d/%y', tz = 'GMT'),
-         Site = paste0('Site-', if_else(str_length(Site) == 1, paste0(0,Site), Site)),
-         Name = str_to_title(Name),
+         Site = paste0('Site-', if_else(str_length(site) == 1, paste0(0,site), site)),
+         Name = str_to_title(name),
          sitename = paste(Site, Name)) %>%
-  filter(!grepl('X0976', Serial)) %>%
-  select(date, GMT, Site, Name, sitename, Serial, Activity, Category)
+  filter(!grepl('X0976', serial)) %>%
+  select(date, GMT, Site, Name, sitename, serial, activity, type)
 
 wls.field <- left_join(wls.field, names.new, by = 'sitename')
 wls.field <- wls.field %>%
@@ -41,7 +41,7 @@ wls.field <- wls.field %>%
 
 ## for use in qc.df creation
 wls.field2 <- wls.field %>%
-  rename(date_time_gmt = GMT, site = Site, activity = Activity) %>%
+  rename(date_time_gmt = GMT) %>%
   select(site, date_time_gmt, activity)
   
 
@@ -54,7 +54,7 @@ field.smry <- wls.field %>%
 df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.Date(date)) %>%
-  mutate(site_date = paste(site_new, date))
+  mutate(sitedate = paste(site, date))
 
 ## testing filter methods
 sites_list <- unique(df$sitename)
