@@ -32,14 +32,25 @@ wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/
          dist_B_mm = as.integer(dist_B_mm),
          dist_C_mm = as.integer(dist_C_mm))
   
-## assess field measurement averages
+## assess and plot field measurement averages
 msmt.A.avgs <- wls.msmt %>%
   group_by(site_new, serial) %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
             lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
             lgr_length_n = n()) %>%
   drop_na() %>%
-  filter(serial != 'X0976')
+  filter(serial != 'X0976') %>%
+  ungroup() %>%
+  mutate(site_serial = paste0(site_new, " (", serial, ')'))  
+
+ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin=lgr_length_avg-lgr_length_sd, ymax=lgr_length_avg+lgr_length_sd), width=.2,
+                position=position_dodge(0.05)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  xlab('Site (Serial #)') + ylab('Length (m)') +
+  ggtitle("Mean Logger Hanging Length (Distance A)")
+  
 
 msmt.B.avgs <- wls.msmt %>%
   group_by(site_new) %>%
@@ -48,6 +59,15 @@ msmt.B.avgs <- wls.msmt %>%
             well_ht_sd = round(sd(dist_B_mm/1000, na.rm = T),3),
             well_ht_n = n()) %>%
   drop_na()
+
+ggplot(msmt.B.avgs, aes(site_new, well_ht_avg)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin=well_ht_avg-well_ht_sd, ymax=well_ht_avg+well_ht_sd), width=.2,
+                position=position_dodge(0.05)) + 
+  # geom_text(msmt.B.avgs, well_ht_n, nudge_x = 0.1) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  xlab('Site') + ylab('Well Height (m)') +
+  ggtitle("Mean Well Height (Distance B)")
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
