@@ -10,6 +10,10 @@ library(readxl)
 library("rio")
 Sys.setenv(TZ='GMT')
 
+## set burntime, where 720 equals 12 minutes between msmts
+## if burn = 0, then 720; if burn = 1, then 1440; if burn = 2, then 2160 
+burntime = 1440
+
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
@@ -42,7 +46,7 @@ wls.field <- wls.field %>%
 ## for use in qc.df creation
 wls.field2 <- wls.field %>%
   rename(date_time_gmt = GMT) %>%
-  select(site, date_time_gmt, activity)
+  select(Site, date_time_gmt, activity)
   
 
 ## filter to just field outing dates with list of sites visited
@@ -54,12 +58,12 @@ field.smry <- wls.field %>%
 df <- read.csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.Date(date)) %>%
-  mutate(sitedate = paste(site, date))
+  mutate(site_date = paste(site, date))
 
 ## testing filter methods
-sites_list <- unique(df$sitename)
+sites_list <- unique(df$site)
 dates_list <- unique(field.smry$date)
-df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(dates_list[10]-1), as.Date(dates_list[10]+1)))
+df.test <- df %>% filter(site == sites_list[16] & between(date, as.Date(dates_list[10]-1), as.Date(dates_list[10]+1)))
 
 ## https://business-science.github.io/tibbletime/articles/TT-01-time-based-filtering.html
 # library(tibbletime)
@@ -67,7 +71,7 @@ df.test <- df %>% filter(sitename == sites_list[16] & between(date, as.Date(date
 # dates_list <- as_tbl_time(field.smry, index = date)
 # df.test <- df.tbbl %>% filter_time(dates_list[10,]-1 ~ dates_list[10]+1)
 
-temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
+# temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
 
 
 
@@ -80,47 +84,36 @@ temp <- df %>% filter(site == "Site-06" & date == '2019-05-22')
 qc <- NULL
 
   # create list logger sites in data to loop over 
-  sites_list <- unique(df$sitename)
+  sites_list <- unique(df$site)
   
   # create for loop to produce df 
   for (i in seq_along(sites_list)) {
     
     # create list of date and logger sites in data to loop over 
     gmt_list <- wls.field %>% 
-      # filter(sitename == 'Site-11 Library') %>%
-      filter(sitename == sites_list[i]) %>%
+      filter(site_new == sites_list[i]) %>%
       pull(GMT)
     
     for (z in seq_along(gmt_list)) {
       
       # create QC dataframe first measurement post download minus last measurement pre-download
       # also percent difference column
-      # OUT <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z] + 720)) %>%
-      #   select(site_new, sitename_new, date_time_gmt, water_level_C, type, logger, serial)
-      OUTpre <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z]-1)) %>%
+      OUTpre <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - burntime, gmt_list[z]-1)) %>%
         mutate(field = 'pre_temp')
-      OUTpost <- filter(df, sitename == sites_list[i] & between(df$date_time_gmt, gmt_list[z]+1, gmt_list[z] + 720)) %>%
+      OUTpost <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z]+1, gmt_list[z] + burntime)) %>%
                           mutate(field = 'post_temp')
       OUT <- rbind(OUTpre, OUTpost) %>%
-        select(site, site_new, sitename_new, date, date_time_gmt, water_level_C, type, logger, serial, field)
-      # OUT <- df %>% 
-      #   filter(sitename == sites_list[i]) %>%
-      #   mutate(
-      #         # visit = gmt_list[z],
-      #          previsit = if_else(between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z]),
-      #                             df$date_time_gmt, 'NA'),
-      #          # postvisit = if_else(between(df$date_time_gmt, gmt_list[z], gmt_list[z] + 720),
-      #          #                     df$date_time_gmt, 'NA')
-      #          )
+        select(site, name, date, date_time_gmt, water_level_wellcap, type, logger, serial, field)
       qc <- rbind(OUT, qc)
       
     }
   }
 
+## create dataframe showing difference in pre and post download measurements
 qc.diff_post <- qc %>%
-  group_by(site_new, date) %>%
+  group_by(site, date) %>%
   select(!date_time_gmt) %>%
-  pivot_wider(names_from = field, values_from = water_level_C, values_fn = list) %>%
+  pivot_wider(names_from = field, values_from = water_level_wellcap, values_fn = list) %>%
   ungroup() %>%
   hoist(pre_temp, previsit = list(1L)) %>%
   hoist(post_temp, postvisit = list(1L)) %>%
@@ -141,20 +134,22 @@ qc.diff_post <- qc %>%
          accuracy = if_else(str_starts(serial, '2|9'), '0.003',
                               if_else(str_starts(serial, '1'), '0.010', '0.005')),)
 
+## plot abs difference in pre and post download measurements
+## why did I previously limit x-axis to 8 cm when some values are up to 90 cm?
 qc.diff_post.fig<- 
   ggplot(qc.diff_post) + 
   geom_point(aes(date, abs_diff*100, shape = logger_material, color = accuracy_x2)) + 
-  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(0,8), breaks = seq(0,8,2)) + 
+  scale_y_continuous(name = 'Water Level Difference (cm)', limits = c(0,90), breaks = seq(0,90,10)) + 
   scale_color_manual(name = 'Accuracy (x2)',
                      values = c('black', 'red'),
                      labels = c("Within Range","Outside Range")) +
   scale_shape_manual(name = 'Logger',
                      values = c(15, 16, 17),
-                     labels = c('Hobo Polypropylene',
-                                'Hobo Titanium',
+                     labels = c('Hobo U20L-04 (Poly)',
+                                'Hobo U20-001-04 (Metal)',
                                 'Van Essen Ceramic')) + 
   ggtitle('Quality Control: Absolute Difference in Water Level Pre & Post Data Download') + 
-  facet_wrap('site_new')
+  facet_wrap('site')
 qc.diff_post.fig
 
 png(paste0(datadir, "figures/qaqc/qc_abs_diff.png"), width = 12, height = 8, units = 'in', res = 150)
@@ -167,15 +162,18 @@ tbl <- qc.diff_post %>%
   summarise(count = n())
 
 out.range <-qc.diff_post %>%
-  filter(accuracy_x2 == 'outside' | is.na(accuracy_x2)) %>%
-  mutate(site_date = paste(site_new, date))
+  filter(accuracy_x2 == 'outside' 
+         # | is.na(accuracy_x2)
+         ) %>%
+  mutate(site_date = paste(site, date))
   
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
-## types of errrors in measurement. 
+## types of errors in measurement. 
 
 ##############################################################################################
-# create graphing function for 12-minute intervals over specified interval using water depth
-# filtered to field day site visits for data downloads plus/minus one day
+# create graphing function for 12-minute intervals over specified interval using water level relative to wellcap
+# filtered to field day site visits for data downloads plus/minus 2 days and that are ID'd as out of range
+# want to update to run through dates list that expands graphs to one week of dates around download date, not one day. 
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
@@ -196,7 +194,7 @@ qc.graph <- function(df, na.rm = TRUE, ...){
     
     for (z in seq_along(dates_list)) {
       
-      df2 <- filter(df, site_date == sites_dates[i] & between(df$date, dates_list[z] - 1, dates_list[z] + 1))
+      df2 <- filter(df, site_date == sites_dates[i] & between(df$date, dates_list[z] - 3, dates_list[z] + 4))
       
       df3 <- left_join(df2, out.range, by = 'site_date')
       
@@ -206,12 +204,12 @@ qc.graph <- function(df, na.rm = TRUE, ...){
       # create plot for each site in df 
       plot <- 
         ggplot(df3)  + 
-        geom_line(aes(date_time_gmt, water_level_navd88)) +  ## convert to feet then add MLLW base elevation
+        geom_line(aes(date_time_gmt, water_level_wellcap)) +  
         geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
         scale_fill_manual(values = c('white', 'black')) + 
         scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
-        scale_y_continuous(name = 'Water Level (m NAVD88)', 
-                           breaks = seq(-0.5,1.8,0.1), limits = c(-0.5,1.8), expand = c(0,0)) +
+        scale_y_continuous(name = 'Water Level (m Wellcap)', 
+                           breaks = seq(-1,1,0.1), limits = c(-1,1), expand = c(0,0)) +
         theme(axis.title = element_text(size = TEXT),
               axis.text = element_text(color = "black", size = TEXT),
               axis.ticks.length = unit(-0.2, 'cm'),
@@ -219,10 +217,10 @@ qc.graph <- function(df, na.rm = TRUE, ...){
               axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
               axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
               axis.line = element_line(color = 'black'),
-              axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
-              axis.title.y.right = element_text(color = 'blue'),
-              axis.line.y.right = element_line(color = "blue"), 
-              axis.ticks.y.right = element_line(color = "blue"),
+              # axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
+              # axis.title.y.right = element_text(color = 'blue'),
+              # axis.line.y.right = element_line(color = "blue"), 
+              # axis.ticks.y.right = element_line(color = "blue"),
               panel.background = element_rect(fill = FALSE, color = 'black'),
               panel.grid = element_blank(),
               panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
