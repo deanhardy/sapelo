@@ -43,14 +43,18 @@ msmt.A.avgs <- wls.msmt %>%
   ungroup() %>%
   mutate(site_serial = paste0(site_new, " (", serial, ')'))  
 
-ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg)) +
+a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg)) +
   geom_point() + 
   geom_errorbar(aes(ymin=lgr_length_avg-lgr_length_sd, ymax=lgr_length_avg+lgr_length_sd), width=.2,
                 position=position_dodge(0.05)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   xlab('Site (Serial #)') + ylab('Length (m)') +
   ggtitle("Mean Logger Hanging Length (Distance A)")
-  
+a.mn
+
+png(paste0(datadir, "figures/msmt-a-means.png"), bg = 'white', width = 13.33, height = 6.5, units = 'in', res = 150)
+a.mn
+dev.off()
 
 msmt.B.avgs <- wls.msmt %>%
   group_by(site_new) %>%
@@ -60,7 +64,7 @@ msmt.B.avgs <- wls.msmt %>%
             well_ht_n = n()) %>%
   drop_na()
 
-ggplot(msmt.B.avgs, aes(site_new, well_ht_avg)) +
+b.mn <- ggplot(msmt.B.avgs, aes(site_new, well_ht_avg)) +
   geom_point() + 
   geom_errorbar(aes(ymin=well_ht_avg-well_ht_sd, ymax=well_ht_avg+well_ht_sd), width=.2,
                 position=position_dodge(0.05)) + 
@@ -68,6 +72,11 @@ ggplot(msmt.B.avgs, aes(site_new, well_ht_avg)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   xlab('Site') + ylab('Well Height (m)') +
   ggtitle("Mean Well Height (Distance B)")
+b.mn
+
+png(paste0(datadir, "figures/msmt-b-means.png"), bg = 'white', width = 13.33, height = 6.5, units = 'in', res = 150)
+b.mn
+dev.off()
 
 ## import water level data files
 filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo'),
