@@ -166,7 +166,9 @@ out.range <-qc.diff_post %>%
          # | is.na(accuracy_x2)
          ) %>%
   mutate(site_date = paste(site, date))
-  
+
+write.csv(out.range, paste(datadir, 'qaqc_out-of-range.csv'))
+
 ## could add assessment comparing logged measurement pre and post with field measurement to analyze different
 ## types of errors in measurement. 
 
@@ -194,7 +196,7 @@ qc.graph <- function(df, na.rm = TRUE, ...){
     
     for (z in seq_along(dates_list)) {
       
-      df2 <- filter(df, site_date == sites_dates[i] & between(df$date, dates_list[z] - 3, dates_list[z] + 4))
+      df2 <- filter(df, str_sub(site_date, start = 1L, end = 5L) == str_sub(sites_dates[i], 1L, 5L) & between(df$date, dates_list[z] - 3, dates_list[z] + 4))
       
       df3 <- left_join(df2, out.range, by = 'site_date')
       
