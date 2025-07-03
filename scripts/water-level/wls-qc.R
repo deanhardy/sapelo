@@ -175,7 +175,7 @@ write.csv(out.range, paste(datadir, 'qaqc_out-of-range.csv'))
 ##############################################################################################
 # create graphing function for 12-minute intervals over specified interval using water level relative to wellcap
 # filtered to field day site visits for data downloads plus/minus 2 days and that are ID'd as out of range
-# want to update to run through dates list that expands graphs to one week of dates around download date, not one day. 
+# want to add horizontal line representing substrate, bottom of wellscreen, and tip of logger
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
 ##############################################################################################
 TEXT = 15 ## set font size for figures
