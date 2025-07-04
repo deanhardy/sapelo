@@ -4,6 +4,7 @@
 rm(list=ls())
 
 library(tidyverse)
+library(geomtextpath)
 library(lubridate)
 library(data.table)
 library(readxl)
@@ -184,7 +185,7 @@ qc.graph <- function(df, na.rm = TRUE, ...){
   # create list logger sites in data to loop over 
   # sites_list <- unique(out.range$sitename_new)
   sites_dates <- unique((out.range$site_date))
-  
+
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_dates)) {
     
@@ -207,8 +208,16 @@ qc.graph <- function(df, na.rm = TRUE, ...){
       plot <- 
         ggplot(df3)  + 
         geom_line(aes(date_time_gmt, water_level_wellcap)) +  
-        geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
-        scale_fill_manual(values = c('white', 'black')) + 
+        # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
+        geom_textvline(aes(xintercept = GMT, label = "data download", hjust = 0.8,
+                      vjust = 1.3, color = "blue4"), data = dl, show.legend = F) +
+        geom_texthline(aes(yintercept = 0-well_ht_avg, label = "substrate",
+                       hjust = 0.8, color = "green4"), data = df3, show.legend = F) + ## substrate relative to wellcap
+        geom_texthline(aes(yintercept = -0.61, label = "bottom of screen",
+                           hjust = 0.8, color = "red4"), data = df3, show.legend = F) + ## bottom of screen relative to wellcap
+        geom_texthline(aes(yintercept =  0-lgr_length_avg, label = "tip of logger",
+                           hjust = 0.8, color = "grey50"), data = df3, show.legend = F) + ## tip of logger relative to wellcap
+        # scale_fill_manual(values = c('white', 'black')) + 
         scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
         scale_y_continuous(name = 'Water Level (m Wellcap)', 
                            breaks = seq(-1,1,0.1), limits = c(-1,1), expand = c(0,0)) +
@@ -219,19 +228,10 @@ qc.graph <- function(df, na.rm = TRUE, ...){
               axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
               axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
               axis.line = element_line(color = 'black'),
-              # axis.text.y.right = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), color = 'blue'),
-              # axis.title.y.right = element_text(color = 'blue'),
-              # axis.line.y.right = element_line(color = "blue"), 
-              # axis.ticks.y.right = element_line(color = "blue"),
               panel.background = element_rect(fill = FALSE, color = 'black'),
               panel.grid = element_blank(),
               panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
               plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-              legend.position = c(0.1, 0.92),
-              legend.text = element_text(size = TEXT),
-              legend.title = element_text(size = TEXT),
-              # legend.key = element_blank(),
-              legend.box.background = element_rect(color = 'black'),
               plot.title = element_text(size = TEXT, face = "bold")) + 
         ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
       
