@@ -209,14 +209,16 @@ qc.graph <- function(df, na.rm = TRUE, ...){
         ggplot(df3)  + 
         geom_line(aes(date_time_gmt, water_level_wellcap)) +  
         # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
-        geom_textvline(aes(xintercept = GMT, label = "data download", hjust = 0.8,
-                      vjust = 1.3, color = "blue4"), data = dl, show.legend = F) +
-        geom_texthline(aes(yintercept = 0-well_ht_avg, label = "substrate",
-                       hjust = 0.8, color = "green4"), data = df3, show.legend = F) + ## substrate relative to wellcap
-        geom_texthline(aes(yintercept = -0.61, label = "bottom of screen",
-                           hjust = 0.8, color = "red4"), data = df3, show.legend = F) + ## bottom of screen relative to wellcap
-        geom_texthline(aes(yintercept =  0-lgr_length_avg, label = "tip of logger",
-                           hjust = 0.8, color = "grey50"), data = df3, show.legend = F) + ## tip of logger relative to wellcap
+        geom_textvline(aes(xintercept = GMT), label = "data download", hjust = 0.8,
+                      vjust = 1.3, color = "blue4", data = dl, show.legend = F) +
+        geom_texthline(aes(yintercept = 0), label = "wellcap",
+                           hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
+        geom_texthline(aes(yintercept = 0-well_ht_avg), label = "substrate",
+                       hjust = 0.9, color = "green4", data = df3, show.legend = F) + ## substrate relative to wellcap
+        geom_texthline(aes(yintercept = -0.61), label = "bottom of screen",
+                           hjust = 0.9, color = "red4", data = df3, show.legend = F) + ## bottom of screen relative to wellcap
+        geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
+                           hjust = 0.9, color = "grey30", data = df3, show.legend = F) + ## tip of logger relative to wellcap
         # scale_fill_manual(values = c('white', 'black')) + 
         scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
         scale_y_continuous(name = 'Water Level (m Wellcap)', 
