@@ -11,10 +11,6 @@ library(readxl)
 library("rio")
 Sys.setenv(TZ='GMT')
 
-## set burntime, where 720 equals 12 minutes between msmts
-## if burn = 0, then 720; if burn = 1, then 1440; if burn = 2, then 2160 
-burntime = 1440
-
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
@@ -98,10 +94,11 @@ qc <- NULL
     for (z in seq_along(gmt_list)) {
       
       # create QC dataframe first measurement post download minus last measurement pre-download
+      ## gmt_list +- seconds must equal relative number of burned log events from data cleaning script
       # also percent difference column
-      OUTpre <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - burntime, gmt_list[z]-1)) %>%
+      OUTpre <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z] - 720, gmt_list[z])) %>%
         mutate(field = 'pre_temp')
-      OUTpost <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z]+1, gmt_list[z] + burntime)) %>%
+      OUTpost <- filter(df, site == sites_list[i] & between(df$date_time_gmt, gmt_list[z], gmt_list[z] + 1440)) %>%
                           mutate(field = 'post_temp')
       OUT <- rbind(OUTpre, OUTpost) %>%
         select(site, name, date, date_time_gmt, water_level_wellcap, type, logger, serial, field)
@@ -149,7 +146,7 @@ qc.diff_post.fig<-
                      labels = c('Hobo U20L-04 (Poly)',
                                 'Hobo U20-001-04 (Metal)',
                                 'Van Essen Ceramic')) + 
-  ggtitle('Quality Control: Absolute Difference in Water Level Pre & Post Data Download') + 
+  ggtitle(paste0('Quality Control: Absolute Difference in Water Level Pre & Post Data Download')) + 
   facet_wrap('site')
 qc.diff_post.fig
 

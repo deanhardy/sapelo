@@ -13,7 +13,7 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 # level.var <- c('water_depth_m')
 
 ## set # measurements to "burn" pre and post data download
-burn = 0
+burn = 1
 
 #######################################
 ## import and clean data
@@ -128,7 +128,7 @@ for(i in 1:length(filz)) {
   
     # colnames(OUT) <- c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'water_level_C')
 
-    slice(., burn:(n()-burn)) %>% ## removes first ## and last ## readings
+    slice(., burn:(n())) %>% ## removes first ## and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 7) %>% ## removes last # rows
     mutate(date_time_gmt = if_else(
@@ -185,7 +185,7 @@ for(i in 1:length(filz.ve)) {
                select = c(1:3),
                col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
                stringsAsFactors = FALSE) %>%
-    slice(., burn:(n()-burn)) %>% ## removes first and last ## readings
+    slice(., burn:(n())) %>% ## removes first and last ## readings
     # slice_head(n = 5) %>% ## removes first # rows
     # slice_tail(n = 6) %>% ## removes last # rows
     mutate(
