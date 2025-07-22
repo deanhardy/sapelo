@@ -1,5 +1,6 @@
 ################################################################
 ## comparing elevation of sites against other projects
+## take ensemble averages of project sites
 ################################################################
 rm(list=ls())
 
@@ -7,6 +8,7 @@ library(tidyverse)
 library(lubridate)
 library(readxl)
 library(colorspace)
+library(sf)
 library(dataRetrieval) ## https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html
 Sys.setenv(TZ='GMT')
 # options(scipen=999)
@@ -21,31 +23,33 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date = as.POSIXct(date, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
+  mutate(date = as.POSIXct(date, format = "%Y-%m-%d %H:%M:%S", tz = 'UTC'),
          date = as.POSIXct(date)) %>%
   arrange(date_time_gmt)
 
 # Hudson River, Meridian, GA
 # some answers about pcode and statcd here: https://github.com/DOI-USGS/dataRetrieval/issues/438
-siteNo <- "022035975"
-pCode <- "00065" ## gage height data
-statCode <- "00024" ## tidal high-high values
+siteNumbers <- "USGS-022035975"
+parameterCode <- "00065" ## gage height data
+statCode <- "00024" ## tidal high-high values; https://help.waterdata.usgs.gov/stat_code
 # pCode <- "00003" ## sampling depth feet
-statCode <- "00003" ## mean values
-start.date <- first(df$date) ## earliest available date
-end.date <- date(last(first(df$date) + duration(0.5, units = "year")))
+# statCode <- "00003" ## mean values
+start.date <- as.character(first(df$date)) ## earliest available date
+end.date <- as.character(last(df$date)) 
+                                   # + duration(0.2, units = "year")))) ## dl X number years after first date
 
-ml <- readNWISdv(siteNumbers = siteNo,
-                 parameterCd = pCode,
-                 startDate = start.date,
-                 endDate = end.date,
-                 statCd = statCode
-                 ) 
-# %>%
-#   rename(water_level_navd88 = X_00065_00003,
-#          quality = X_00065_00021_cd,
-#          date = Date) %>%
-#   mutate(type = 'high', water_level_navd88 = water_level_navd88 * 0.3048)
+ml <- read_waterdata_daily(
+  monitoring_location_id = siteNumbers,
+  parameter_code = parameterCode,
+  statistic_id = statCode,
+  time = c(start.date, end.date)
+) %>%
+  st_drop_geometry() %>% 
+  rename(water_level_navd88 = value,
+         date = time) %>%
+  mutate(water_level_navd88 = (water_level_navd88) * -0.3048) %>% ## appears data are not right, as all negative 7/22/25, so multiply by (-)
+  select(date, water_level_navd88)
+
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
@@ -211,8 +215,8 @@ png(paste0(datadir, 'figures/mhhw-comparisons_slide.png'), unit = 'in', height =
 comps
 dev.off()
 
-## monthly mhhw comparisons
-t.var <- 'T4'
+## monthly mhhw ensemble average comparisons
+t.var <- 'T1'
 TEXT = 10
 ea_comps <- ea.mhhw %>%
   # filter(!site_new %in% c('T5-01', 'T5-02')) %>%
@@ -233,7 +237,7 @@ ea_comps <- ea.mhhw %>%
   #              date_minor_breaks = '3 months',
   #              limits = c(ymd("2018-07-01"), ymd("2024-03-31")),
   #              expand = c(0,0)) +
-  scale_color_manual(name = 'Site: ', values = sequential_hcl(4)) +
+  scale_color_manual(name = 'Site: ', values = qualitative_hcl(6)) +
   # scale_linetype_manual(name = "MHHW: ", values = c(2,3,3,2),
   #                       guide = guide_legend(override.aes = list(color = c("red", "black", 'black', 'red')))) +
   # geom_smooth(method = lm, se = F) + 
@@ -265,7 +269,7 @@ ea_comps <- ea.mhhw %>%
 # guides(fill=guide_legend(nrow=2,byrow=TRUE))
 ea_comps 
 
-tiff(paste0(datadir, 'figures/mhhw-ensemble-t 4-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+tiff(paste0(datadir, 'figures/mhhw-ensemble-t1-comparisons.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
 ea_comps
 dev.off()
 
