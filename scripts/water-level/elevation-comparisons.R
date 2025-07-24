@@ -31,23 +31,25 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
 # some answers about pcode and statcd here: https://github.com/DOI-USGS/dataRetrieval/issues/438
 siteNumbers <- "USGS-022035975"
 parameterCode <- "00065" ## gage height data
-statCode <- "00024" ## tidal high-high values; https://help.waterdata.usgs.gov/stat_code
+statCode <- "00021" ## tidal high-high values; https://help.waterdata.usgs.gov/stat_code
 # pCode <- "00003" ## sampling depth feet
 # statCode <- "00003" ## mean values
-start.date <- as.character(first(df$date)) ## earliest available date
-end.date <- as.character(last(df$date)) 
+start.date <- as.character(first(df$date)) ## earliest available date in dataset
+end.date <- as.character(last(df$date)) # last available date in dataset
                                    # + duration(0.2, units = "year")))) ## dl X number years after first date
 
+## https://water.code-pages.usgs.gov/dataRetrieval/reference/read_waterdata_daily.html
 ml <- read_waterdata_daily(
   monitoring_location_id = siteNumbers,
   parameter_code = parameterCode,
   statistic_id = statCode,
-  time = c(start.date, end.date)
+  time = c(start.date, end.date),
+  skipGeometry = T
 ) %>%
-  st_drop_geometry() %>% 
+  st_drop_geometry() %>%
   rename(water_level_navd88 = value,
          date = time) %>%
-  mutate(water_level_navd88 = (water_level_navd88) * -0.3048) %>% ## appears data are not right, as all negative 7/22/25, so multiply by (-)
+  mutate(water_level_navd88 = (water_level_navd88) * 0.3048) %>%
   select(date, water_level_navd88)
 
 
