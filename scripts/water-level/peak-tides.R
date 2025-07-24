@@ -37,7 +37,7 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
          date = as.POSIXct(date)) %>%
   arrange(date_time_gmt) %>%
-  select(date_time_gmt, site_new, water_level_navd88)
+  select(date_time_gmt, site, water_level_navd88)
 
 # Hudson River, Meridian, GA
 siteNo <- "022035975"

@@ -32,8 +32,7 @@ df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
 siteNumbers <- "USGS-022035975"
 parameterCode <- "00065" ## gage height data
 statCode <- "00021" ## tidal high-high values; https://help.waterdata.usgs.gov/stat_code
-# pCode <- "00003" ## sampling depth feet
-# statCode <- "00003" ## mean values
+statCode <- "00021" ##; 
 start.date <- as.character(first(df$date)) ## earliest available date in dataset
 end.date <- as.character(last(df$date)) # last available date in dataset
                                    # + duration(0.2, units = "year")))) ## dl X number years after first date
@@ -52,6 +51,18 @@ ml <- read_waterdata_daily(
   mutate(water_level_navd88 = (water_level_navd88) * 0.3048) %>%
   select(date, water_level_navd88)
 
+## read 15-min interval data aka "unit value" data
+siteNo = "022035975"
+ml.uv <- readNWISuv(siteNumbers = siteNo,
+                 parameterCd = parameterCode,
+                 startDate = start.date,
+                 endDate = end.date) %>%
+  rename(water_level_navd88 = X_00065_00000,
+         quality = X_00065_00000_cd,
+         date_time_gmt = dateTime) %>%
+  mutate(water_level_navd88 = water_level_navd88 * 0.3048,
+         site_new = 'ML') %>%
+  select(date_time_gmt, site_new, water_level_navd88)
 
 ml$date <- as.Date(ml$date) ## convert datetime column to correct format
 
@@ -275,9 +286,9 @@ tiff(paste0(datadir, 'figures/mhhw-ensemble-t1-comparisons.tiff'), unit = 'in', 
 ea_comps
 dev.off()
 
-# png(paste0(datadir, 'figures/mhhw-ensemble-t3-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
-# ea_comps
-# dev.off()
+png(paste0(datadir, 'figures/mhhw-ensemble-t3-comparisons_slide.png'), unit = 'in', height = 6.5, width = 13.33, res = 150)
+ea_comps
+dev.off()
 
 ## calculate MHHW difference b/t community measured and NOAA modeled estimate 
 comm_noaa <- mo.mhhw %>%
