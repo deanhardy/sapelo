@@ -72,13 +72,15 @@ library(zoo)
 #########################
 ## filtered water depth 
 #########################
-df.ma4 <- df %>%
+## exploring rolling means
+## https://jmsallan.netlify.app/blog/rolling-functions-in-r/
+df.ma <- df %>%
   group_by(site) %>%
-  mutate(ma4 = rollmean(wtr2sbst_depth, k=5, fill=NA, align = 'right')) %>%
+  mutate(ma = rollmean(wtr2sbst_depth, k=120, fill=NA, align = 'center')) %>%
   ungroup()
 
-ggplot(filter(df.ma4, site == 'T1-05')) + 
-         geom_line(aes(date_time_gmt, ma4))
+ggplot(filter(df.ma, site == 'T3-02')) + 
+         geom_line(aes(date_time_gmt, ma))
 
 #########
 ## esda 
