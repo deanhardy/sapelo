@@ -352,9 +352,8 @@ tidal3.22 <- tidal3.21 %>%
 ## adding average logger lengths as measured to date
 ## also adding water depth relative to substrate and logger as well as logger level relative to NAVD88
 tidal3.23 <- left_join(tidal3.22, msmt.A.avgs, by = join_by(site_new == site_new, serial == serial)) %>%
-  mutate(wtr2sbst_depth = well_ht_avg + water_level_wellcap, 
-         wtr2lgr_depth = lgr_length_avg + water_level_wellcap,
-         lgr_level_navd88 = wellcap_navd88 - lgr_length_avg)
+  mutate(wtr2sbst_depth = if_else((well_ht_avg + water_level_wellcap) <= 0, 0, well_ht_avg + water_level_wellcap), 
+         wtr2lgr_depth = if_else((lgr_length_avg + water_level_wellcap) <= 0, 0, lgr_length_avg + water_level_wellcap)) 
 
 ggplot(err, aes(date_time_gmt, water_level_C, color = site)) + geom_point()  
 
@@ -369,7 +368,6 @@ tidal3.24 <- tidal3.23 %>%
          lgr_length_avg, lgr_length_sd, lgr_length_n,
          wtr2sbst_depth, wtr2lgr_depth,
          water_level_wellcap, water_level_navd88,
-         water_level_navd88, lgr_level_navd88,
          screen_bottom_navd88, salinity, water_temp_c)
 
 write.csv(tidal3.24, paste(datadir, 'wls_data.csv'))
@@ -390,7 +388,6 @@ metadata <- data.frame(variable=names(tidal3.24),
                                               'Depth of water above logger',
                                               'Water level relative to wellcap',
                                               'Water level relative to NAVD88',
-                                              'Logger level relative to NAVD88',
                                               'Bottom of well screen relative to NAVD88 (well screen is approximately two feet below bottom of the wellcap. This measuremnt does not take into account the wellcap height itself, which would raise these measurements by about 8-10cm',
                                               'Salinity in parts per thousand',
                                               'Water temperaute in degrees Celsius'

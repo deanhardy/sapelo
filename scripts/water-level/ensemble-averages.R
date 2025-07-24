@@ -96,10 +96,6 @@ ea_comps.mhhw <- ea.mhhw %>%
   ggplot(aes(month, avg)) + 
   # geom_point(aes(color = source)) + 
   geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site), size = 0.25, position = position_dodge(width = 0.25)) + 
-  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(ea.mhhw, site == t.var)) + ## measured MHHW at CWBP sites
-  # geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
-  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(ea.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
-  # geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
   scale_y_continuous(name = "Monthly MHHW Level (m NAVD88)", breaks = seq(0.9, 1.4, 0.1), minor_breaks = seq(0.9,1.4,0.01), limits = c(0.8, 1.4)) + 
   scale_x_continuous(name = "Month", breaks = seq(1,12,1), limits = c(0.5,12.5)) +
   # scale_x_date(name = 'Year', 
@@ -169,7 +165,7 @@ ml.uv <- readNWISuv(siteNumbers = siteNo,
 ea.mn.cwbp <- df %>%
   mutate(prd = floor_date(date_time_gmt, "day")) %>%
   group_by(transect, site, prd) %>%
-  summarise(mwl = mean(water_level_navd88)) %>%
+  summarise(mwl = mean(wtr2sbst_depth)) %>%
   # mutate(month = floor_date(prd, "month")) %>%
   mutate(month = month(prd)) %>%
   mutate(year = year(prd)) %>%
@@ -208,12 +204,8 @@ ea_comps.mn <- ea.mn %>%
   ) %>%
   ggplot(aes(month, avg)) + 
   # geom_point(aes(color = source)) + 
-  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site), size = 0.25, position = position_dodge(width = 0.25)) + 
-  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'red', data = filter(ea.mhhw, site == t.var)) + ## measured MHHW at CWBP sites
-  # geom_hline(aes(yintercept = 3.1791339 * 0.3048), linetype = 'dotted', color = 'red') +  ## NOAA MHHW for Community
-  # geom_hline(aes(yintercept = mean(avg)), linetype = 'dashed', color = 'black', data = filter(ea.mhhw, source == 'USGS')) + ## measured MHHW at CWBP sites
-  # geom_hline(aes(yintercept = 3.3038058* 0.3048), linetype = 'dotted', color = 'black') + ## NOAA MHHW for ML
-  scale_y_continuous(name = "Monthly Mean Water Level (m NAVD88)", breaks = seq(-0.2, 1.2, 0.1), minor_breaks = seq(-0.2,1.2,0.1), limits = c(-0.2, 1.2)) + 
+  geom_pointrange(aes(ymin = avg - (se), ymax = avg + (se), color = site), size = 0.2, position = position_dodge(width = 0.25)) + 
+  scale_y_continuous(name = "Monthly Mean Water Level (m)", breaks = seq(-0.1, 0.5, 0.1), minor_breaks = seq(-0.1,0.5,0.1), limits = c(-0.1, 0.5)) + 
   scale_x_continuous(name = "Month", breaks = seq(1,12,1), limits = c(0.5,12.5)) +
   # scale_x_date(name = 'Year', 
   #              date_breaks = '1 year', date_labels = '%Y', 
