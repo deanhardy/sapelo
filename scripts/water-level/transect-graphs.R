@@ -59,26 +59,10 @@ tx.graph <- function(df, na.rm = TRUE, ...){
       geom_line(aes(date_time_gmt, ma1hr, color = site)) + 
       geom_line(aes(date, mean, color = site), 
                 data = filter(daily.mn),
-                linewidth = 1) +
+                linewidth = 1.5) +
       # geom_hline(aes(yintercept = mean(water_level_navd88)), linetype = 'dashed', df2) +
-      # geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'red') +
-      # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
-      # geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
-      # geom_text(aes(date_time_gmt, 1.5, label = dist_rad), data = int.lnr, vjust = -1) + 
-      # scale_fill_manual(values = c('white', 'black')) + 
       scale_x_datetime(name = paste0('Month/Day/', year(int.date1)), date_breaks = '1 week', date_labels = '%m/%d') + 
       scale_y_continuous(name = 'Water Level (m NAVD88)', breaks = seq(0.2,2,0.2), limits = c(0.2,2), expand = c(0,0)) +
-      # annotate("rect",
-      #          xmin = as.POSIXct(paste(int.date1, '00:48:00')),
-      #          xmax = as.POSIXct(paste(int.date1, '12:48:00')),
-      #          ymin = 0,
-      #          ymax = df2$well_ht,
-      #          alpha = 0.1) +
-      # annotate("text",
-      #          x = as.POSIXct(paste(int.date1, '06:48:00')),
-      #          y = df2$well_ht+0.1,
-      #          label = 'Well Height',
-      #          angle = 90) +
       labs(color = 'Site') + 
       theme(axis.title = element_text(size = TEXT),
             axis.text = element_text(color = "black", size = TEXT),
@@ -96,10 +80,10 @@ tx.graph <- function(df, na.rm = TRUE, ...){
             panel.grid.major.y = element_line('grey', size = 0.5, linetype = "dotted"),
             panel.grid.major.x = element_line('grey', size = 0.5, linetype = "dotted"),
             plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-            legend.position = 'bottom',
             legend.text = element_text(size = TEXT),
             legend.title = element_text(size = TEXT),
             legend.box.background = element_rect(color = 'black'),
+            legend.position = c(0.8,0.8),
             plot.title = element_text(size = TEXT, face = "bold"))
     # ggtitle(paste0(transect_list[i], " - 12-minute Interval From ", int.date1, ' to ', int.date2))
     
