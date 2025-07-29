@@ -17,22 +17,40 @@ Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
-## import NERR Wx data for Sapelo @ Marsh Landing
-## run all inclusive only if necessary ie missing data
-nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250217-sapmlmet/SAPMLMET.csv'),
-# nerr_wx <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/220903-sapmlmet-allinclusive/SAPMLMET.csv'),
+## import "best available" NERR Wx data for Sapelo @ Marsh Landing
+nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP),
          F_BP = (F_BP),
          TP = as.numeric(TotPrcp),
-         Temp = as.numeric(ATemp)) %>%
-  select(date_time_gmt, BP, F_BP, TP, Temp) %>%
+         Temp = as.numeric(ATemp),
+         quality = 'best available') %>%
+  select(date_time_gmt, BP, TP, Temp, quality) %>%
   filter(BP > 990) %>% ## filters erroneous data on 3/7/22
-  filter(!str_detect(F_BP, '<-3>|<-4>')) %>% ## filters rejected data, but keeps suspect data
+  # filter(!str_detect(F_BP, '<-3>|<-4>')) %>% ## filters rejected data, but keeps suspect data
   # filter_by_time(date_time_gmt, .start_date = '2022-03-07 00:00:00', .end_date = '2022-03-07 23:59:00') %>%
   drop_na()
+
+## import "all inclusive" NERR Wx data for Sapelo @ Marsh Landing
+## run all inclusive only if necessary ie missing data
+## as of 7/29/25, decided to always run all inclusive and "patch" it into best available dataset 
+## All inclusive missing dates used are "10/21/20 16:45:00" to "06/26/21 17:15:00" during which the BA data set reads BP as 102.1
+nerr_wx_ai <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet-allinclusive/SAPMLMET.csv'),
+                       header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
+  slice(., 1:n()) %>%
+  mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
+         BP = as.numeric(BP),
+         F_BP = (F_BP),
+         TP = as.numeric(TotPrcp),
+         Temp = as.numeric(ATemp),
+         quality = 'all inclusive') %>%
+  select(date_time_gmt, BP, TP, Temp, quality) %>%
+  filter_by_time(date_time_gmt, .start_date = '2020-10-21 16:45:00', .end_date = '2021-06-26 17:15:00') %>%
+  drop_na()
+
+nerr_wx <- rbind(nerr_wx_ba, nerr_wx_ai)
 
 ## calculate and export total daily precipitation values in mm 
 totprcp <- nerr_wx %>%
