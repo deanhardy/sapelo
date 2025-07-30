@@ -5,6 +5,7 @@ library(lubridate)
 library(data.table)
 library("rio")
 library(readxl)
+library(zoo)
 Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
@@ -12,9 +13,9 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 ## set # measurements to "burn" pre and post data download
 burn = 0
 
-#######################################
-## import field data measurements
-#######################################
+#####################################################
+### import field data measurements & assess averages ###
+#####################################################
 
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv')) %>%
@@ -81,9 +82,9 @@ dev.off()
 msmt.A.avgs2 <- left_join(msmt.A.avgs, wls.info)
 msmt.A.avgs3 <- left_join(msmt.A.avgs2, msmt.B.avgs)
 
-#########################################
-## import water level data files adn tidy
-#########################################
+#######################################################
+## import logger sensor depth data files and tidy
+#######################################################
 filz <- list.files(path = file.path(datadir, 'new-logger-data/'),
                    pattern= '*.csv',
                    full.names = TRUE,
@@ -113,7 +114,6 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/'),
 # tf <- read.csv(paste0(datadir, 'new-logger-data/site06_1316_181108-211213.csv'), skip = 1)
 
 ## import & tidy hobo water level data
-## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for Hobo)
 tidal <- NULL
 for(i in 1:length(filz)) {
   OUT <- fread(filz[i],
@@ -197,8 +197,9 @@ tidal3.2 <- tidal3.1 %>%
 ## attach name to elevation data
 SN <- msmt.A.avgs$site_serial
 
-## adding reference levels in NAVD88
-tidal4 <- NULL
+#### adding reference levels in NAVD88 ####
+# test 2
+df <- NULL
 
 for (i in 1:length(SN)) {
   
@@ -207,15 +208,55 @@ for (i in 1:length(SN)) {
   
   OUT2 <- tidal3.2 %>%
     filter(site_serial == SN[[i]]) %>%
-    mutate(water_level_navd88 = el2$rtkcap_navd88 + sensor_depth,
+    mutate(
            wellcap_navd88 = el2$rtkcap_navd88,
            subst_navd88 = el2$rtkcap_navd88 - el2$well_ht_avg,
            screen_bottom_navd88 = round(el2$rtkcap_navd88 - 0.6096,3), # screens are ~ top 2' of wells
-           sensor_navd88 = el2$rtkcap_navd88 - el2$lgr_length_avg
+           sensor_navd88 = el2$rtkcap_navd88 - (el2$lgr_length_avg - 0.0026) ## sensor face is 2.6 cm above logger tip
            ) %>%
+    mutate(water_level_navd88 = sensor_navd88 + sensor_depth) %>%
     mutate(water_depth = water_level_navd88 - subst_navd88)
   
-  tidal4 <- rbind(OUT2, tidal4)
+  df <- rbind(OUT2, df)
 }
 
 ## still need to merge average field measurements, water depth, and cleanup columns
+
+## filter to download date
+df2 <- df %>%
+  # mutate(ma1hr = rollmean(water_level_navd88, k=5, fill=NA, align = 'center')) %>%
+  filter(date_time_gmt >= "2020-10-13 12:00:00" & date_time_gmt <= "2020-10-20 12:00:00") 
+
+library(geomtextpath)
+TEXT = 15 ## set font size for figures
+
+ggplot(df2)  + 
+  geom_line(aes(date_time_gmt, water_level_navd88)) +  
+  # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
+  # geom_textvline(aes(xintercept = GMT), label = "data download", hjust = 0.8,
+  #                vjust = 1.3, color = "blue4", data = dl, show.legend = F) +
+  # geom_texthline(aes(yintercept = 0), label = "wellcap",
+  #                hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
+  geom_texthline(aes(yintercept = subst_navd88), label = "avg substrate",
+                 hjust = 0.9, color = "green4", data = df2, show.legend = F) + ## substrate relative to wellcap
+  # geom_texthline(aes(yintercept = -0.61), label = "bottom of screen",
+  #                hjust = 0.9, color = "red4", data = df3, show.legend = F) + ## bottom of screen relative to wellcap
+  # geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
+  #                hjust = 0.9, color = "grey30", data = df3, show.legend = F) + ## tip of logger relative to wellcap
+  # scale_fill_manual(values = c('white', 'black')) + 
+  scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
+  scale_y_continuous(name = 'Water Level (m NAVD88)', 
+                     breaks = seq(0,1.6,0.2), limits = c(0,1.6), expand = c(0,0)) +
+  theme(axis.title = element_text(size = TEXT),
+        axis.text = element_text(color = "black", size = TEXT),
+        axis.ticks.length = unit(-0.2, 'cm'),
+        axis.ticks = element_line(color = 'black'),
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+        axis.line = element_line(color = 'black'),
+        panel.background = element_rect(fill = FALSE, color = 'black'),
+        panel.grid = element_blank(),
+        panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
+        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+        plot.title = element_text(size = TEXT, face = "bold"))
+  # ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
