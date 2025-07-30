@@ -21,13 +21,13 @@ datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
-  mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
+  mutate(date_time_est = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP),
          F_BP = (F_BP),
          TP = as.numeric(TotPrcp),
          Temp = as.numeric(ATemp),
          quality = 'best available') %>%
-  select(date_time_gmt, BP, TP, Temp, quality) %>%
+  select(date_time_est, BP, TP, Temp, quality) %>%
   filter(BP > 990) %>% ## filters erroneous data on 3/7/22
   # filter(!str_detect(F_BP, '<-3>|<-4>')) %>% ## filters rejected data, but keeps suspect data
   # filter_by_time(date_time_gmt, .start_date = '2022-03-07 00:00:00', .end_date = '2022-03-07 23:59:00') %>%
@@ -40,17 +40,21 @@ nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2
 nerr_wx_ai <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet-allinclusive/SAPMLMET.csv'),
                        header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
   slice(., 1:n()) %>%
-  mutate(date_time_gmt = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
+  mutate(date_time_est = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
          BP = as.numeric(BP),
          F_BP = (F_BP),
          TP = as.numeric(TotPrcp),
          Temp = as.numeric(ATemp),
          quality = 'all inclusive') %>%
-  select(date_time_gmt, BP, TP, Temp, quality) %>%
-  filter_by_time(date_time_gmt, .start_date = '2020-10-21 16:45:00', .end_date = '2021-06-26 17:15:00') %>%
+  select(date_time_est, BP, TP, Temp, quality) %>%
+  filter_by_time(date_time_est, .start_date = '2020-10-21 16:45:00', .end_date = '2021-06-26 17:15:00') %>%
   drop_na()
 
-nerr_wx <- rbind(nerr_wx_ba, nerr_wx_ai)
+nerr_wx <- rbind(nerr_wx_ba, nerr_wx_ai) %>%
+  arrange(date_time_est) %>%
+  filter(date_time_est >= as.POSIXct("2018-10-01 00:00:00")) %>%
+  mutate(date_time_gmt = date_time_est + hours(5)) %>%
+  select(date_time_gmt, BP, TP, Temp, quality)
 
 ## calculate and export total daily precipitation values in mm 
 totprcp <- nerr_wx %>%
@@ -68,8 +72,8 @@ write.csv(TP, file.path(datadir, 'water-level/nerr-data/SAPMLMET_TP.csv'))
 
 ## create datetime sequence that matches logger datetime stamps
 ## then interpolate baro press values and export for use in HOBOware
-date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(Sys.Date()), 
-                     by = '12 mins')
+# date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(Sys.Date()), 
+#                      by = '12 mins')
 date_time_gmt <- seq(as.POSIXct('2018-10-01 05:00:00', tz = 'UTC'), as.POSIXct(last(nerr_wx$date_time_gmt)), 
                      by = '12 mins')
 tail(date_time_gmt)
@@ -94,7 +98,7 @@ nerr_wx3h <- nerr_wx2.2 %>%
   # mutate(Date = noquote(Date)) %>%
   mutate(temp = y.y) %>%
   mutate(date_time_gmt = as.POSIXct(x, format = '%m/%d/%y %H:%M:%S')) %>%
-  mutate(date.est = date_time_gmt - hours(5)) %>%
+  mutate(date_time_est = date_time_gmt - hours(5)) %>%
   select(Date, Time, pres) # for HOBOs
 
 colnames(nerr_wx3h) <- c('Date', 'Time (GMT)', 'pres (mbar)') ## for HOBOs
