@@ -42,35 +42,4 @@ for (folder_path in sub_dirs) {
   }
 }
 
-# Create some dummy files for demonstration
-file.create("example_file_1234.txt")
-file.create("another_long_name_abcd.csv")
 
-# Get a list of files to rename
-old_names <- list.files(pattern = "\\.txt$|\\.csv$")
-
-# Loop through each file to rename
-# for (old_name in old_names) {
-#   # Get the base name (without extension)
-#   base_name <- tools::file_path_sans_ext(old_name)
-#   
-#   # Get the extension
-#   extension <- tools::file_ext(old_name)
-#   
-#   # Extract the last four characters of the base name
-#   # Ensure the base name is long enough to extract 4 characters
-#   if (nchar(base_name) >= 4) {
-#     new_base_name <- substr(base_name, nchar(base_name) - 3, nchar(base_name))
-#   } else {
-#     # If the base name is shorter than 4 characters, use the whole base name
-#     new_base_name <- base_name 
-#   }
-#   
-#   # Construct the new file name
-#   new_name <- paste0(new_base_name, ".", extension)
-#   
-#   # Rename the file
-#   file.rename(old_name, new_name)
-#   
-#   cat(paste("Renamed '", old_name, "' to '", new_name, "'\n"))
-}
