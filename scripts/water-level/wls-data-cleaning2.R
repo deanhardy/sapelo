@@ -85,13 +85,13 @@ msmt.A.avgs3 <- left_join(msmt.A.avgs2, msmt.B.avgs)
 #######################################################
 ## import logger sensor depth data files and tidy
 #######################################################
-filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo_sensor_depth'),
+filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo-sensor-depth'),
                    pattern= '*.csv',
                    full.names = TRUE,
                    recursive = F)
 # 
 # ## test file
-# # filz <- "/Users/dhardy/Dropbox/r_data/sapelo/water-level//new-logger-data/hobo/site06_1316_190522-191022.csv"
+# filz <- "/Users/dhardy/Dropbox/r_data/sapelo/water-level/new-logger-data/hobo/site06_1316_190522-191022.csv"
 # 
 # filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
 #                       pattern= '*.CSV',
@@ -111,8 +111,11 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo_sensor_depth'
 #                        full.names = TRUE,
 #                        recursive = TRUE) 
 ## read test file
-# tf <- read.csv(paste0(datadir, 'new-logger-data/hobo_sensor_depth/t102_0000_181013-250426.csv'), skip = 1)
-
+# temp <- fread(paste0(datadir, 'new-logger-data/hobo-sensor-depth/t102_0000_181013-250426.csv'),
+#               select = c(2:5),
+#               col.names = c('date_time_gmt', 'abs_pres_psi', 'water_temp_c', 'sensor_depth'),
+#               stringsAsFactors = FALSE)
+  
 ## import & tidy hobo water level data
 tidal <- NULL
 for(i in 1:length(filz)) {
@@ -157,8 +160,9 @@ for(i in 1:length(filz)) {
 
 ## select relevant hobo data columns
 tidal.01 <- tidal %>%
-  mutate(logger = 'hobo') %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial)
+  mutate(logger = 'hobo',
+         site_serial = paste0(site, ' (', serial, ')')) %>%
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
 
 ## attach name to elevation data
 SN <- msmt.A.avgs$site_serial
@@ -197,14 +201,14 @@ library(geomtextpath)
 TEXT = 15 ## set font size for figures
 
 ggplot(df2)  + 
-  geom_line(aes(date_time_gmt, water_level_navd88)) +  
+  geom_line(aes(date_time_gmt, water_level_navd88, color = site)) +  
   # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
   # geom_textvline(aes(xintercept = GMT), label = "data download", hjust = 0.8,
   #                vjust = 1.3, color = "blue4", data = dl, show.legend = F) +
   # geom_texthline(aes(yintercept = 0), label = "wellcap",
   #                hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
-  geom_texthline(aes(yintercept = subst_navd88), label = "avg substrate",
-                 hjust = 0.9, color = "green4", data = df2, show.legend = F) + ## substrate relative to wellcap
+  geom_texthline(aes(yintercept = subst_navd88, color = site), label = "avg substrate",
+                 hjust = 0.9, data = df2, show.legend = F) + ## substrate relative to wellcap
   # geom_texthline(aes(yintercept = -0.61), label = "bottom of screen",
   #                hjust = 0.9, color = "red4", data = df3, show.legend = F) + ## bottom of screen relative to wellcap
   # geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
@@ -212,7 +216,7 @@ ggplot(df2)  +
   # scale_fill_manual(values = c('white', 'black')) + 
   scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
   scale_y_continuous(name = 'Water Level (m NAVD88)', 
-                     breaks = seq(0,1.6,0.2), limits = c(0,1.6), expand = c(0,0)) +
+                     breaks = seq(0,1.8,0.2), limits = c(0,1.8), expand = c(0,0)) +
   theme(axis.title = element_text(size = TEXT),
         axis.text = element_text(color = "black", size = TEXT),
         axis.ticks.length = unit(-0.2, 'cm'),
