@@ -195,7 +195,7 @@ for (i in 1:length(SN)) {
 ## filter to download date
 df2 <- df %>%
   # mutate(ma1hr = rollmean(water_level_navd88, k=5, fill=NA, align = 'center')) %>%
-  filter(date_time_gmt >= "2020-10-13 12:00:00" & date_time_gmt <= "2020-10-20 12:00:00") 
+  filter(date_time_gmt >= "2022-10-20 12:00:00" & date_time_gmt <= "2022-11-03 12:00:00") 
 
 library(geomtextpath)
 TEXT = 15 ## set font size for figures
@@ -209,8 +209,8 @@ ggplot(df2)  +
   #                hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
   geom_texthline(aes(yintercept = subst_navd88, color = site), label = "avg substrate",
                  hjust = 0.9, data = df2, show.legend = F) + ## substrate relative to wellcap
-  # geom_texthline(aes(yintercept = -0.61), label = "bottom of screen",
-  #                hjust = 0.9, color = "red4", data = df3, show.legend = F) + ## bottom of screen relative to wellcap
+  # geom_texthline(aes(yintercept = -0.61, color = site), label = "bottom of screen",
+  #                hjust = 0.9, data = df2, show.legend = F) + ## bottom of screen relative to wellcap
   # geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
   #                hjust = 0.9, color = "grey30", data = df3, show.legend = F) + ## tip of logger relative to wellcap
   # scale_fill_manual(values = c('white', 'black')) + 
