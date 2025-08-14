@@ -90,7 +90,7 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo-sensor-depth'
                    full.names = TRUE,
                    recursive = F)
 
-filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen'),
+filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen-sensor-depth'),
                       pattern= '*.CSV',
                       full.names = TRUE,
                       recursive = TRUE)
@@ -140,55 +140,27 @@ for(i in 1:length(filz)) {
 tidal.01 <- tidal %>%
   mutate(logger = 'hobo',
          site_serial = paste0(site, ' (', serial, ')')) %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, type, logger, serial, site_serial)
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
 
 ## import & tidy van essen water level data
-## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
 tidal.ve <- NULL
 try(
   for(i in 1:length(filz.ve)) {
     OUT <- fread(filz.ve[i],
-                 skip = 51,
+                 skip = 63,
                  select = c(1:3),
-                 col.names = c('date_time_gmt', 'water_level_C', 'water_temp_c'),
+                 col.names = c('date_time_gmt', 'sensor_depth', 'water_temp_c'),
                  stringsAsFactors = FALSE) %>%
       slice(., burn:(n())) %>% ## removes first and last ## readings
-      # slice_head(n = 5) %>% ## removes first # rows
-      # slice_tail(n = 6) %>% ## removes last # rows
       mutate(
-        date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y/%m/%d %H:%M:%S', tz = 'GMT'),
+        date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%Y %H:%M', tz = 'GMT'),
         date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
-        site = str_sub(filz.ve[i], -26,-25),
+        transect = toupper(str_sub(filz.ve[i], -28,-27)),
+        site = toupper(paste0(str_sub(filz.ve[i], -28,-27), '-', str_sub(filz[i], -26,-25))),
         serial = str_sub(filz.ve[i], -23,-19),
-        water_level_C = as.numeric(water_level_C)/1000 * -1) %>%
-      mutate(site = paste('Site', site, sep = '-')) %>%
-      mutate(type = ifelse(site %in% c('Site-13', 'Site-11', 'Site-09', 'Site-05', 'Site-19', 'Site-14', 'Site-15', 'Site-18', 'Site-20', 'Site-23', 'Site-24'), 'ditch',
-                           ifelse(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12', 'Site-16'), 'creek', site))) %>% ## ditches sites
-      # filter(site %in% c('Site-02', 'Site-03', 'Site-07', 'Site-06', 'Site-12')) %>% ## marsh sites
-      mutate(transect = ifelse(site %in% c('Site-06', 'Site-12', 'Site-19', 'Site-13', 'Site-18'), 'T1',
-                               ifelse(site %in% c('Site-02', 'Site-03', 'Site-05','Site-11', 'Site-23'), 'T3',
-                                      ifelse(site %in% c('Site-07', 'Site-09', 'Site-24'), 'T4',
-                                             ifelse(site %in% c('Site-16', 'Site-15'), "T5",
-                                                    ifelse(site %in% c('Site-20'), 'T2',
-                                                           if_else(site %in% c('Site-14'), 'T6', site))))))) %>%
-    mutate(site = if_else(site == 'Site-06', 'T1-01',
-                              if_else(site == 'Site-12', 'T1-02', 
-                                      if_else(site == 'Site-19', 'T1-03',
-                                              if_else(site == 'Site-13', 'T1-04',
-                                                      if_else(site == 'Site-18', 'T1-05',
-                                                              if_else(site == 'Site-20', 'T2-01', 
-                                                                      if_else(site == 'Site-02', 'T3-01',
-                                                                              if_else(site == 'Site-03', 'T3-02',
-                                                                                      if_else(site =='Site-05', 'T3-BR-01',
-                                                                                              if_else(site == 'Site-11', 'T3-03',
-                                                                                                      if_else(site == 'Site-23', 'T3-04',
-                                                                                                              if_else(site == 'Site-07', 'T4-01',
-                                                                                                                      if_else(site == 'Site-09', 'T4-BR-01',
-                                                                                                                              if_else(site == 'Site-24', 'T4-02',
-                                                                                                                                      if_else(site == 'Site-16', 'T5-01',
-                                                                                                                                              if_else(site == 'Site-15', 'T5-02', 
-                                                                                                                                                      if_else(site == 'Site-14', 'T6-01', site)))))))))))))))))) %>%
+        sensor_depth = round(as.numeric(sensor_depth)/1000,3)) %>%                                                                                                                                   
       mutate(site_serial = paste0(site, ' (', serial, ')'))
+
     tidal.ve <- rbind(OUT, tidal.ve)
   }
 )
@@ -196,7 +168,7 @@ try(
 ## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
   mutate(logger = 'van essen') %>%
-  select(date_time_gmt, water_temp_c, water_level_C, date, transect, site, type, logger, serial, site_serial)
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
 
 ## merge hobo and van essan data
 tidal1 <- rbind(tidal.01, tidal.ve2)
