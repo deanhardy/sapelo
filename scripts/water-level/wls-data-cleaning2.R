@@ -1,3 +1,5 @@
+## revising wls-data-cleaning after converting all hobo & van essen logger data to
+## BP compensated sensor depth measurements rather than using a reference water level
 rm(list=ls())
 
 library(tidyverse)
@@ -225,7 +227,7 @@ for (i in 1:length(SN)) {
   el2 <- msmt.A.avgs3 %>%
     filter(site_serial == SN[[i]])
   
-  OUT2 <- tidal1 %>%
+  OUT2 <- tidal1.1 %>%
     filter(site_serial == SN[[i]]) %>%
     mutate(
            wellcap_navd88 = el2$rtkcap_navd88,
