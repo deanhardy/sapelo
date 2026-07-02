@@ -1,3 +1,5 @@
+## a use once script for revising naming convention for raw (uncompensated) hobo data files to be shared/stored long term with GCE
+
 rm(list=ls())
 
 library(tidyverse)
