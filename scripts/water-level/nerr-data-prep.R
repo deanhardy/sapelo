@@ -18,7 +18,7 @@ Sys.setenv(TZ='GMT')
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo'
 
 ## import "best available" NERR Wx data for Sapelo @ Marsh Landing
-nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet/SAPMLMET.csv'),
+nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/260703-sapmlmet/SAPMLMET.csv'),
     header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
     slice(., 1:n()) %>%
   mutate(date_time_est = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
@@ -37,7 +37,7 @@ nerr_wx_ba <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/2
 ## run all inclusive only if necessary ie missing data
 ## as of 7/29/25, decided to always run all inclusive and "patch" it into best available dataset 
 ## All inclusive missing dates used are "10/21/20 16:45:00" to "06/26/21 17:15:00" during which the BA data set reads BP as 102.1
-nerr_wx_ai <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/250729-sapmlmet-allinclusive/SAPMLMET.csv'),
+nerr_wx_ai <- read.csv(file.path(datadir, 'water-level/nerr-data/sapmlmet-data/260703-sapmlmet-allinclusive/SAPMLMET.csv'),
                        header = TRUE, skip = 2, stringsAsFactors = FALSE) %>%
   slice(., 1:n()) %>%
   mutate(date_time_est = with_tz(mdy_hm(DateTimeStamp, tz = 'EST')),
