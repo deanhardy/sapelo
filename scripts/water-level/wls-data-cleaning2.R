@@ -95,7 +95,7 @@ filz <- list.files(path = file.path(datadir, 'new-logger-data/hobo-sensor-depth'
 filz.ve <- list.files(path = file.path(datadir, 'new-logger-data/vanessen-sensor-depth'),
                       pattern= '*.CSV',
                       full.names = TRUE,
-                      recursive = TRUE)
+                      recursive = F)
 
 ## convert salinity Excel files to csv
 sal <- list.files(path = file.path(datadir, 'new-logger-data/salinity'),
@@ -169,7 +169,7 @@ try(
   }
 )
 
- ## select relevant ve data columns
+## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
   mutate(logger = 'van essen') %>%
   select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
@@ -281,3 +281,9 @@ ggplot(df2)  +
         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
         plot.title = element_text(size = TEXT, face = "bold"))
   # ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
+
+nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
+
+## check for erroneous data points and remove them from data
+err <- tidal1.1 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
+# err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
