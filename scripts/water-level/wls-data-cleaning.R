@@ -219,7 +219,6 @@ tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('site', 'date_time_gmt'))
 SN <- msmt.A.avgs$site_serial
 
 #### adding reference levels in NAVD88 ####
-# test 2
 df <- NULL
 
 for (i in 1:length(SN)) {
@@ -236,54 +235,108 @@ for (i in 1:length(SN)) {
            sensor_navd88 = el2$rtkcap_navd88 - (el2$lgr_length_avg - 0.0026) ## sensor face is 2.6 cm above logger tip
            ) %>%
     mutate(water_level_navd88 = sensor_navd88 + sensor_depth) %>%
-    mutate(water_depth = water_level_navd88 - subst_navd88)
+    mutate(water_depth = water_level_navd88 - subst_navd88,
+           well_ht_avg = el2$well_ht_avg,
+           well_ht_sd = el2$well_ht_sd,
+           well_ht_n = el2$well_ht_n,
+           lgr_length_avg = el2$lgr_length_avg,
+           lgr_length_sd = el2$lgr_length_sd,
+           lgr_length_n = el2$lgr_length_n,
+           )
   
   df <- rbind(OUT2, df)
 }
 
 ## still need to merge average field measurements, water depth, and cleanup columns
 
-## filter to download date
-df2 <- df %>%
-  # mutate(ma1hr = rollmean(water_level_navd88, k=5, fill=NA, align = 'center')) %>%
-  filter(date_time_gmt >= "2022-10-20 12:00:00" & date_time_gmt <= "2022-11-03 12:00:00") 
-
-library(geomtextpath)
-TEXT = 15 ## set font size for figures
-
-ggplot(df2)  + 
-  geom_line(aes(date_time_gmt, water_level_navd88, color = site)) +  
-  # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
-  # geom_textvline(aes(xintercept = GMT), label = "data download", hjust = 0.8,
-  #                vjust = 1.3, color = "blue4", data = dl, show.legend = F) +
-  # geom_texthline(aes(yintercept = 0), label = "wellcap",
-  #                hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
-  geom_texthline(aes(yintercept = subst_navd88, color = site), label = "avg substrate",
-                 hjust = 0.9, data = df2, show.legend = F) + ## substrate relative to wellcap
-  # geom_texthline(aes(yintercept = -0.61, color = site), label = "bottom of screen",
-  #                hjust = 0.9, data = df2, show.legend = F) + ## bottom of screen relative to wellcap
-  # geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
-  #                hjust = 0.9, color = "grey30", data = df3, show.legend = F) + ## tip of logger relative to wellcap
-  # scale_fill_manual(values = c('white', 'black')) + 
-  scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
-  scale_y_continuous(name = 'Water Level (m NAVD88)', 
-                     breaks = seq(0,1.8,0.2), limits = c(0,1.8), expand = c(0,0)) +
-  theme(axis.title = element_text(size = TEXT),
-        axis.text = element_text(color = "black", size = TEXT),
-        axis.ticks.length = unit(-0.2, 'cm'),
-        axis.ticks = element_line(color = 'black'),
-        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
-        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
-        axis.line = element_line(color = 'black'),
-        panel.background = element_rect(fill = FALSE, color = 'black'),
-        panel.grid = element_blank(),
-        panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
-        plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
-        plot.title = element_text(size = TEXT, face = "bold"))
-  # ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
+# filter for where sensor depth change is > 5 cm
+tidal1.2 <- df %>%
+  arrange(site_serial, date_time_gmt) %>%
+  group_by(site_serial) %>%
+  mutate(abs_chg = abs(sensor_depth - lag(sensor_depth))) %>%
+  filter(!abs((sensor_depth - lag(sensor_depth))) > 0.05)
 
 nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
 
 ## check for erroneous data points and remove them from data
-err <- tidal1.1 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
-# err2 <- err %>% filter(!water_level_C >2 | water_level_C < -2)
+err <- tidal1.2 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
+# tidal <- err %>% filter(!sensor_depth >=4 | sensor_depth =< -4)
+
+#########################
+## below here is just copied and pasted from deprecated cleaning script 7/9/26
+
+## rearrange and export merged and cleaned data
+tidal1.21 <- tidal1.2 %>%
+  select(date_time_gmt, transect, site, logger, serial, site_serial, 
+         water_temp_c, sensor_depth, water_depth,
+         water_level_navd88,
+         well_ht_avg, well_ht_sd, well_ht_n,
+         lgr_length_avg, lgr_length_sd, lgr_length_n,
+         screen_bottom_navd88, salinity)
+
+write.csv(tidal1.21, paste(datadir, 'wls_data.csv'))
+
+## create metadata file
+metadata <- data.frame(variable=names(tidal1.21),
+                       description=c('YYYY-MM-DD HH:MM:SS GMT',
+                                     'Transect number', 'Site number',
+                                     'Logger Brand', 'Logger Serial number', 
+                                     'Unique site serial combination',
+                                     'Water temperature in degrees Celsius',
+                                     'Depth of water above logger sensor (m)',
+                                     'Depth of water above substrate/ground (m)',
+                                     'Water level relative to NAVD88 (m)',
+                                     'Average height of well (m)', 
+                                     'Standard Deviation of well height (m)',
+                                     'Count of well height measurements',
+                                     'Average length of logger line from wellcap to logger tip (m; does not account for sensor position on logger',
+                                     'Standard Deviation of logger line length (m)',
+                                     'Count of logger length measurements',
+                                     'Bottom of well screen relative to NAVD88 (well screen is approximately two feet below bottom of the wellcap. This measuremnt does not take into account the wellcap height itself, which would raise these measurements by about 8-10cm',
+                                     'Salinity in parts per thousand'
+                                     )
+                       )
+write.csv(metadata, paste(datadir, 'metadata_wls_data.csv'))
+
+
+####################
+## exploring data by filtering and graphing download date
+
+## filter to download date
+# df2 <- tidal1.2 %>%
+#   # mutate(ma1hr = rollmean(water_level_navd88, k=5, fill=NA, align = 'center')) %>%
+#   filter(date_time_gmt >= "2022-10-20 12:00:00" & date_time_gmt <= "2022-11-03 12:00:00") 
+# 
+# library(geomtextpath)
+# TEXT = 15 ## set font size for figures
+# 
+# ggplot(df2)  + 
+#   geom_line(aes(date_time_gmt, water_level_navd88, color = site)) +  
+#   # geom_vline(aes(xintercept = GMT), data = dl, lty = 'dashed') +
+#   # geom_textvline(aes(xintercept = GMT), label = "data download", hjust = 0.8,
+#   #                vjust = 1.3, color = "blue4", data = dl, show.legend = F) +
+#   # geom_texthline(aes(yintercept = 0), label = "wellcap",
+#   #                hjust = 0.9, color = "grey70", linetype = 2, data = df3, show.legend = F) + ## wellcap
+#   geom_texthline(aes(yintercept = subst_navd88, color = site), label = "avg substrate",
+#                  hjust = 0.9, data = df2, show.legend = F) + ## substrate relative to wellcap
+#   # geom_texthline(aes(yintercept = -0.61, color = site), label = "bottom of screen",
+#   #                hjust = 0.9, data = df2, show.legend = F) + ## bottom of screen relative to wellcap
+#   # geom_texthline(aes(yintercept =  0-lgr_length_avg), label = "tip of logger",
+#   #                hjust = 0.9, color = "grey30", data = df3, show.legend = F) + ## tip of logger relative to wellcap
+#   # scale_fill_manual(values = c('white', 'black')) + 
+#   scale_x_datetime(name = 'Day', date_breaks = '1 day', date_labels = '%m/%d/%y') + 
+#   scale_y_continuous(name = 'Water Level (m NAVD88)', 
+#                      breaks = seq(0,1.8,0.2), limits = c(0,1.8), expand = c(0,0)) +
+#   theme(axis.title = element_text(size = TEXT),
+#         axis.text = element_text(color = "black", size = TEXT),
+#         axis.ticks.length = unit(-0.2, 'cm'),
+#         axis.ticks = element_line(color = 'black'),
+#         axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), 
+#         axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")),
+#         axis.line = element_line(color = 'black'),
+#         panel.background = element_rect(fill = FALSE, color = 'black'),
+#         panel.grid = element_blank(),
+#         panel.grid.major.x = element_line('grey', linewidth = 0.5, linetype = "dotted"),
+#         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
+#         plot.title = element_text(size = TEXT, face = "bold"))
+# ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
