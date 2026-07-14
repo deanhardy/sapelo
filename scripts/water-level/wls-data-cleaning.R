@@ -179,6 +179,7 @@ tidal1 <- rbind(tidal.01, tidal.ve2)
 
 ## import & tidy van essen specific conductivity/salinity data
 ## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
+## abondoned water_level_C data for psu datafiles starting on 7/14/26 as newly exported salinity data will be sensor depth not water level referenced to wellcap
 tidal.psu <- NULL
 for(i in 1:length(filz.psu)) {
   OUT <- fread(filz.psu[i],
@@ -193,7 +194,7 @@ for(i in 1:length(filz.psu)) {
                                  str_sub(filz.psu[i], -30,-29))),
            serial = str_sub(filz.psu[i], -27,-23),          
            water_temp_c = as.numeric(water_temp_c),
-           water_level_C = as.numeric(water_level_C)/1000 * -1,
+           # water_level_C = as.numeric(water_level_C)/1000 * -1,
            serial = 'X0976')
 
   tidal.psu <- rbind(OUT, tidal.psu)
@@ -262,8 +263,6 @@ nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
 err <- tidal1.2 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
 # tidal <- err %>% filter(!sensor_depth >=4 | sensor_depth =< -4)
 
-#########################
-## below here is just copied and pasted from deprecated cleaning script 7/9/26
 
 ## rearrange and export merged and cleaned data
 tidal1.21 <- tidal1.2 %>%
