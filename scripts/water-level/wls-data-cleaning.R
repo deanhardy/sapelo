@@ -10,7 +10,7 @@ library(readxl)
 library(zoo)
 Sys.setenv(TZ='GMT')
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/rh21/Dropbox/r_data/sapelo/water-level/'
 
 ## set # measurements to "burn" pre and post data download
 burn = 0
@@ -25,7 +25,7 @@ wls.info <- read.csv(file.path(datadir, 'wls-info.csv')) %>%
   select(site_new, rtkcap_navd88)
 
 ## import field measurement data
-wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
+wls.msmt <- read_xlsx("/Users/rh21/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
                       sheet = 'field_measurements',
                       skip = 6) %>%
   # mutate(launch_time = as.POSIXct(launch_time, format = '%m/%d/%Y %H:%M:%OS'))
@@ -259,6 +259,7 @@ tidal1.2 <- df %>%
   mutate(abs_chg = abs(sensor_depth - lag(sensor_depth))) %>%
   filter(!abs((sensor_depth - lag(sensor_depth))) > 0.05)
 
+## appear to all be salinity measurements as of 8/6/2026
 nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
 
 ## check for erroneous data points and remove them from data
@@ -273,7 +274,8 @@ tidal1.21 <- tidal1.2 %>%
          water_level_navd88,
          well_ht_avg, well_ht_sd, well_ht_n,
          lgr_length_avg, lgr_length_sd, lgr_length_n,
-         screen_bottom_navd88, salinity)
+         screen_bottom_navd88, salinity) %>%
+  ungroup()
 
 write.csv(tidal1.21, paste(datadir, 'wls_data.csv'))
 
