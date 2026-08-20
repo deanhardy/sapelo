@@ -45,12 +45,13 @@ msmt.A.avgs <- wls.msmt %>%
   ungroup() %>%
   mutate(site_serial = paste0(site_new, " (", serial, ')'))  
 
-a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg)) +
+a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg*1000)) +
   geom_point() + 
-  geom_errorbar(aes(ymin=lgr_length_avg-lgr_length_sd, ymax=lgr_length_avg+lgr_length_sd), width=.2,
+  geom_errorbar(aes(ymin=(lgr_length_avg-lgr_length_sd)*1000, ymax=(lgr_length_avg+lgr_length_sd)*1000), width=.2,
                 position=position_dodge(0.05)) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  xlab('Site (Serial #)') + ylab('Length (m)') +
+  scale_y_continuous(breaks = seq(500,1050, 50)) + 
+  xlab('Site (Serial #)') + ylab('Length (mm)') +
   ggtitle("Mean Logger Hanging Length (Distance A)")
 a.mn
 
@@ -66,13 +67,14 @@ msmt.B.avgs <- wls.msmt %>%
     well_ht_n = n()) %>%
   drop_na()
 
-b.mn <- ggplot(msmt.B.avgs, aes(site_new, well_ht_avg)) +
+b.mn <- ggplot(msmt.B.avgs, aes(site_new, well_ht_avg*1000)) +
   geom_point() + 
-  geom_errorbar(aes(ymin=well_ht_avg-well_ht_sd, ymax=well_ht_avg+well_ht_sd), width=.2,
-                position=position_dodge(0.05)) + 
+  geom_errorbar(aes(ymin=(well_ht_avg-well_ht_sd)*1000, ymax=(well_ht_avg+well_ht_sd)*1000), width=.2,
+                position=position_dodge(0.05)) +
+  scale_y_continuous(breaks = seq(300,900,50)) + 
   # geom_text(msmt.B.avgs, well_ht_n, nudge_x = 0.1) + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
-  xlab('Site') + ylab('Well Height (m)') +
+  xlab('Site') + ylab('Well Height (mm)') +
   ggtitle("Mean Well Height (Distance B)")
 b.mn
 
