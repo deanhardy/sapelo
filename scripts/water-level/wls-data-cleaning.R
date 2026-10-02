@@ -10,7 +10,7 @@ library(readxl)
 library(zoo)
 Sys.setenv(TZ='GMT')
 ## define data directory
-datadir <- '/Users/rh21/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
 ## set # measurements to "burn" pre and post data download
 burn = 0
@@ -21,29 +21,31 @@ burn = 0
 
 ## import site characteristics/info 
 wls.info <- read.csv(file.path(datadir, 'wls-info.csv')) %>%
-  mutate(site_new = transect_site) %>%
-  select(site_new, rtkcap_navd88)
+  mutate(site = transect_site) %>%
+  select(site, rtkcap_navd88, type)
 
 ## import field measurement data
-wls.msmt <- read_xlsx("/Users/rh21/Dropbox/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
+wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/usc/research/sapelo/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
                       sheet = 'field_measurements',
                       skip = 6) %>%
   # mutate(launch_time = as.POSIXct(launch_time, format = '%m/%d/%Y %H:%M:%OS'))
   select(-c(launch_time)) %>%
   mutate(dist_A_mm = as.integer(dist_A_mm),
          dist_B_mm = as.integer(dist_B_mm),
-         dist_C_mm = as.integer(dist_C_mm))
+         dist_C_mm = as.integer(dist_C_mm)) %>%
+  select(-site) %>%
+  rename(site = site_new)
 
 ## assess and plot field measurement averages
 msmt.A.avgs <- wls.msmt %>%
-  group_by(site_new, serial) %>%
+  group_by(site, serial) %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
             lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
             lgr_length_n = n()) %>%
   drop_na() %>%
   filter(serial != 'X0976') %>%
   ungroup() %>%
-  mutate(site_serial = paste0(site_new, " (", serial, ')'))  
+  mutate(site_serial = paste0(site, " (", serial, ')'))  
 
 a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg*1000)) +
   geom_point() + 
@@ -60,14 +62,14 @@ a.mn
 dev.off()
 
 msmt.B.avgs <- wls.msmt %>%
-  group_by(site_new) %>%
+  group_by(site) %>%
   summarise(
     well_ht_avg = round(mean(dist_B_mm/1000, na.rm = T),3),
     well_ht_sd = round(sd(dist_B_mm/1000, na.rm = T),3),
     well_ht_n = n()) %>%
   drop_na()
 
-b.mn <- ggplot(msmt.B.avgs, aes(site_new, well_ht_avg*1000)) +
+b.mn <- ggplot(msmt.B.avgs, aes(site, well_ht_avg*1000)) +
   geom_point() + 
   geom_errorbar(aes(ymin=(well_ht_avg-well_ht_sd)*1000, ymax=(well_ht_avg+well_ht_sd)*1000), width=.2,
                 position=position_dodge(0.05)) +
@@ -266,10 +268,12 @@ nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
 err <- tidal1.2 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
 # tidal <- err %>% filter(!sensor_depth >=4 | sensor_depth =< -4)
 
+## attach site type (creek or ditch) to data
+tidal1.2a <- left_join(tidal1.2, select(wls.info, c(site, type)))
 
 ## rearrange and export merged and cleaned data
-tidal1.21 <- tidal1.2 %>%
-  select(date_time_gmt, transect, site, logger, serial, site_serial, 
+tidal1.21 <- tidal1.2a %>%
+  select(date_time_gmt, transect, site, type, logger, serial, site_serial, 
          water_temp_c, sensor_depth, water_depth,
          water_level_navd88,
          well_ht_avg, well_ht_sd, well_ht_n,
@@ -282,7 +286,7 @@ write.csv(tidal1.21, paste(datadir, 'wls_data.csv'))
 ## create metadata file
 metadata <- data.frame(variable=names(tidal1.21),
                        description=c('YYYY-MM-DD HH:MM:SS GMT',
-                                     'Transect number', 'Site number',
+                                     'Transect number', 'Site number', 'Ditch or Creek',
                                      'Logger Brand', 'Logger Serial number', 
                                      'Unique site serial combination',
                                      'Water temperature in degrees Celsius',

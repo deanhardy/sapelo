@@ -20,7 +20,9 @@ YR <- c("https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2021",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2022",
        "https://aa.usno.navy.mil/api/moon/phases/year?year=2023",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2024")
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2024",
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2025",
+       "https://aa.usno.navy.mil/api/moon/phases/year?year=2026")
 
 for (i in 1:length(YR)) {
   

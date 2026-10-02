@@ -11,12 +11,9 @@ Sys.setenv(TZ='GMT')
 ## define data directory
 datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
 
-## define depth reference datum as NAVD88 or local substrate
-# level.var <- c('water_depth_m')
-
 # set dates for daily high tide graphs
 ht.date1 <- as.Date('2018-11-01') 
-ht.date2 <- as.Date('2024-08-25')
+ht.date2 <- as.Date('2026-08-25')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
@@ -29,17 +26,11 @@ ht.date2 <- as.Date('2024-08-25')
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'),
-         date = as.POSIXct(date))
-
-## check for NAs in datetime column and remove them, if necessary
-# nas <- df %>% filter(is.na(date_time_gmt))
-# nas.df2 <- df2 %>% filter(is.na(date_time_gmt))
-# df3 <- df2 %>% filter(!is.na(date_time_gmt))
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'))
 
 ## filter to interval dates
 # df.int <- df %>%
-#   filter(date >= int.date1 & date <= int.date2)
+# filter(date >= int.date1 & date <= int.date2)
 # select(site_new, site, type, transect, date_time_gmt, water_depth_m, water_level_navd88, water_temp_c)
 
 ## import daily precipitation totals
@@ -83,13 +74,13 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 #########
 
 ## facet wrap of water levels across transects and sites
-# sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) + 
-#   geom_smooth(na.rm = T, aes(color = site_new, linetype = type)) + 
-#   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) + 
-#   labs(x = 'Date') + 
-#   theme_bw(base_size = 20) + 
-#   facet_wrap(~ transect)
-# sm.plot
+sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) +
+  geom_smooth(na.rm = T, aes(color = site)) +
+  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) +
+  labs(x = 'Date') +
+  theme_bw(base_size = 20) +
+  facet_wrap(~ transect)
+sm.plot
 
 ## export facet wrap
 # png(paste0(datadir, '/figures/FacetWrap_', int.date1, "-to-", 
@@ -126,14 +117,14 @@ dev.off()
 ## monthly high water means
 df.mhhw <- df %>%
 mutate(prd = floor_date(date_time_gmt, "day")) %>%
-  group_by(transect, site_new, prd) %>%
+  group_by(transect, site, prd) %>%
   summarise(max = max(water_level_navd88)) %>%
   mutate(prd2 = floor_date(prd, "month")) %>%
-  group_by(transect, site_new, prd2) %>%
+  group_by(transect, site, prd2) %>%
   summarize(avg = mean(max))
 
-ggplot(df.mhhw, aes(prd2, avg, group = site_new)) + 
-  geom_line(aes(color = site_new)) + 
+ggplot(df.mhhw, aes(prd2, avg, group = site)) + 
+  geom_line(aes(color = site)) + 
   # geom_smooth(method = lm, se = F) + 
   facet_wrap(~ transect)
 
@@ -144,17 +135,17 @@ ggplot(df, aes(water_temp_c)) +
 
 ## summary of number of days active by site
 active.time <- df %>%
-  group_by(sitename_new) %>%
-  summarise(days = n_distinct(date)) %>%
+  group_by(site) %>%
+  summarise(days = n_distinct(date(date_time_gmt))) %>%
   mutate(weeks = days/7, years = weeks/52)
 # arrange(factor(site, years))
 
-df.active <- active.time[order(active.time$sitename_new, decreasing = TRUE),]
+df.active <- active.time[order(active.time$site, decreasing = TRUE),]
 
 ## export active time for all sites
 jpeg(paste0(datadir, "figures/sites-deployment-time.jpg"), width = 7, height = 5, units = 'in', res = 150)
 par(mar=c(4,10,4,4))
-barplot(df.active$years, names.arg = df.active$sitename_new,
+barplot(df.active$years, names.arg = df.active$site,
         horiz = T, 
         las = 1,
         ylab = '',
@@ -165,18 +156,18 @@ dev.off()
 
 ## sites active time by date
 df.date <- df %>%
-  group_by(site_new, serial, logger) %>%
-  mutate(date = as.Date(date, "%Y-%m-%d")) %>%
+  group_by(site, serial, logger) %>%
+  mutate(date = as.Date(date_time_gmt, "%Y-%m-%d")) %>%
   arrange(date) %>%
   mutate(start_date = first(date),
          end_date = last(date)) %>%
   # arrange(sitename_new) %>%
   # mutate(sitename_new = factor(sitename_new, levels=sitename_new)) %>%
-  summarise(start_date = first(start_date), end_date = last(end_date), type = first(type))
+  summarise(start_date = first(start_date), end_date = last(end_date))
 
 sites.timeline <- 
   ggplot(df.date) +
-  geom_linerange(aes(x = reorder(site_new, desc(site_new)),
+  geom_linerange(aes(x = reorder(site, desc(site)),
                      ymax = end_date,
                      ymin = start_date,
                  linetype = logger,
@@ -192,7 +183,6 @@ sites.timeline <-
                limits = c(as.Date('2018-10-01'), as.Date('2025-02-15')), 
                expand = c(0,0)) +
   # scale_color_manual()
-  xlab('Transect-Site') + 
   scale_linetype_manual(name='Logger Type',
                      breaks=c('hobo', 'van essen'),
                      values=c('hobo' = 'solid',
