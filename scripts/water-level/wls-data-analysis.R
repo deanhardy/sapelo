@@ -26,7 +26,8 @@ ht.date2 <- as.Date('2026-08-25')
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT'))
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')) %>%
+  mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
 ## filter to interval dates
 # df.int <- df %>%
@@ -74,13 +75,13 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 #########
 
 ## facet wrap of water levels across transects and sites
-sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) +
-  geom_smooth(na.rm = T, aes(color = site)) +
-  scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) +
-  labs(x = 'Date') +
-  theme_bw(base_size = 20) +
-  facet_wrap(~ transect)
-sm.plot
+# sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) +
+#   geom_smooth(na.rm = T, aes(color = site)) +
+#   scale_y_continuous(name = 'Water Level (m NAVD88)', limits = c(-0.2, 1.2)) +
+#   labs(x = 'Date') +
+#   theme_bw(base_size = 20) +
+#   facet_wrap(~ transect)
+# sm.plot
 
 ## export facet wrap
 # png(paste0(datadir, '/figures/FacetWrap_', int.date1, "-to-", 
@@ -89,30 +90,30 @@ sm.plot
 # dev.off()
 
 ## averages by unit time
-df.avg <- df %>%
-  mutate(prd = floor_date(date_time_gmt, "month")) %>%
-  group_by(transect, site, type, prd) %>%
-  summarize(avg = mean(water_level_navd88))
+# df.avg <- df %>%
+#   mutate(prd = floor_date(date_time_gmt, "month")) %>%
+#   group_by(transect, site, type, prd) %>%
+#   summarize(avg = mean(water_level_navd88))
 
 ## plot mean monthly water levels
-tt_facet <- ggplot(df.avg, aes(prd, avg*3.28084, group = site)) + 
-  geom_point(aes(color = site 
-                 # ,shape = type
-                 ), size = 0.5) + 
-  geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +
-  scale_y_continuous(name = 'Monthly Mean Water Level (ft NAVD88)', 
-                     breaks = seq(-1,4,1), limits = c(-1,4)) + 
-  scale_x_datetime(name = 'Date') + 
-  scale_color_discrete(name = 'Site') + 
-  scale_shape_discrete(name = 'Type') + 
-  # theme(
-  #   legend.text=element_text(size=rel(0.5))) + 
-  facet_wrap(~ transect)
-tt_facet
-
-tiff(paste0(datadir, 'figures/transect_trends_faceted.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
-tt_facet
-dev.off()
+# tt_facet <- ggplot(df.avg, aes(prd, avg*3.28084, group = site)) + 
+#   geom_point(aes(color = site 
+#                  # ,shape = type
+#                  ), size = 0.5) + 
+#   geom_smooth(method = lm, se = F, lwd=0.5, color = 'black') +
+#   scale_y_continuous(name = 'Monthly Mean Water Level (ft NAVD88)', 
+#                      breaks = seq(-1,4,1), limits = c(-1,4)) + 
+#   scale_x_datetime(name = 'Date') + 
+#   scale_color_discrete(name = 'Site') + 
+#   scale_shape_discrete(name = 'Type') + 
+#   # theme(
+#   #   legend.text=element_text(size=rel(0.5))) + 
+#   facet_wrap(~ transect)
+# tt_facet
+# 
+# tiff(paste0(datadir, 'figures/transect_trends_faceted.tiff'), unit = 'in', height = 5, width = 6.5, res = 300)
+# tt_facet
+# dev.off()
 
 ## monthly high water means
 df.mhhw <- df %>%
@@ -156,7 +157,7 @@ dev.off()
 
 ## sites active time by date
 df.date <- df %>%
-  group_by(site, serial, logger) %>%
+  group_by(site, serial, logger, type) %>%
   mutate(date = as.Date(date_time_gmt, "%Y-%m-%d")) %>%
   arrange(date) %>%
   mutate(start_date = first(date),
@@ -180,7 +181,7 @@ sites.timeline <-
   #               size = 1,
   #               show.legend = T) + ## trick for making horizontal legend bars
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y", 
-               limits = c(as.Date('2018-10-01'), as.Date('2025-02-15')), 
+               limits = c(as.Date('2018-10-01'), as.Date('2026-08-01')), 
                expand = c(0,0)) +
   # scale_color_manual()
   scale_linetype_manual(name='Logger Type',
@@ -198,9 +199,9 @@ sites.timeline <-
   theme_bw(base_size = 24)
 sites.timeline
 
-tiff(paste0(datadir, "figures/sites-deployment-dates.tiff"), width = 6.5, height = 5, units = 'in', res = 300)
-sites.timeline
-dev.off()
+# tiff(paste0(datadir, "figures/sites-deployment-dates.tiff"), width = 6.5, height = 5, units = 'in', res = 300)
+# sites.timeline
+# dev.off()
 
 png(paste0(datadir, "figures/sites-deployment-dates_slide.png"), bg = 'white', width = 13.33, height = 6.5, units = 'in', res = 150)
 sites.timeline
@@ -216,19 +217,19 @@ ht.graph <- function(df, na.rm = TRUE, ...){
   
   ## filter to daily high tide
   df <- df %>%
-    group_by(sitename_new, date) %>%
+    group_by(site, date) %>%
     slice_max(water_level_navd88, with_ties = FALSE) %>%
     # select(date_time_gmt, water_depth_m, salinity) %>%
     ungroup() %>%
     arrange(date)
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df$sitename_new)
+  sites_list <- unique(df$site)
   
   # create for loop to produce ggplot2 graphs 
   for (i in seq_along(sites_list)) {
     
-    df2 <- filter(df, sitename_new == sites_list[i] & date >= first(date) & date <= last(date))
+    df2 <- filter(df, site == sites_list[i] & date >= first(date) & date <= last(date))
     
     ## set parameters
     my.formula <- y ~ x # generic formula for use in equation
