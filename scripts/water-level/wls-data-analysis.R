@@ -318,7 +318,7 @@ TEXT = 15 ## set font size for figures
 int.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df$site_new)
+  sites_list <- unique(df$site)
   
   # create date filter for most recent # months of date for interval graphs
   n <- 3 # set number of months
@@ -328,7 +328,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
     
     df2 <- df %>%
       arrange(date) %>%
-      filter(site_new == sites_list[i]) %>%
+      filter(site == sites_list[i]) %>%
       filter(date >= seq(floor_date(max(date), 'month'),
                          length.out = n + 1, by = '-1 month'))
     
@@ -342,8 +342,8 @@ int.graph <- function(df, na.rm = TRUE, ...){
     # create plot for each site in df 
     plot <- 
       ggplot(df2)  + 
-      geom_line(aes(date_time_gmt, water_depth_m)) +  ## convert to feet then add MLLW base elevation
-      geom_hline(aes(yintercept = mean(water_depth_m)), linetype = 'dashed', df2) +
+      geom_line(aes(date_time_gmt, water_depth)) +  ## convert to feet then add MLLW base elevation
+      geom_hline(aes(yintercept = mean(water_depth)), linetype = 'dashed', df2) +
       geom_point(aes(date_time_gmt, TP_mm/100), data = int.TP, size = 1, color = 'blue') +
       # geom_line(aes(date_time_gmt, salinity/25), lwd = 0.5, color = 'blue') +
       geom_point(aes(date_time_gmt, 1.5, fill = phase), data = int.lnr, shape = 21, size = 5) +
@@ -395,7 +395,7 @@ int.graph <- function(df, na.rm = TRUE, ...){
     
     # save plots as .png
     ggsave(plot, file=paste(datadir,
-                            'figures/', 'NAVD88 ', 'Interval-12-minute ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
+                            'figures/', 'Water Depth ', '12-minute-interval ', sites_list[i], ".png", sep=''), width = 6, height = 5, units = 'in', scale=2)
     
   }
 }
@@ -413,7 +413,7 @@ TEXT = 15 ## set font size for figures
 sal.graph <- function(df, na.rm = TRUE, ...){
   
   # create list of logger sites in data to loop over 
-  sites_list <- unique(df$site_new)
+  sites_list <- unique(df$site)
   
   # create date filter for most recent # months of date for interval graphs
   n <- 3 # set number of months
@@ -423,7 +423,7 @@ sal.graph <- function(df, na.rm = TRUE, ...){
     
     df2 <- df %>%
       arrange(date) %>%
-      filter(site_new == sites_list[i]) %>%
+      filter(site == sites_list[i]) %>%
       filter(salinity > 0)
       # filter(date >= seq(floor_date(max(date), 'month'),
       #                    length.out = n + 1, by = '-1 month'))
