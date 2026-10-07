@@ -153,7 +153,7 @@ tidal.01 <- tidal %>%
 tidal.ve <- NULL
 try(
   for(i in 1:length(filz.ve)) {
-    OUT <- fread(filz.ve[2],
+    OUT <- fread(filz.ve[i],
                  skip = 51,
                  select = c(1:3),
                  col.names = c('date_time_gmt', 'sensor_depth', 'water_temp_c'),
@@ -347,3 +347,4 @@ write.csv(metadata, paste(datadir, 'metadata_wls_data.csv'))
 #         plot.margin = margin(0.5,0.5,0.5,0.5, 'cm'),
 #         plot.title = element_text(size = TEXT, face = "bold"))
 # ggtitle(paste0(sites_dates[i], ', Logger Accuracy: ', df3$accuracy, 'm', ', Abs Diff: ', df3$abs_diff, 'm'))
+
