@@ -154,7 +154,7 @@ tidal.ve <- NULL
 try(
   for(i in 1:length(filz.ve)) {
     OUT <- fread(filz.ve[2],
-                 skip = 63,
+                 skip = 51,
                  select = c(1:3),
                  col.names = c('date_time_gmt', 'sensor_depth', 'water_temp_c'),
                  stringsAsFactors = FALSE) %>%
