@@ -156,22 +156,32 @@ try(
     OUT <- fread(filz.ve[i],
                  skip = 51,
                  select = c(1:3),
-                 col.names = c('date_time_gmt', 'sensor_depth', 'water_temp_c'),
+                 col.names = c('date_time_var', 'sensor_depth', 'water_temp_c'),
                  stringsAsFactors = FALSE) %>%
       slice(., burn:(n())) %>% ## removes first and last ## readings
       mutate(
-        date_time_gmt = as.POSIXct(date_time_gmt, format = '%m/%d/%y %H:%M', tz = 'GMT'),
-        date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT'),
-        transect = toupper(str_sub(filz.ve[i], -28,-27)),
-        site = toupper(paste0(str_sub(filz.ve[i], -28,-27), '-', str_sub(filz.ve[i], -26,-25))),
-        serial = str_sub(filz.ve[i], -23,-19),
+        # date_time_var = as.POSIXct(date_time_var, format = '%m/%d/%y %H:%M'),
+        transect = toupper(str_sub(filz.ve[i], -32,-31)),
+        site = toupper(paste0(str_sub(filz.ve[i], -32,-31), '-', str_sub(filz.ve[i], -30,-29))),
+        serial = str_sub(filz.ve[i], -27,-23),
+        timezone = str_sub(filz.ve[i], -7,-5),
         sensor_depth = round(as.numeric(sensor_depth)/1000,3)) %>%                                                                                                                                   
       mutate(site_serial = paste0(site, ' (', serial, ')')) %>%
       filter(sensor_depth != 'NA')
+      # mutate(
+      #   date_time_gmt = if_else(timezone == 'edt', as.POSIXct(date_time_var + hours(4), format = '%m/%d/%y %H:%M', tz = 'GMT'),
+      #                           if_else(timezone == 'est', as.POSIXct(date_time_var + hours(5), format = '%m/%d/%y %H:%M', tz = 'GMT'), 
+      #                                   as.POSIXct(date_time_var, format = '%m/%d/%y %H:%M', tz = 'GMT'))),
+      #     as.POSIXct(date_time_var, format = '%m/%d/%y %H:%M', tz = 'GMT'),
+      #   date = as.Date(date_time_gmt, '%m/%d/%y', tz = 'GMT')
+      # )
 
     tidal.ve <- rbind(OUT, tidal.ve)
   }
 )
+
+## checking date format to assess which CSV files need corrections
+tidal.ve %>% group_by(site_serial) %>% slice_head(n = 1)
 
 ## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
