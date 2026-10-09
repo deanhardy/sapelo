@@ -43,7 +43,7 @@ msmt.A.avgs <- wls.msmt %>%
             lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
             lgr_length_n = n()) %>%
   drop_na() %>%
-  filter(serial != 'X0976') %>%
+  # filter(serial != 'X0976') %>%
   ungroup() %>%
   mutate(site_serial = paste0(site, " (", serial, ')'))  
 
@@ -192,16 +192,14 @@ tidal.ve2 <- tidal.ve %>%
 tidal1 <- rbind(tidal.01, tidal.ve2)
 
 ## import & tidy van essen specific conductivity/salinity data
-## note water level C is in meters and indicates water level in reference to top of wellcap (negative numbers indicate below for VE data)
-## abondoned water_level_C data for psu datafiles starting on 7/14/26 as newly exported salinity data will be sensor depth not water level referenced to wellcap
 tidal.psu <- NULL
 for(i in 1:length(filz.psu)) {
   OUT <- fread(filz.psu[i],
                select = c(2:8),
-               col.names = c('date_time_vartz', 'pressure', 'water_temp_c', 'conductivity', 'water_level_C', 'datum_reference', 'salinity'),
+               col.names = c('date_time_vartz', 'pressure', 'water_temp_c', 'conductivity', 'sensor_depth', 'datum_reference', 'salinity'),
                stringsAsFactors = FALSE) %>%
     # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
-    mutate(date_time_vartz = ymd_hms(date_time_vartz),
+    mutate(date_time_vartz = as.POSIXct(date_time_vartz, format = '%Y/%m/%d %H:%M:%S'),
            tz = str_sub(filz.psu[i], -7, -5),
            transect = toupper(str_sub(filz.psu[i], -32,-31)),
            site = toupper(paste0(str_sub(filz.psu[i], -32,-31), '-', 
@@ -213,6 +211,9 @@ for(i in 1:length(filz.psu)) {
 
   tidal.psu <- rbind(OUT, tidal.psu)
 }
+
+## checking date format to assess which files need corrections
+tidal.psu %>% group_by(site, tz) %>% slice_head(n = 1)
 
 options(scipen=999)
 
@@ -264,22 +265,22 @@ for (i in 1:length(SN)) {
 
 ## still need to merge average field measurements, water depth, and cleanup columns
 
-# filter for where sensor depth change is > 5 cm
-tidal1.2 <- df %>%
-  arrange(site_serial, date_time_gmt) %>%
-  group_by(site_serial) %>%
-  mutate(abs_chg = abs(sensor_depth - lag(sensor_depth))) %>%
-  filter(!abs((sensor_depth - lag(sensor_depth))) > 0.05)
+# filter for where sensor depth change is > 5 cm between two consecutive readings (lag)
+# tidal1.2 <- df %>%
+#   arrange(site_serial, date_time_gmt) %>%
+#   group_by(site_serial) %>%
+#   mutate(abs_chg = abs(sensor_depth - lag(sensor_depth))) %>%
+#   filter(!abs((sensor_depth - lag(sensor_depth))) > 0.05)
 
 ## appear to all be salinity measurements as of 8/6/2026
-nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
+# nas <- tidal1.1 %>% filter(is.na(date_time_gmt))
 
 ## check for erroneous data points and remove them from data
-err <- tidal1.2 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
+# err <- tidal1.1 %>% filter(sensor_depth >= 4 | sensor_depth <= -4)
 # tidal <- err %>% filter(!sensor_depth >=4 | sensor_depth =< -4)
 
 ## attach site type (creek or ditch) to data
-tidal1.2a <- left_join(tidal1.2, select(wls.info, c(site, type)))
+tidal1.2a <- left_join(df, select(wls.info, c(site, type)))
 
 ## rearrange and export merged and cleaned data
 tidal1.21 <- tidal1.2a %>%

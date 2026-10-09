@@ -26,7 +26,7 @@ ht.date2 <- as.Date('2026-08-25')
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')) %>%
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y/%m/%d %H:%M:%S", tz = 'GMT')) %>%
   mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
 ## filter to interval dates
@@ -53,7 +53,7 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
   filter(
     # date_time_gmt >= ht.date1 & date_time_gmt <= ht.date2 & 
       phase %in% c('New Moon', 'Full Moon')) %>%
-  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'),
+  mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = 'GMT'),
          phase = ifelse(phase == 'New Moon', 'New', 'Full'),
          date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
@@ -171,9 +171,10 @@ sites.timeline <-
   geom_linerange(aes(x = reorder(site, desc(site)),
                      ymax = end_date,
                      ymin = start_date,
-                 linetype = logger,
-                 color = type),
-                 show.legend = T) +
+                 # linetype = type,
+                 color = logger),
+                 show.legend = T,
+                 position = position_dodge(width = 0.5)) +
   # geom_errorbar(aes(x = reorder(sitename_new, desc(sitename_new)),
   #                   ymax = as.Date("2000-01-01"),
   #                   ymin = as.Date('2010-01-01'),
@@ -184,16 +185,16 @@ sites.timeline <-
                limits = c(as.Date('2018-10-01'), as.Date('2026-08-01')), 
                expand = c(0,0)) +
   # scale_color_manual()
-  scale_linetype_manual(name='Logger Type',
-                     breaks=c('hobo', 'van essen'),
-                     values=c('hobo' = 'solid',
-                              'van essen' = 'dashed'),
+  # scale_linetype_manual(name='Site Type',
+  #                    breaks=c('creek', 'ditch'),
+  #                    values=c('creek' = 'solid',
+  #                             'ditch' = 'dashed'),
+  #                    labels = c('Creek', 'Ditch')) +
+  scale_color_manual(name='Logger Type',
+                        breaks=c('hobo', 'van essen'),
+                        values=c('hobo' = 'black',
+                              'van essen' = 'red'),
                      labels = c('Hobo', 'Van Essen')) +
-  scale_color_manual(name='Site Type',
-                        breaks=c('creek', 'ditch'),
-                        values=c('creek' = 'red',
-                              'ditch' = 'black'),
-                     labels = c('Creek', 'Ditch')) +
   # ggtitle('Hog Hammock Water Level Survey\nDeployment Date Range') + 
   coord_flip() + 
   theme_bw(base_size = 24)
