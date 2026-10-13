@@ -37,6 +37,7 @@ wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/usc/research/sapelo/Sapelo_NSF/wate
   rename(site = site_new)
 
 ## assess and plot field measurement averages
+### <<<< 10/13/26 NEED TO ASSESS how to account for measurement As for redeployments of VE conductivity logger >>>>
 msmt.A.avgs <- wls.msmt %>%
   group_by(site, serial) %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
