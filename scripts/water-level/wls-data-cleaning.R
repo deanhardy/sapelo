@@ -39,14 +39,17 @@ wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/usc/research/sapelo/Sapelo_NSF/wate
 ## assess and plot field measurement averages
 ### <<<< 10/13/26 NEED TO ASSESS how to account for measurement As for redeployments of VE conductivity logger >>>>
 msmt.A.avgs <- wls.msmt %>%
-  group_by(site, serial) %>%
+  group_by(site, serial, deployment_no) %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
             lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
             lgr_length_n = n()) %>%
   drop_na() %>%
   # filter(serial != 'X0976') %>%
   ungroup() %>%
-  mutate(site_serial = paste0(site, " (", serial, ')'))  
+  mutate(
+    site_serial = paste0(site, " (", serial, ')'),
+    SSD = paste0(site_serial, deployment_no)
+         )  
 
 a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg*1000)) +
   geom_point() + 
@@ -232,24 +235,26 @@ tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('site', 'date_time_gmt'))
 # %>%
 #   select(!(site.y))
 
-## attach name to elevation data
-SN <- msmt.A.avgs$site_serial
+
 
 #### adding reference levels in NAVD88 ####
 df <- NULL
 
-for (i in 1:length(SN)) {
+## create unique identifier list for filtering for loop for elevation calculations
+ID <- msmt.A.avgs3$SSD %>%
+
+for (i in 1:length(ID)) {
   
   el2 <- msmt.A.avgs3 %>%
-    filter(site_serial == SN[[i]])
+    filter(SSD == ID[[i]])
   
   OUT2 <- tidal1.1 %>%
-    filter(site_serial == SN[[i]]) %>%
+    filter(site_serial == ID[[i]]) %>%
     mutate(
            wellcap_navd88 = el2$rtkcap_navd88,
            subst_navd88 = el2$rtkcap_navd88 - el2$well_ht_avg,
            screen_bottom_navd88 = round(el2$rtkcap_navd88 - 0.6096,3), # screens are ~ top 2' of wells
-           sensor_navd88 = el2$rtkcap_navd88 - (el2$lgr_length_avg - 0.0026) ## sensor face is 2.6 cm above logger tip
+           sensor_navd88 = el2$rtkcap_navd88 - (el2$lgr_length_avg - 0.0026) ## Hobo sensor face is 2.6 cm above logger tip
            ) %>%
     mutate(water_level_navd88 = sensor_navd88 + sensor_depth) %>%
     mutate(water_depth = water_level_navd88 - subst_navd88,
