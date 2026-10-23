@@ -157,13 +157,11 @@ dev.off()
 
 ## sites active time by date
 df.date <- df %>%
-  group_by(site, serial, logger, type) %>%
+  group_by(site, serial, deployment_no, logger, type) %>%
   mutate(date = as.Date(date_time_gmt, "%Y-%m-%d")) %>%
   arrange(date) %>%
   mutate(start_date = first(date),
          end_date = last(date)) %>%
-  # arrange(sitename_new) %>%
-  # mutate(sitename_new = factor(sitename_new, levels=sitename_new)) %>%
   summarise(start_date = first(start_date), end_date = last(end_date))
 
 sites.timeline <- 

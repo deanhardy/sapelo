@@ -155,7 +155,7 @@ tidal.01 <- tidal %>%
     site_serial = paste0(site, ' (', serial, ')'),
     SSD = paste0(site_serial, ' D', deployment_no)
     ) %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, SSD)
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, deployment_no, SSD)
 
 ## import & tidy van essen water level data
 tidal.ve <- NULL
@@ -196,7 +196,7 @@ tidal.ve %>% group_by(site_serial, timezone) %>% slice_head(n = 1)
 ## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
   mutate(logger = 'van essen') %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, SSD)
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, deployment_no, SSD)
 
 ## merge hobo and van essan data
 tidal1 <- rbind(tidal.01, tidal.ve2)
@@ -240,10 +240,6 @@ tidal.psu2 <- tidal.psu %>%
 
 ## merge salinity data to water level data 
 tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('SSD', 'date_time_gmt')) 
-# %>%
-#   select(!(site.y))
-
-
 
 #### adding reference levels in NAVD88 ####
 df <- NULL
@@ -298,7 +294,7 @@ tidal1.2a <- left_join(df, select(wls.info, c(site, type)))
 
 ## rearrange and export merged and cleaned data
 tidal1.21 <- tidal1.2a %>%
-  select(date_time_gmt, transect, site, type, logger, serial, SSD, 
+  select(date_time_gmt, transect, site, type, logger, serial, deployment_no, SSD, 
          water_temp_c, sensor_depth, water_depth,
          water_level_navd88,
          well_ht_avg, well_ht_sd, well_ht_n,
@@ -313,6 +309,7 @@ metadata <- data.frame(variable=names(tidal1.21),
                        description=c('YYYY-MM-DD HH:MM:SS GMT',
                                      'Transect number', 'Site number', 'Ditch or Creek',
                                      'Logger Brand', 'Logger Serial number', 
+                                     'Deployment Number, >1 if same site and serial combo exists more than once',
                                      'Unique site serial deployment combination',
                                      'Water temperature in degrees Celsius',
                                      'Depth of water above logger sensor (m)',
