@@ -48,7 +48,7 @@ msmt.A.avgs <- wls.msmt %>%
   ungroup() %>%
   mutate(
     site_serial = paste0(site, " (", serial, ')'),
-    SSD = paste0(site_serial, deployment_no)
+    SSD = paste0(site_serial, ' D', deployment_no)
          )  
 
 a.mn <- ggplot(msmt.A.avgs, aes(site_serial, lgr_length_avg*1000)) +
@@ -140,6 +140,7 @@ for(i in 1:length(filz)) {
       transect = toupper(str_sub(filz[i], -27,-26)),
       site = toupper(paste0(str_sub(filz[i], -27,-26), '-', str_sub(filz[i], -25,-24))),
       serial = str_sub(filz[i], -22,-19),
+      deployment_no = '1',
       water_temp_c = as.numeric(water_temp_c),
       sensor_depth = as.numeric(sensor_depth),
       temp_max = max(water_temp_c)) %>%
@@ -149,9 +150,12 @@ for(i in 1:length(filz)) {
 
 ## select relevant hobo data columns
 tidal.01 <- tidal %>%
-  mutate(logger = 'hobo',
-         site_serial = paste0(site, ' (', serial, ')')) %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
+  mutate(
+    logger = 'hobo',
+    site_serial = paste0(site, ' (', serial, ')'),
+    SSD = paste0(site_serial, ' D', deployment_no)
+    ) %>%
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, SSD)
 
 ## import & tidy van essen water level data
 tidal.ve <- NULL
@@ -165,12 +169,14 @@ try(
       slice(., burn:(n())) %>% ## removes first and last ## readings
       mutate(
         date_time_var = as.POSIXct(date_time_var, format = '%Y/%m/%d %H:%M:%S'),
-        transect = toupper(str_sub(filz.ve[i], -32,-31)),
-        site = toupper(paste0(str_sub(filz.ve[i], -32,-31), '-', str_sub(filz.ve[i], -30,-29))),
-        serial = str_sub(filz.ve[i], -27,-23),
-        timezone = str_sub(filz.ve[i], -7,-5),
+        transect = toupper(str_sub(filz.ve[i], -34,-33)),
+        site = toupper(paste0(str_sub(filz.ve[i], -34,-33), '-', str_sub(filz.ve[i], -32,-31))),
+        serial = str_sub(filz.ve[i], -29,-25),
+        deployment_no = str_sub(filz.ve[i], -5,-5),
+        timezone = str_sub(filz.ve[i], -9,-7),
         sensor_depth = round(as.numeric(sensor_depth)/1000,3)) %>%                                                                                                                                   
-      mutate(site_serial = paste0(site, ' (', serial, ')')) %>%
+      mutate(site_serial = paste0(site, ' (', serial, ')'),
+             SSD = paste0(site_serial, ' D', deployment_no)) %>%
       filter(sensor_depth != 'NA') %>%
       mutate(
         date_time_gmt = if_else(timezone == 'edt', as.POSIXct(date_time_var + hours(4), format = '%m/%d/%y %H:%M', tz = 'GMT'),
@@ -190,7 +196,7 @@ tidal.ve %>% group_by(site_serial, timezone) %>% slice_head(n = 1)
 ## select relevant ve data columns
 tidal.ve2 <- tidal.ve %>%
   mutate(logger = 'van essen') %>%
-  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial)
+  select(date_time_gmt, water_temp_c, sensor_depth, date, transect, site, logger, serial, site_serial, SSD)
 
 ## merge hobo and van essan data
 tidal1 <- rbind(tidal.01, tidal.ve2)
@@ -204,14 +210,14 @@ for(i in 1:length(filz.psu)) {
                stringsAsFactors = FALSE) %>%
     # slice(., 5:(n()-7)) %>% ## removes first and last ## readings
     mutate(date_time_vartz = as.POSIXct(date_time_vartz, format = '%Y/%m/%d %H:%M:%S'),
-           tz = str_sub(filz.psu[i], -7, -5),
-           transect = toupper(str_sub(filz.psu[i], -32,-31)),
-           site = toupper(paste0(str_sub(filz.psu[i], -32,-31), '-', 
-                                 str_sub(filz.psu[i], -30,-29))),
-           serial = str_sub(filz.psu[i], -27,-23),          
-           water_temp_c = as.numeric(water_temp_c),
-           # water_level_C = as.numeric(water_level_C)/1000 * -1,
-           serial = 'X0976')
+           tz = str_sub(filz.psu[i], -9, -7),
+           transect = toupper(str_sub(filz.psu[i], -34,-33)),
+           site = toupper(paste0(str_sub(filz.psu[i], -34,-33), '-', 
+                                 str_sub(filz.psu[i], -32,-31))),
+           serial = str_sub(filz.psu[i], -29,-25),
+           deployment_no = str_sub(filz.psu[i], -5,-5),
+           water_temp_c = as.numeric(water_temp_c)
+           )
 
   tidal.psu <- rbind(OUT, tidal.psu)
 }
@@ -225,13 +231,15 @@ options(scipen=999)
 tidal.psu2 <- tidal.psu %>%
   mutate(date_time_gmt = as.POSIXct(
     if_else(tz == 'est', date_time_vartz + hours(5),
-            if_else(tz == 'edt', date_time_vartz + hours(4), date_time_vartz)
-    ))) %>%
-  select(date_time_gmt, site, salinity) %>%
+            if_else(tz == 'edt', date_time_vartz + hours(4), date_time_vartz))),
+    site_serial = paste0(site, ' (', serial, ')'),
+    SSD = paste0(site_serial, ' D', deployment_no) 
+    ) %>%
+  select(date_time_gmt, SSD, salinity) %>%
   filter(salinity < 50 | is.na(salinity))
 
 ## merge salinity data to water level data 
-tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('site', 'date_time_gmt')) 
+tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('SSD', 'date_time_gmt')) 
 # %>%
 #   select(!(site.y))
 
@@ -241,7 +249,7 @@ tidal1.1 <- full_join(tidal1, tidal.psu2, by = c('site', 'date_time_gmt'))
 df <- NULL
 
 ## create unique identifier list for filtering for loop for elevation calculations
-ID <- msmt.A.avgs3$SSD %>%
+ID <- msmt.A.avgs3$SSD
 
 for (i in 1:length(ID)) {
   
@@ -249,7 +257,7 @@ for (i in 1:length(ID)) {
     filter(SSD == ID[[i]])
   
   OUT2 <- tidal1.1 %>%
-    filter(site_serial == ID[[i]]) %>%
+    filter(SSD == ID[[i]]) %>%
     mutate(
            wellcap_navd88 = el2$rtkcap_navd88,
            subst_navd88 = el2$rtkcap_navd88 - el2$well_ht_avg,
@@ -290,7 +298,7 @@ tidal1.2a <- left_join(df, select(wls.info, c(site, type)))
 
 ## rearrange and export merged and cleaned data
 tidal1.21 <- tidal1.2a %>%
-  select(date_time_gmt, transect, site, type, logger, serial, site_serial, 
+  select(date_time_gmt, transect, site, type, logger, serial, SSD, 
          water_temp_c, sensor_depth, water_depth,
          water_level_navd88,
          well_ht_avg, well_ht_sd, well_ht_n,
@@ -305,7 +313,7 @@ metadata <- data.frame(variable=names(tidal1.21),
                        description=c('YYYY-MM-DD HH:MM:SS GMT',
                                      'Transect number', 'Site number', 'Ditch or Creek',
                                      'Logger Brand', 'Logger Serial number', 
-                                     'Unique site serial combination',
+                                     'Unique site serial deployment combination',
                                      'Water temperature in degrees Celsius',
                                      'Depth of water above logger sensor (m)',
                                      'Depth of water above substrate/ground (m)',
