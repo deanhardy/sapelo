@@ -9,11 +9,11 @@ library(zoo)
 Sys.setenv(TZ='GMT')
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/dhardy/Library/CloudStorage/OneDrive-UniversityofSouthCarolina/r_data/sapelo/water-level/'
 
 # set dates for daily high tide graphs
-ht.date1 <- as.Date('2018-11-01') 
-ht.date2 <- as.Date('2026-08-25')
+ht.date1 <- as.Date('2018-10-01') 
+ht.date2 <- as.Date('2026-11-07')
 
 # # set dates for esda graphs
 # date1 <- as.Date('2018-10-01') 
@@ -25,7 +25,7 @@ ht.date2 <- as.Date('2026-08-25')
 
 ## define column classes
 ## import cleaned water level data
-df <- read_csv(paste(datadir, 'wls_data.csv'))[,-1] %>%
+df <- read_csv(paste0(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y/%m/%d %H:%M:%S", tz = 'GMT')) %>%
   mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
@@ -180,7 +180,7 @@ sites.timeline <-
   #               size = 1,
   #               show.legend = T) + ## trick for making horizontal legend bars
   scale_y_date(name = "Year", date_breaks = "1 year", date_minor_breaks = '3 months', date_labels = "%Y", 
-               limits = c(as.Date('2018-10-01'), as.Date('2026-08-01')), 
+               limits = c(as.Date('2018-10-01'), as.Date('2026-11-07')), 
                expand = c(0,0)) +
   # scale_color_manual()
   # scale_linetype_manual(name='Site Type',
