@@ -10,7 +10,7 @@ library(readxl)
 library(zoo)
 Sys.setenv(TZ='GMT')
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/dhardy/Library/CloudStorage/OneDrive-UniversityofSouthCarolina/r_data/sapelo/water-level/'
 
 ## set # measurements to "burn" pre and post data download
 burn = 0
@@ -25,7 +25,7 @@ wls.info <- read.csv(file.path(datadir, 'wls-info.csv')) %>%
   select(site, rtkcap_navd88, type)
 
 ## import field measurement data
-wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/usc/research/sapelo/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
+wls.msmt <- read_xlsx("/Users/dhardy/Library/CloudStorage/OneDrive-UniversityofSouthCarolina/research/sapelo/Sapelo_NSF/water_level_survey/data/sapelo-water-level-survey.xlsx",
                       sheet = 'field_measurements',
                       skip = 6) %>%
   # mutate(launch_time = as.POSIXct(launch_time, format = '%m/%d/%Y %H:%M:%OS'))
@@ -37,7 +37,6 @@ wls.msmt <- read_xlsx("/Users/dhardy/Dropbox/usc/research/sapelo/Sapelo_NSF/wate
   rename(site = site_new)
 
 ## assess and plot field measurement averages
-### <<<< 10/13/26 NEED TO ASSESS how to account for measurement As for redeployments of VE conductivity logger >>>>
 msmt.A.avgs <- wls.msmt %>%
   group_by(site, serial, deployment_no) %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
