@@ -27,8 +27,8 @@ ht.date2 <- as.Date('2026-11-07')
 ## import cleaned water level data
 df <- read_csv(paste0(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y/%m/%d %H:%M:%S", tz = 'GMT')) %>%
-  mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
-  # filter(!(transect %in% c('T5', 'T6')))
+  mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT')) %>%
+  filter(!(transect %in% c('T5', 'T6')))
 
 ## filter to interval dates
 # df.int <- df %>%
@@ -167,8 +167,8 @@ df.date <- df %>%
 
 sites.timeline <- 
   ggplot(
-    df.date
-    # filter(df.date, (!(site %in% c('T1-01', 'T3-01', 'T3-B1'))))
+    # df.date
+    filter(df.date, (!(site %in% c('T1-01', 'T3-01', 'T3-B1'))))
     ) +
   geom_linerange(aes(x = reorder(site, desc(site)),
                      ymax = end_date,
