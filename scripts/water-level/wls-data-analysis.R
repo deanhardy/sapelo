@@ -19,15 +19,16 @@ ht.date2 <- as.Date('2026-11-07')
 # date1 <- as.Date('2018-10-01') 
 # date2 <- as.Date('2023-04-25') 
 
-######################
+#=======================
 ## import & tidy data
-#####################
+#=======================
 
 ## define column classes
 ## import cleaned water level data
 df <- read_csv(paste0(datadir, 'wls_data.csv'))[,-1] %>%
   mutate(date_time_gmt = as.POSIXct(date_time_gmt, format = "%Y/%m/%d %H:%M:%S", tz = 'GMT')) %>%
   mutate(date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
+  # filter(!(transect %in% c('T5', 'T6')))
 
 ## filter to interval dates
 # df.int <- df %>%
@@ -57,9 +58,9 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
          phase = ifelse(phase == 'New Moon', 'New', 'Full'),
          date = as.Date(date_time_gmt, format = '%m/%d/%y', tz = 'GMT'))
 
-#########################
-## filtered water depth 
-#########################
+#=======================
+# filtered water depth 
+#=======================
 ## exploring rolling means
 ## https://jmsallan.netlify.app/blog/rolling-functions-in-r/
 # df <- df %>%
@@ -70,9 +71,9 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
 # ggplot(filter(df.ma, site == 'T3-02')) + 
 #          geom_line(aes(date_time_gmt, ma))
 
-#########
-## esda 
-#########
+#=======================
+# esda 
+#=======================
 
 ## facet wrap of water levels across transects and sites
 # sm.plot <- ggplot(df, aes(date_time_gmt, water_level_navd88)) +
@@ -165,7 +166,10 @@ df.date <- df %>%
   summarise(start_date = first(start_date), end_date = last(end_date))
 
 sites.timeline <- 
-  ggplot(df.date) +
+  ggplot(
+    df.date
+    # filter(df.date, (!(site %in% c('T1-01', 'T3-01', 'T3-B1'))))
+    ) +
   geom_linerange(aes(x = reorder(site, desc(site)),
                      ymax = end_date,
                      ymin = start_date,
@@ -207,10 +211,10 @@ sites.timeline
 dev.off()
 
 
-#################################################################################
+#================================================================================
 # DAILY HIGH TIDES create graphing function for daily highest tides' water level
 # https://www.reed.edu/data-at-reed/resources/R/loops_with_ggplot2.html
-#################################################################################
+#================================================================================
 TEXT = 10 ## set font size for figures
 ht.graph <- function(df, na.rm = TRUE, ...){
   

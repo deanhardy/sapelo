@@ -42,7 +42,7 @@ msmt.A.avgs <- wls.msmt %>%
   summarise(lgr_length_avg = round(mean(dist_A_mm/1000, na.rm = T),3),
             lgr_length_sd = round(sd(dist_A_mm/1000, na.rm = T),3),
             lgr_length_n = n()) %>%
-  drop_na() %>%
+  # drop_na() %>%
   # filter(serial != 'X0976') %>%
   ungroup() %>%
   mutate(
@@ -69,8 +69,7 @@ msmt.B.avgs <- wls.msmt %>%
   summarise(
     well_ht_avg = round(mean(dist_B_mm/1000, na.rm = T),3),
     well_ht_sd = round(sd(dist_B_mm/1000, na.rm = T),3),
-    well_ht_n = n()) %>%
-  drop_na()
+    well_ht_n = n())
 
 b.mn <- ggplot(msmt.B.avgs, aes(site, well_ht_avg*1000)) +
   geom_point() + 
@@ -301,7 +300,7 @@ tidal1.21 <- tidal1.2a %>%
          screen_bottom_navd88, salinity) %>%
   ungroup()
 
-write.csv(tidal1.21, paste(datadir, 'wls_data.csv'))
+write.csv(tidal1.21, paste0(datadir, 'wls_data.csv'))
 
 ## create metadata file
 metadata <- data.frame(variable=names(tidal1.21),
@@ -324,7 +323,7 @@ metadata <- data.frame(variable=names(tidal1.21),
                                      'Salinity in parts per thousand'
                                      )
                        )
-write.csv(metadata, paste(datadir, 'metadata_wls_data.csv'))
+write.csv(metadata, paste0(datadir, 'metadata_wls_data.csv'))
 
 
 ####################
