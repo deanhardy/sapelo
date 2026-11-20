@@ -5,24 +5,27 @@ library(httr)
 library(jsonlite)
 library(lubridate)
 library(lunar)
-Sys.setenv(TZ='GMT')
+# Sys.setenv(TZ='GMT')
 
 ## https://www.dataquest.io/blog/r-api-tutorial/
 ## https://aa.usno.navy.mil/data/api#phase
 
 ## define data directory
-datadir <- '/Users/dhardy/Dropbox/r_data/sapelo/water-level/'
+datadir <- '/Users/dhardy/Library/CloudStorage/OneDrive-UniversityofSouthCarolina/r_data/sapelo/water-level/'
 
 lunar <- NULL
-YR <- c("https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2019",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2020",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2021",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2022",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2023",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2024",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2025",
-       "https://aa.usno.navy.mil/api/moon/phases/year?year=2026")
+YR <- c(
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2018",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2019",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2020",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2021",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2022",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2023",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2024",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2025",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2026",
+  "https://aa.usno.navy.mil/api/moon/phases/year?year=2027"
+       )
 
 for (i in 1:length(YR)) {
   

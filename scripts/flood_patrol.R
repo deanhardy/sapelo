@@ -16,7 +16,7 @@ datadir <- '/Users/dhardy/Library/CloudStorage/OneDrive-UniversityofSouthCarolin
 
 # set parameters
 begin_date = as.Date("2026-10-01")
-end_date = as.Date("2026-12-31")
+end_date = as.Date("2027-09-30")
 
 #===================================================================================================================
 # import & tidy data
@@ -43,10 +43,11 @@ raw_json <- resp_body_json(resp, simplifyVector = TRUE)
 
 tide_df <- as_tibble(raw_json$predictions) |>
   mutate(
-    t = as.POSIXct(t, format = "%Y-%m-%d %H:%M"),
-    v = as.numeric(v)
+    tide_lt = as.POSIXct(t, format = "%Y-%m-%d %H:%M"),
+    height = as.numeric(v)
   ) |>
-  filter(type == "H")
+  filter(type == "H") |>
+  select(tide_lt, height)
 
 #========================================
 # convert data to subordinate station
@@ -55,25 +56,30 @@ tide_df <- as_tibble(raw_json$predictions) |>
 #========================================
 sub_df <- tide_df |>
   mutate(
-    t = t + minutes(15),
-    v = v*0.99,
-    event.date = as.Date(t)
+    tide_lt = tide_lt + minutes(15),
+    height = height*0.99,
+    event.date = as.Date(tide_lt, tz = Sys.timezone())
     ) |>
   group_by(event.date) |>
-  slice_max(v) |>
-  rename(predicted = v) |>
-  select(event.date, predicted)
+  slice_max(height) |>
+  rename(predicted = height) |>
+  select(event.date, tide_lt, predicted)
 
 #========================================
-# import lunar data
+# import lunar data & join with tidal
 #========================================
 lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
   mutate(
-    t = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S'),
-    phase = ifelse(phase == 'New Moon', 'New', 'Full'),
-    event.date = as.Date(t, format = '%m/%d/%y')
+    lnr_ut = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = "UTC"),
+    lnr_lt = with_tz(lnr_ut, tzone = Sys.timezone()),
+    # phase = ifelse(phase == 'New Moon', 'New', 'Full'),
+    event.date = as.Date(lnr_lt, format = '%m/%d/%y', Sys.timezone())
     ) |>
-  select(event.date, phase, dist_rad, dist_name)
+  select(event.date, lnr_lt, phase, dist_rad, dist_name)
 
-temp <- left_join(sub_df, lnr)
+ht_daily <- left_join(sub_df, lnr)
   
+#=============================================
+# filter tidal data to spring tides using lag
+#=============================================
+
