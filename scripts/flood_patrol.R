@@ -77,9 +77,25 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
     ) |>
   select(event.date, lnr_lt, phase, dist_rad, dist_name)
 
-ht_daily <- left_join(sub_df, lnr)
-  
+ht_daily <- left_join(sub_df, lnr) %>%
+  ungroup()
+
 #=============================================
 # filter tidal data to spring tides using lag
 #=============================================
-
+library(slider)
+library(tidyr)
+result <- ht_daily %>%
+  # 1. Find the max tide within 3 rows before and 3 rows after each row
+  mutate(
+    peak_event = slide(
+      .x = pick(tide_lt, predicted),
+      .f = ~ slice_max(.x, order_by = predicted, n = 1, with_ties = FALSE),
+      .before = 3,
+      .after = 3
+    )
+  ) %>%
+  # 2. Keep only the rows that actually have a moon phase recorded
+  filter(!is.na(phase) & phase %in% c('Full Moon', 'New Moon')) %>%
+  # 3. Unpack the nested peak_event data frame into normal columns
+  unnest(peak_event, names_sep = "_")
