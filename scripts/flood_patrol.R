@@ -70,7 +70,7 @@ sub_df <- tide_df |>
 #========================================
 lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
   mutate(
-    lnr_ut = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = "UTC"),
+    lnr_ut = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M', tz = "UTC"),
     lnr_lt = with_tz(lnr_ut, tzone = Sys.timezone()),
     # phase = ifelse(phase == 'New Moon', 'New', 'Full'),
     event_date = as.Date(lnr_lt, format = '%m/%d/%y', Sys.timezone())
@@ -100,7 +100,7 @@ spring_tides <- ht_daily %>%
   filter(!is.na(phase) & phase %in% c('Full Moon', 'New Moon')) %>%
   # 3. Unpack the nested peak_event data frame into normal columns
   unnest(spring_tide, names_sep = "_") %>%
-  # 4. Clean up dataframe for export
+  # 4. Clean up data frame for export
   select(spring_tide_tide_lt, spring_tide_predicted, phase, lnr_lt, dist_name, dist_rad)
 
-write.csv(spring_tides, paste0(datadir, 'flood_patrol/', Sys.Date(), '_spring_tides_predicted.csv'))
+write.csv(spring_tides, paste0(datadir, 'flood_patrol/spring_tides_predicted.csv'))
