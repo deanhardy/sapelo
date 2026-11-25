@@ -58,12 +58,12 @@ sub_df <- tide_df |>
   mutate(
     tide_lt = tide_lt + minutes(15),
     height = height*0.99,
-    event.date = as.Date(tide_lt, tz = Sys.timezone())
+    event_date = as.Date(tide_lt, tz = Sys.timezone())
     ) |>
-  group_by(event.date) |>
+  group_by(event_date) |>
   slice_max(height) |>
   rename(predicted = height) |>
-  select(event.date, tide_lt, predicted)
+  select(event_date, tide_lt, predicted)
 
 #========================================
 # import lunar data & join with tidal
@@ -73,22 +73,23 @@ lnr <- read.csv(file.path(datadir, 'lunar.csv')) %>%
     lnr_ut = as.POSIXct(date_time_gmt, format = '%Y-%m-%d %H:%M:%S', tz = "UTC"),
     lnr_lt = with_tz(lnr_ut, tzone = Sys.timezone()),
     # phase = ifelse(phase == 'New Moon', 'New', 'Full'),
-    event.date = as.Date(lnr_lt, format = '%m/%d/%y', Sys.timezone())
+    event_date = as.Date(lnr_lt, format = '%m/%d/%y', Sys.timezone())
     ) |>
-  select(event.date, lnr_lt, phase, dist_rad, dist_name)
+  select(event_date, lnr_lt, phase, dist_rad, dist_name)
 
 ht_daily <- left_join(sub_df, lnr) %>%
   ungroup()
 
-#=============================================
-# filter tidal data to spring tides using lag
-#=============================================
+#====================================================
+# filter tidal data to spring tides using lag method
+#====================================================
 library(slider)
 library(tidyr)
-result <- ht_daily %>%
+
+spring_tides <- ht_daily %>%
   # 1. Find the max tide within 3 rows before and 3 rows after each row
   mutate(
-    peak_event = slide(
+    spring_tide = slide(
       .x = pick(tide_lt, predicted),
       .f = ~ slice_max(.x, order_by = predicted, n = 1, with_ties = FALSE),
       .before = 3,
@@ -98,4 +99,8 @@ result <- ht_daily %>%
   # 2. Keep only the rows that actually have a moon phase recorded
   filter(!is.na(phase) & phase %in% c('Full Moon', 'New Moon')) %>%
   # 3. Unpack the nested peak_event data frame into normal columns
-  unnest(peak_event, names_sep = "_")
+  unnest(spring_tide, names_sep = "_") %>%
+  # 4. Clean up dataframe for export
+  select(spring_tide_tide_lt, spring_tide_predicted, phase, lnr_lt, dist_name, dist_rad)
+
+write.csv(spring_tides, paste0(datadir, 'flood_patrol/', Sys.Date(), '_spring_tides_predicted.csv'))
